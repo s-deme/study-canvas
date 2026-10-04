@@ -1,0 +1,37 @@
+{
+  "passages": [
+    {
+      "id": "reading-001",
+      "text": "ある団体は次の資料を公開しました。\n\n|項目|値|\n|---|---|\n|A|10|\n|B|20|"
+    }
+  ],
+  "questions": [
+    {
+      "id": "sample-v2-single",
+      "type": "single",
+      "category": "基礎",
+      "subject": "",
+      "topic": "選択式の見本",
+      "prompt": "資料のAの値はいくつですか。",
+      "passageId": "reading-001",
+      "options": [
+        "10",
+        "20"
+      ],
+      "answer": 0,
+      "explanation": "表のAの行を確認します。",
+      "source": "形式確認用の自作ダミーデータ"
+    },
+    {
+      "id": "sample-v2-written",
+      "type": "written",
+      "category": "基礎",
+      "topic": "記述式の見本",
+      "prompt": "AとBの合計を記述してください。",
+      "passageId": "reading-001",
+      "modelAnswer": "30",
+      "explanation": "10＋20＝30。",
+      "source": "形式確認用の自作ダミーデータ"
+    }
+  ]
+}

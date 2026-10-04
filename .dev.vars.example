@@ -1,0 +1,4 @@
+# Copy to .dev.vars for local authenticated testing. Never publish .dev.vars.
+OWNER_EMAIL=you@example.com
+ACCESS_DOMAIN=https://your-team.cloudflareaccess.com
+ACCESS_AUD=your-access-application-audience

@@ -1,0 +1,11 @@
+CREATE TABLE IF NOT EXISTS sync_head (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  revision INTEGER NOT NULL DEFAULT 0,
+  mutation_id TEXT,
+  updated_at INTEGER NOT NULL DEFAULT 0
+);
+INSERT OR IGNORE INTO sync_head (id) VALUES (1);
+CREATE TABLE IF NOT EXISTS sync_chunks (
+  position INTEGER PRIMARY KEY,
+  content TEXT NOT NULL
+);

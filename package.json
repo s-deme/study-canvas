@@ -1,0 +1,23 @@
+{
+  "name": "study-canvas",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node checks/web-check.mjs && node checks/multiexam-check.mjs && node checks/cloud-check.mjs && node checks/multiexam-cloud-check.mjs && node checks/cloud-config-check.mjs && node checks/publication-guard-check.mjs && node checks/publication-check.mjs",
+    "dev:cloud": "wrangler pages dev web --ip 127.0.0.1 --port 8766",
+    "build:cloud": "wrangler pages functions build --outdir build/cloud",
+    "check:runtime": "node checks/cloud-runtime-check.mjs",
+    "deploy:cloud": "wrangler pages deploy web --branch main",
+    "predev:cloud": "node checks/publication-check.mjs && node scripts/prepare-cloud-config.mjs",
+    "predeploy:cloud": "node checks/publication-check.mjs && node scripts/prepare-cloud-config.mjs",
+    "prebuild:cloud": "node checks/publication-check.mjs",
+    "check:browser": "node checks/multiexam-browser-check.mjs"
+  },
+  "dependencies": {
+    "@cloudflare/pages-plugin-cloudflare-access": "^1.0.5"
+  },
+  "devDependencies": {
+    "wrangler": "^4.147.0"
+  },
+  "license": "MIT"
+}

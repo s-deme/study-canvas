@@ -1,0 +1,3 @@
+﻿id,type,category,subject,topic,prompt,options,answer,modelAnswer,explanation,source,year
+sample-csv-001,multiple,基礎,,CSVの見本,"正しいものをすべて選んでください。
+「引用符」と改行も扱えます。","[""正しいA"", ""誤りB"", ""正しいC""]","[0,2]",,AとCが正解。,形式確認用の自作ダミーデータ,
