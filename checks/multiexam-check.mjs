@@ -1,9 +1,21 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {emptyState,validateQuestions,validateState,validateExam,questionKey,allQuestions,newSession,submit,next,selfEvaluate,finish,correctAnswer,sessionSummary,parseCSV,previewImport,record,saveState,KEY} from '../web/core.mjs';
+import {DEFAULT_EXAMS,AVAILABLE_EXAMS,emptyState,validateQuestions,validateState,validateExam,questionKey,allQuestions,newSession,submit,next,selfEvaluate,finish,correctAnswer,sessionSummary,parseCSV,previewImport,record,saveState,KEY} from '../web/core.mjs';
+import {EXAM_CATALOG,groupExams} from '../web/exams.mjs';
 import {BUILTIN_QUESTIONS} from '../web/catalog.mjs';
 import {richText} from '../web/render.mjs';
 const make=(examId,id,type='single')=>validateQuestions([{id,examId,type,prompt:'問題',category:'任意の分野',options:['A','B','C'],answer:type==='multiple'?[0,2]:0,modelAnswer:'模範解答',source:'チェック用'}])[0];
+assert.equal(new Set(EXAM_CATALOG.map(e=>e.id)).size,EXAM_CATALOG.length);
+assert.equal(new Set(EXAM_CATALOG.map(e=>e.name)).size,EXAM_CATALOG.length);
+assert.ok(EXAM_CATALOG.length>300);assert.ok(groupExams(EXAM_CATALOG).size>=20);
+for(const e of EXAM_CATALOG) {validateExam(e);assert.ok(e.field && /^https:\/\//.test(e.source));}
+const expanded=emptyState();expanded.exams.push(...Array.from({length:1100},(_,i)=>validateExam({id:'extra-'+i,name:'追加'+i})));
+expanded.history=Array.from({length:3001},(_,i)=>({examId:'extra-'+Math.floor(i/30),title:'履歴',correct:0,total:1,at:1000}));
+assert.deepEqual(validateState(JSON.parse(JSON.stringify(expanded))),expanded);
+const previous=emptyState();previous.exams=structuredClone(DEFAULT_EXAMS);previous.exams[0].name='編集済みG検定';previous.custom=[make('sg','preserved')];record(previous,previous.custom[0],0,1000);
+const upgraded=validateState(previous);assert.equal(upgraded.exams.length,AVAILABLE_EXAMS.length);assert.equal(upgraded.exams.find(e=>e.id==='gken').name,'編集済みG検定');assert.deepEqual(upgraded.stats,previous.stats);assert.deepEqual(upgraded.custom,previous.custom);
+assert.throws(()=>validateState({...expanded,exams:[...expanded.exams,expanded.exams[0]]}),/重複/);
+assert.throws(()=>validateState({...expanded,exams:'not an array'}),/試験一覧/);
 let s=emptyState();s.exams.push(validateExam({id:'language',name:'語学',field:'語学'}));
 const a=make('gken','same'),b=make('language','same'),m=make('language','multi','multiple'),w=make('language','written','written'),e=make('language','essay','essay');
 s.custom=[a,b,m,w,e];

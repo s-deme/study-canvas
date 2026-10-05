@@ -37,6 +37,7 @@ python -m http.server 8765 --bind 127.0.0.1 --directory web
 |JSON・CSVの形式と教材|[問題の取り込み形式](docs/question-format.md)|
 |本人限定ログイン・同期|[クラウド設定](docs/cloud.md)|
 |開発・チェック・公開対象|[開発ガイド](docs/development.md)|
+|カテゴリ別の試験一覧・問題登録数|[試験管理表](docs/exam-inventory.md)|
 |検証済み・未検証の範囲|[検証結果](docs/verification-web.md)|
 
 ## ライセンスと教材

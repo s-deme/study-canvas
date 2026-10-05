@@ -1,4 +1,5 @@
 import {MATERIAL_EXAMS} from './catalog.mjs';
+import {EXAM_CATALOG} from './exams.mjs';
 export const CATEGORIES=['人工知能とは','人工知能をめぐる動向','機械学習の概要','ディープラーニングの概要','ディープラーニングの要素技術','ディープラーニングの応用例','AIの社会実装に向けて','数理・統計','法律と契約','倫理・AIガバナンス'];
 // study-canvas keeps the old storage key and G検 IDs to preserve existing records.
 export const KEY='gstudy.web.v1';
@@ -8,6 +9,7 @@ export const DEFAULT_EXAMS=[
   {id:'fe',name:'基本情報技術者',field:'IT',subjects:['科目A','科目B'],categories:[]},
   {id:'boki3',name:'日商簿記3級',field:'会計',subjects:[],categories:['仕訳','計算','決算']}
 ];
+export const AVAILABLE_EXAMS=[...DEFAULT_EXAMS,...MATERIAL_EXAMS,...EXAM_CATALOG.filter(e=>![...DEFAULT_EXAMS,...MATERIAL_EXAMS].some(prior=>prior.id===e.id)).map(e=>({id:e.id,name:e.name,field:e.field,subjects:[],categories:[]}))];
 const valid=(ok,message)=>{if(!ok) throw new Error(message);};
 const object=v=>v!==null && typeof v==='object' && !Array.isArray(v);
 const integer=(v,min,max)=>Number.isSafeInteger(v) && v>=min && v<=max;
@@ -53,7 +55,7 @@ export function validateQuestions(input,existing=[],custom=false,examId) {
     }catch(error) {throw new Error(`${index+1}問目：${error.message}`);}
   });
 }
-export function emptyState() {return {version:2,exams:structuredClone([...DEFAULT_EXAMS,...MATERIAL_EXAMS.filter(e=>!DEFAULT_EXAMS.some(d=>d.id===e.id))]),selectedExam:'gken',custom:[],stats:{},daily:{},history:[],session:null};}
+export function emptyState() {return {version:2,exams:structuredClone(AVAILABLE_EXAMS),selectedExam:'gken',custom:[],stats:{},daily:{},history:[],session:null};}
 export function allQuestions(base,state) {return [...new Map([...base,...state.custom].map(q=>[questionKey(q),q])).values()];}
 export function dayKey(now=new Date()) {return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;}
 export function shuffle(items,random=Math.random) {const out=[...items];for(let i=out.length-1;i>0;i--) {const j=Math.floor(random()*(i+1));[out[i],out[j]]=[out[j],out[i]];}return out;}
@@ -99,11 +101,11 @@ export function next(state,questions,now=Date.now()) {
 }
 export function validateState(input,base=[]) {
   valid(object(input) && [1,2].includes(input.version) && Array.isArray(input.custom) && input.custom.length<=2000,'Web版バックアップの形式が不正です');const legacy=input.version===1;
-  const exams=legacy?structuredClone(DEFAULT_EXAMS):(valid(Array.isArray(input.exams) && input.exams.length>0 && input.exams.length<=100,'試験一覧が不正です'),input.exams.map(validateExam));const examIds=new Set(exams.map(e=>e.id));valid(examIds.size===exams.length && DEFAULT_EXAMS.every(e=>examIds.has(e.id)),'試験IDが重複または初期試験が不足しています');
-  for(const e of MATERIAL_EXAMS) if(!examIds.has(e.id)) {exams.push(validateExam(e));examIds.add(e.id);}
+  const exams=legacy?structuredClone(DEFAULT_EXAMS):(valid(Array.isArray(input.exams) && input.exams.length>0,'試験一覧が不正です'),input.exams.map(validateExam));const examIds=new Set(exams.map(e=>e.id));valid(examIds.size===exams.length && DEFAULT_EXAMS.every(e=>examIds.has(e.id)),'試験IDが重複または初期試験が不足しています');
+  for(const e of AVAILABLE_EXAMS) if(!examIds.has(e.id)) {exams.push(validateExam(e));examIds.add(e.id);}
   const selectedExam=legacy?'gken':input.selectedExam;valid(examIds.has(selectedExam),'選択した試験がありません');const custom=input.custom.length?validateQuestions(input.custom):[];valid(custom.every(q=>examIds.has(q.examId)),'問題の試験がありません');
   const questions=allQuestions(base,{custom}),map=new Map(questions.map(q=>[questionKey(q),q]));const knownId=id=>typeof id==='string' && !dangerous(id) && (map.has(id) || examIds.has(retiredExamId(id)) || id.startsWith('original:') && id.length>9 && id.length<=120);
-  valid(object(input.stats) && object(input.daily) && Array.isArray(input.history) && input.history.length<=3000,'学習記録の形式が不正です');
+  valid(object(input.stats) && object(input.daily) && Array.isArray(input.history) && input.history.length<=exams.length*30,'学習記録の形式が不正です');
   for(const [id,s] of Object.entries(input.stats)) {
     valid(knownId(id) && object(s) && integer(s.attempts,0,1e9) && integer(s.correct,0,s.attempts) && typeof s.bookmark==='boolean','回答記録が不正です');valid(s.attempts===0 || typeof s.lastCorrect==='boolean' && integer(s.lastAt,0,Number.MAX_SAFE_INTEGER),'回答日時が不正です');valid(s.gradedAttempts===undefined || integer(s.gradedAttempts,s.correct,s.attempts),'自動採点の記録が不正です');
     if(s.self!==undefined) valid(object(s.self) && ['done','partial','review'].every(k=>integer(s.self[k],0,s.attempts)) && Object.values(s.self).reduce((a,b)=>a+b,0)===s.attempts-(s.gradedAttempts ?? s.attempts),'自己評価の記録が不正です');

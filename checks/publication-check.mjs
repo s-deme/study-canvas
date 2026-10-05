@@ -6,7 +6,7 @@ import {fileURLToPath} from 'node:url';
 import {BUILTIN_QUESTIONS,MATERIAL_INDEX,MATERIAL_PACKS,MATERIAL_EXAMS} from '../web/catalog.mjs';
 import {previewImport} from '../web/core.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url)),web=new URL('../web/',import.meta.url);
-const allowed=['_routes.json','app.mjs','core.mjs','catalog.mjs','render.mjs','material.mjs','index.html','sample-questions.json','sample-questions-v2.json','sample-questions.csv','styles.css','sync.mjs'];
+const allowed=['_routes.json','app.mjs','core.mjs','catalog.mjs','exams.mjs','render.mjs','material.mjs','index.html','sample-questions.json','sample-questions-v2.json','sample-questions.csv','styles.css','sync.mjs'];
 assert.deepEqual(readdirSync(web).sort(),allowed.sort(),'web/に未承認のファイルがあります');
 for(const name of allowed) assert.ok(lstatSync(new URL(name,web)).isFile());
 assert.deepEqual(BUILTIN_QUESTIONS,[],'試験問題集は同梱しません');

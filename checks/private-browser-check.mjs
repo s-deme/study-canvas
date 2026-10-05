@@ -4,6 +4,7 @@ import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
 import {onRequestGet,onRequestPut} from '../build/private/functions/api/state.js';
 import {servePreview} from './cloud-preview.mjs';
 import {MATERIAL_EXAMS,MATERIAL_PACKS} from '../build/private/web/catalog.mjs';
+import {AVAILABLE_EXAMS} from '../build/private/web/core.mjs';
 const browser=await(await fetch((process.env.STUDY_CANVAS_BROWSER_URL || 'http://127.0.0.1:9238')+'/json/version')).json(),ws=new WebSocket(browser.webSocketDebuggerUrl);
 await new Promise((ok,fail)=>{ws.addEventListener('open',ok,{once:true});ws.addEventListener('error',fail,{once:true});});
 let id=0;const waiting=new Map();ws.addEventListener('message',e=>{const r=JSON.parse(e.data),p=waiting.get(r.id);if(p) {waiting.delete(r.id);r.error?p.reject(new Error(r.error.message)):p.resolve(r.result);}});
@@ -25,7 +26,11 @@ const raw=s=>evaluate(s,"JSON.parse(localStorage.getItem('gstudy.web.v1'))");
 
 try {
  const phone=await page(390);await until(phone,"!!document.querySelector('[data-action=daily]')");
- assert.equal(await evaluate(phone,"document.querySelector('#exam-select').options.length"),4+MATERIAL_EXAMS.length);
+ assert.equal(await evaluate(phone,"document.querySelector('#exam-select').options.length"),AVAILABLE_EXAMS.length);
+ await route(phone,'exams');assert.equal(await evaluate(phone,"document.querySelectorAll('#exam-inventory tbody tr').length"),AVAILABLE_EXAMS.length);
+ for(const [examId,count] of [['ap',730],['sg',15],['fe',26],['boki3',20],['eiken3',0]]) assert.equal(await evaluate(phone,`document.querySelector('[data-select-exam="${examId}"]').closest('tr').children[1].textContent`),count+'問');
+ assert.equal(await evaluate(phone,'document.documentElement.scrollWidth<=innerWidth'),true);await screenshot(phone,'exam-inventory-private-phone');
+ await select(phone,'gken');await route(phone,'home');
  const loaded=await evaluate(phone,"performance.getEntriesByType('resource').filter(r=>r.name.includes('/material/')&&r.name.endsWith('.json')).map(r=>r.name)");assert.equal(loaded.length,1);assert.ok(loaded[0].includes('gken-restored'));
  for(const examId of ['fp2','fp3'].filter(id=>MATERIAL_EXAMS.some(e=>e.id===id))) {
   await select(phone,examId);await until(phone,"!!document.querySelector('[data-material-filter=year]')");await route(phone,'search');

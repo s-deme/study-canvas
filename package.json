@@ -15,6 +15,7 @@
     "check:large-material": "node checks/large-material-check.mjs && node checks/additional-material-check.mjs",
     "check:expansion": "node checks/expansion-completion-check.mjs",
     "build:private": "node scripts/build-private.mjs",
+    "inventory:exams": "node scripts/update-exam-inventory.mjs",
     "build:private-cloud": "python scripts/verify-material.py && npm run check && npm run build:private && node scripts/private-cloud-config.mjs && cd build/private && wrangler pages functions build --outdir ../private-worker",
     "deploy:private": "npm run build:private-cloud && cd build/private && wrangler pages deploy web --branch main"
   },

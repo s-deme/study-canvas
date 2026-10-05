@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {readFileSync,existsSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {MATERIAL_INDEX,MATERIAL_PACKS,MATERIAL_EXAMS} from '../build/private/web/catalog.mjs';
-import {emptyState,validateState,validateQuestions,newSession,submit,finish,questionKey} from '../build/private/web/core.mjs';
+import {AVAILABLE_EXAMS,emptyState,validateState,validateQuestions,newSession,submit,finish,questionKey} from '../build/private/web/core.mjs';
 import {onRequestGet,onRequestPut} from '../build/private/functions/api/state.js';
 import {authFixture} from './cloud-preview.mjs';
 
@@ -17,7 +17,7 @@ for(const pack of MATERIAL_PACKS) {
 assert.equal(all.length,MATERIAL_INDEX.length);assert.ok(all.length>2000);
 assert.equal(new Set(all.map(questionKey)).size,all.length);
 for(const id of ['sg','fe','boki3','gken','ap','st','sa','pm','nw','db','es','sm','au','sc']) assert.ok(all.some(q=>q.examId===id));
-const state=emptyState();assert.equal(state.exams.length,4+MATERIAL_EXAMS.length);
+const state=emptyState();assert.equal(state.exams.length,AVAILABLE_EXAMS.length);assert.ok(MATERIAL_EXAMS.every(e=>state.exams.some(registered=>registered.id===e.id)));
 for(const examId of ['ap','st','sa','pm','nw','db','es','sm','au','sc']) for(const year of ['2023','2024','2025']) assert.ok(all.some(q=>q.examId===examId && q.year===year),examId+year);
 state.selectedExam='ap';const q=all.find(q=>q.examId==='ap' && q.type==='single');state.session=newSession([q],1,'検証');state.session.pending=q.answer;submit(state,all);finish(state,all);
 assert.equal(validateState(state,MATERIAL_INDEX).stats[questionKey(q)].correct,1);

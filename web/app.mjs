@@ -3,12 +3,14 @@ import {BUILTIN_QUESTIONS,MATERIAL_INDEX,MATERIAL_PACKS} from './catalog.mjs';
 import {MaterialLibrary} from './material.mjs';
 import {esc,richText} from './render.mjs';
 import {CloudSync,cloudRequest} from './sync.mjs';
+import {groupExams,examSource} from './exams.mjs';
 const $=selector=>document.querySelector(selector);
 const button=(label,action,primary=false)=>`<button data-action="${esc(action)}" class="${primary?'primary':''}">${esc(label)}</button>`;
 const link=(label,hash,primary=false)=>`<a class="button ${primary?'primary':''}" href="#${hash}">${esc(label)}</a>`;
 const external=(label,url)=>`<a class="button" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(label)} ↗</a>`;
 const card=html=>`<section class="card">${html}</section>`;
 const heading=(title,subtitle)=>`<h1>${esc(title)}</h1><p class="subtitle">${esc(subtitle)}</p>`;
+const questionCounts=()=>allQuestions(base,state).reduce((out,q)=>{out[q.examId]=(out[q.examId] || 0)+1;return out;},Object.create(null));
 const library=new MaterialLibrary(MATERIAL_INDEX,MATERIAL_PACKS);
 const base=library.base; base.push(...BUILTIN_QUESTIONS);
 let materialError='',loadingExam=null;
@@ -96,7 +98,19 @@ const area=(label,name,value='',required=false)=>`<label>${esc(label)}<textarea 
 function manage() {
   const items=pool();let preview='';
   if(pendingImport) preview=card(`<h2>取り込み前の確認</h2><p>取り込み先：${esc(state.exams.find(e=>e.id===pendingImport.examId).name)}</p>${pendingImport.error?`<p role="alert" class="incorrect">${esc(pendingImport.error)}</p><p>保存していません。ファイルを修正して再度取り込んでください。</p>`:`<p>${pendingImport.rows.length}問 · エラーなし</p>${pendingImport.rows.map(q=>`<details><summary>${esc(q.id)} · ${esc(q.topic || q.prompt.slice(0,60))} · ${esc(q.type)}</summary>${material(q)}${solution(q)}</details>`).join('')}${button('この内容で登録する','commit-import',true)}`}<div class="actions">${button('確認を閉じる','cancel-import')}</div>`);
-  return heading('試験・問題を管理',`${exam().name} · ${items.length}問`)+preview+card(`<h2>試験の設定</h2><p>分野：${esc(exam().field || '未設定')} · 科目：${esc(exam().subjects.join('、') || '未設定')}</p><div class="actions">${button('新しい試験を追加','new-exam',true)}${button('この試験を編集','edit-exam')}</div>`)+card('<h2>問題を追加</h2><p>JSON・CSVは2MB、持込問題は全試験合計2000問まで。追加前に内容を確認できます。</p><div class="actions">'+button('画面で問題を登録','new-question',true)+button('JSON・CSVを取り込む','import-questions')+'</div><div class="actions"><a class="button" href="sample-questions-v2.json" download>JSONの見本</a><a class="button" href="sample-questions.csv" download>CSVの見本</a></div>')+card('<h2>登録済みの問題</h2>'+items.map(q=>`<div class="record-row"><span>${esc(q.topic || q.prompt.slice(0,80))}<small>${esc(q.id)} · ${esc(q.type)}</small></span><button data-edit-question="${esc(questionKey(q))}">編集</button></div>`).join('')+(items.length?'':'<p class="empty">問題はまだありません。</p>'));
+  return heading('試験・問題を管理',`${exam().name} · ${items.length}問`)+link('全試験の管理表','exams')+preview+card(`<h2>試験の設定</h2><p>分野：${esc(exam().field || '未設定')} · 科目：${esc(exam().subjects.join('、') || '未設定')}</p><div class="actions">${button('新しい試験を追加','new-exam',true)}${button('この試験を編集','edit-exam')}</div>`)+card('<h2>問題を追加</h2><p>JSON・CSVは2MB、持込問題は全試験合計2000問まで。追加前に内容を確認できます。</p><div class="actions">'+button('画面で問題を登録','new-question',true)+button('JSON・CSVを取り込む','import-questions')+'</div><div class="actions"><a class="button" href="sample-questions-v2.json" download>JSONの見本</a><a class="button" href="sample-questions.csv" download>CSVの見本</a></div>')+card('<h2>登録済みの問題</h2>'+items.map(q=>`<div class="record-row"><span>${esc(q.topic || q.prompt.slice(0,80))}<small>${esc(q.id)} · ${esc(q.type)}</small></span><button data-edit-question="${esc(questionKey(q))}">編集</button></div>`).join('')+(items.length?'':'<p class="empty">問題はまだありません。</p>'));
+}
+function examList() {
+  const n=questionCounts(),registered=state.exams.filter(e=>n[e.id]).length;
+  return heading('試験管理表',`${state.exams.length}試験・教材 · 問題登録あり ${registered} · 未登録 ${state.exams.length-registered}`)+`<p>試験名を選ぶと問題を登録できます。登録数は配布教材と持込問題の合計です。同じIDの編集は重複計上しません。</p><div class="material-filters"><label for="exam-field-filter">カテゴリ<select id="exam-field-filter"><option value="">すべて</option>${[...groupExams(state.exams).keys()].map(field=>`<option>${esc(field)}</option>`).join('')}</select></label><label for="exam-name-filter">試験名・IDで検索<input id="exam-name-filter" type="search" placeholder="例：簿記、英検"></label></div><p id="exam-list-count" role="status"></p><div id="exam-inventory"></div>`;
+}
+function updateExamList() {
+  const field=$('#exam-field-filter').value,needle=$('#exam-name-filter').value.trim().toLocaleLowerCase('ja'),n=questionCounts();let shown=0;
+  $('#exam-inventory').innerHTML=[...groupExams(state.exams)].filter(([category])=>!field || category===field).map(([category,exams])=>{
+    const matches=exams.filter(e=>`${e.name} ${e.id}`.toLocaleLowerCase('ja').includes(needle));shown+=matches.length;if(!matches.length) return '';
+    return card(`<h2>${esc(category)} <small>${matches.length}試験・教材</small></h2><div class="table-scroll" tabindex="0" role="region" aria-label="${esc(category)}の管理表"><table><caption>${esc(category)}の登録状況</caption><thead><tr><th scope="col">試験・教材</th><th scope="col">登録数</th><th scope="col">状態</th><th scope="col">案内</th></tr></thead><tbody>${matches.map(e=>`<tr><th scope="row"><button data-select-exam="${esc(e.id)}">${esc(e.name)}</button><small class="exam-id">${esc(e.id)}</small></th><td>${n[e.id] || 0}問</td><td>${n[e.id]?'登録あり':'問題未登録'}</td><td>${examSource(e)?external('公式案内',examSource(e)):'—'}</td></tr>`).join('')}</tbody></table></div>`);
+  }).join('') || '<p class="empty">該当する試験はありません。カテゴリや検索語を変更してください。</p>';
+  $('#exam-list-count').textContent=`${shown} / ${state.exams.length}試験・教材を表示${shown?' · 表は横にスクロールできます':''}`;
 }
 function examEditor() {
   const e=editingExam || {id:'exam-'+crypto.randomUUID(),name:'',field:'',subjects:[],categories:[]};
@@ -113,9 +127,10 @@ function render(focus=true) {
   if(sessionAvailable() && expired(state.session)) transact(s=>finish(s,questions));
   const route=location.hash.slice(1) || 'home';
   if (['quiz','results'].includes(route) && state.session && state.selectedExam!==state.session.examId) transact(s=>s.selectedExam=s.session.examId);
-  const pages={home,subjects,review,mock:mockSetup,quiz,results,search:searchPage,records,official,sources:official,manage,'exam-editor':examEditor,'question-editor':questionEditor};
-  $('#exam-select').innerHTML=state.exams.map(e=>`<option value="${esc(e.id)}" ${e.id===state.selectedExam?'selected':''}>${esc(e.name)}（${allQuestions(base,state).filter(q=>q.examId===e.id).length}問）</option>`).join('');
-  if(library.has(state.selectedExam) && !library.loaded.has(state.selectedExam)) {
+  const pages={home,subjects,review,mock:mockSetup,quiz,results,search:searchPage,records,official,sources:official,manage,exams:examList,'exam-editor':examEditor,'question-editor':questionEditor};
+  const n=questionCounts();
+  $('#exam-select').innerHTML=[...groupExams(state.exams)].map(([field,exams])=>`<optgroup label="${esc(field)}">${exams.map(e=>`<option value="${esc(e.id)}" ${e.id===state.selectedExam?'selected':''}>${esc(e.name)}（${n[e.id] || 0}問）</option>`).join('')}</optgroup>`).join('');
+  if(route!=='exams' && library.has(state.selectedExam) && !library.loaded.has(state.selectedExam)) {
     $('#main').innerHTML=heading(exam().name,materialError?'教材を読み込めませんでした':'教材を読み込んでいます…')+card(materialError?`<p role="alert">${esc(materialError)}</p>${button('再試行','retry-material',true)}`:'<p role="status">保存済みの学習記録は保持しています。</p>');
     if(!materialError) void loadMaterial(state.selectedExam);return;
   }
@@ -123,6 +138,7 @@ function render(focus=true) {
   if(['home','subjects','review','mock','search'].includes(route) && questions.some(q=>q.examId===state.selectedExam)) {$('#main').insertAdjacentHTML('afterbegin',materialFilters());if(!pool().length) $('#main').innerHTML=materialFilters()+heading('条件に一致する問題がありません','年度・期・科目の条件を変更してください。');}
   document.querySelectorAll('nav a').forEach(a=>{if(a.hash==='#'+route) a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
   if(route==='search' && pool().length) {updateSearch();$('#search-input').addEventListener('input',()=>{searchLimit=50;updateSearch();});}
+  if(route==='exams') {updateExamList();$('#exam-field-filter').addEventListener('change',updateExamList);$('#exam-name-filter').addEventListener('input',updateExamList);}
   editorFields();tick();if(focus) {$('#main').focus({preventScroll:true});window.scrollTo(0,0);}
 }
 function tick() {if(!state || initializing) return;
@@ -150,7 +166,8 @@ const actions={
 $('#main').addEventListener('click',event=>{
   const target=event.target.closest('button');if(!target || !state) return;
   safe(()=>{
-    if(target.dataset.question) {const q=questions.find(q=>questionKey(q)===target.dataset.question);start([q],1,'1問演習');}
+    if(target.dataset.selectExam) {transact(s=>s.selectedExam=target.dataset.selectExam);searchPool=null;go('manage');}
+    else if(target.dataset.question) {const q=questions.find(q=>questionKey(q)===target.dataset.question);start([q],1,'1問演習');}
     else if(target.dataset.editQuestion) {editingQuestion=structuredClone(questions.find(q=>questionKey(q)===target.dataset.editQuestion));if(state.session && !state.session.ended && state.session.ids.includes(questionKey(editingQuestion))) throw new Error('この問題を使う演習を終了してから編集してください');go('question-editor');}
     else if(target.dataset.action?.startsWith('category-')) {const name=categories()[Number(target.dataset.action.slice(9))],subject=$('#subject-filter')?.value;start(pool().filter(q=>questionCategory(q)===name && (!subject || q.subject===subject)),pool().length,name);}
     else if(target.dataset.action?.startsWith('self-')) {transact(s=>selfEvaluate(s,questions,target.dataset.action.slice(5)));render(false);}
