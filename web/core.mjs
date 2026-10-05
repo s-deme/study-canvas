@@ -1,3 +1,4 @@
+import {MATERIAL_EXAMS} from './catalog.mjs';
 export const CATEGORIES=['人工知能とは','人工知能をめぐる動向','機械学習の概要','ディープラーニングの概要','ディープラーニングの要素技術','ディープラーニングの応用例','AIの社会実装に向けて','数理・統計','法律と契約','倫理・AIガバナンス'];
 // study-canvas keeps the old storage key and G検 IDs to preserve existing records.
 export const KEY='gstudy.web.v1';
@@ -44,14 +45,15 @@ export function validateQuestions(input,existing=[],custom=false,examId) {
         valid(Array.isArray(row.options) && row.options.length>=2 && row.options.length<=26 && (!legacy || row.options.length===4),'選択肢は2〜26個（旧形式は4個）必要です');options=row.options.map(v=>text(v,'選択肢',10000));valid(new Set(options).size===options.length,'選択肢は異なる文章にしてください');
         if(type==='single') {valid(integer(row.answer,0,options.length-1),'正解の番号が不正です');answer=row.answer;}
         else {valid(Array.isArray(row.answer) && row.answer.length>0 && row.answer.every(a=>integer(a,0,options.length-1)) && new Set(row.answer).size===row.answer.length,'正解の番号が不正です');answer=[...row.answer].sort((a,b)=>a-b);}
-      }else modelAnswer=text(row.modelAnswer,'模範解答',50000);
+      }else modelAnswer=text(row.modelAnswer ?? '', '模範解答',50000,type==='essay' && !!row.evaluationGuide);
       const images=row.images ?? [];valid(Array.isArray(images) && images.length<=30,'図は30枚以内にしてください');
       const checkedImages=images.map(image=>{valid(object(image) && typeof image.src==='string' && (/^https:\/\/[^\s<>"']+$/.test(image.src) || /^assets\/[a-zA-Z0-9_./-]+\.(png|webp|jpg)$/.test(image.src) && !image.src.includes('..')),'図のURLが不正です');return {src:image.src,alt:text(image.alt,'図の説明',5000)};});
-      return {id,examId:target,type,category,subject:text(row.subject ?? '','科目',200,true),topic:text(row.topic ?? '','topic',200,true),prompt:text(row.prompt,'問題文',50000),options,answer,modelAnswer,explanation:text(row.explanation ?? '','解説',50000,true),source:text(row.source ?? '持込問題','出典',1000),year:text(String(row.year ?? ''),'年度',40,true),passage:text(row.passage ?? '','共通本文',50000,true),images:checkedImages,sourceUrl:row.sourceUrl?safeUrl(row.sourceUrl):'',explanationSource:text(row.explanationSource ?? '登録者による解説','解説の出典',200)};
+      const solutionImages=(row.solutionImages ?? []).map(image=>{valid(object(image) && typeof image.src==='string' && /^assets\/[a-zA-Z0-9_./-]+\.(png|webp|jpg)$/.test(image.src) && !image.src.includes('..'),'解答画像が不正です');return {src:image.src,alt:text(image.alt,'図の説明',1000)};});valid(solutionImages.length<=30,'解答画像が多すぎます');
+      return {id,examId:target,type,term:text(row.term ?? '','期',40,true),evaluationGuide:text(row.evaluationGuide ?? '','評価資料',50000,true),solutionImages,category,subject:text(row.subject ?? '','科目',200,true),topic:text(row.topic ?? '','topic',200,true),prompt:text(row.prompt,'問題文',50000),options,answer,modelAnswer,explanation:text(row.explanation ?? '','解説',50000,true),source:text(row.source ?? '持込問題','出典',1000),year:text(String(row.year ?? ''),'年度',40,true),passage:text(row.passage ?? '','共通本文',50000,true),images:checkedImages,sourceUrl:row.sourceUrl?safeUrl(row.sourceUrl):'',explanationSource:text(row.explanationSource ?? '登録者による解説','解説の出典',200)};
     }catch(error) {throw new Error(`${index+1}問目：${error.message}`);}
   });
 }
-export function emptyState() {return {version:2,exams:structuredClone(DEFAULT_EXAMS),selectedExam:'gken',custom:[],stats:{},daily:{},history:[],session:null};}
+export function emptyState() {return {version:2,exams:structuredClone([...DEFAULT_EXAMS,...MATERIAL_EXAMS.filter(e=>!DEFAULT_EXAMS.some(d=>d.id===e.id))]),selectedExam:'gken',custom:[],stats:{},daily:{},history:[],session:null};}
 export function allQuestions(base,state) {return [...new Map([...base,...state.custom].map(q=>[questionKey(q),q])).values()];}
 export function dayKey(now=new Date()) {return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;}
 export function shuffle(items,random=Math.random) {const out=[...items];for(let i=out.length-1;i>0;i--) {const j=Math.floor(random()*(i+1));[out[i],out[j]]=[out[j],out[i]];}return out;}
@@ -98,6 +100,7 @@ export function next(state,questions,now=Date.now()) {
 export function validateState(input,base=[]) {
   valid(object(input) && [1,2].includes(input.version) && Array.isArray(input.custom) && input.custom.length<=2000,'Web版バックアップの形式が不正です');const legacy=input.version===1;
   const exams=legacy?structuredClone(DEFAULT_EXAMS):(valid(Array.isArray(input.exams) && input.exams.length>0 && input.exams.length<=100,'試験一覧が不正です'),input.exams.map(validateExam));const examIds=new Set(exams.map(e=>e.id));valid(examIds.size===exams.length && DEFAULT_EXAMS.every(e=>examIds.has(e.id)),'試験IDが重複または初期試験が不足しています');
+  for(const e of MATERIAL_EXAMS) if(!examIds.has(e.id)) {exams.push(validateExam(e));examIds.add(e.id);}
   const selectedExam=legacy?'gken':input.selectedExam;valid(examIds.has(selectedExam),'選択した試験がありません');const custom=input.custom.length?validateQuestions(input.custom):[];valid(custom.every(q=>examIds.has(q.examId)),'問題の試験がありません');
   const questions=allQuestions(base,{custom}),map=new Map(questions.map(q=>[questionKey(q),q]));const knownId=id=>typeof id==='string' && !dangerous(id) && (map.has(id) || examIds.has(retiredExamId(id)) || id.startsWith('original:') && id.length>9 && id.length<=120);
   valid(object(input.stats) && object(input.daily) && Array.isArray(input.history) && input.history.length<=3000,'学習記録の形式が不正です');
@@ -107,12 +110,12 @@ export function validateState(input,base=[]) {
   }
   for(const [key,n] of Object.entries(input.daily)) {const parts=key.split('::');valid(parts.length<=2 && (parts.length===1 || examIds.has(parts[0])) && /^\d{4}-\d{2}-\d{2}$/.test(parts.at(-1)) && integer(n,0,1e9),'日別記録が不正です');}
   const history=input.history.map(h=>{
-    valid(object(h),'履歴が不正です');text(h.title,'演習名',200);valid(integer(h.total,1,2240) && integer(h.correct,0,h.total) && integer(h.at,0,Number.MAX_SAFE_INTEGER) && examIds.has(h.examId ?? 'gken'),'履歴が不正です');
+    valid(object(h),'履歴が不正です');text(h.title,'演習名',200);valid(integer(h.total,1,Math.max(2240,questions.length)) && integer(h.correct,0,h.total) && integer(h.at,0,Number.MAX_SAFE_INTEGER) && examIds.has(h.examId ?? 'gken'),'履歴が不正です');
     if(h.gradedTotal!==undefined) valid(integer(h.gradedTotal,h.correct,h.total) && object(h.self) && ['done','partial','review','pending'].every(k=>integer(h.self[k],0,h.total)) && Object.values(h.self).reduce((a,b)=>a+b,0)===h.total-h.gradedTotal,'履歴の自己評価が不正です');return {...h,examId:h.examId ?? 'gken'};
   });
   let s=input.session;
   if(s!==null) {
-    valid(object(s) && Array.isArray(s.ids) && s.ids.length>0 && s.ids.length<=2240 && s.ids.every(knownId) && new Set(s.ids).size===s.ids.length,'演習の問題が不正です');s={...s,examId:s.examId ?? 'gken'};valid(examIds.has(s.examId) && s.ids.every(id=>map.has(id)?(map.get(id).examId ?? 'gken')===s.examId:s.examId===(retiredExamId(id) || 'gken')),'演習の試験が不正です');
+    valid(object(s) && Array.isArray(s.ids) && s.ids.length>0 && s.ids.length<=Math.max(2240,questions.length) && s.ids.every(knownId) && new Set(s.ids).size===s.ids.length,'演習の問題が不正です');s={...s,examId:s.examId ?? 'gken'};valid(examIds.has(s.examId) && s.ids.every(id=>map.has(id)?(map.get(id).examId ?? 'gken')===s.examId:s.examId===(retiredExamId(id) || 'gken')),'演習の試験が不正です');
     const answerValid=(a,q,pending=false,retired=false)=>{
       if(a===-1 || a===-2 && !pending) return true;if(!q && !retired) return integer(a,0,3);if(!q) {
         if(integer(a,0,25)) return true;
@@ -134,6 +137,6 @@ export function parseCSV(source) {
     else if(c===',' || c==='\n' || c==='\r') {row.push(cell);cell='';closed=false;if(c!==',') {if(c==='\r' && source[i+1]==='\n') i++;if(row.some(v=>v!=='')) rows.push(row);row=[];}}
     else if(c==='"' && cell==='' && !closed) quoted=true;else {valid(!closed && c!=='"','CSVの引用符が不正です');cell+=c;}}
   valid(!quoted,'CSVの引用符が閉じられていません');row.push(cell);if(row.some(v=>v!=='')) rows.push(row);valid(rows.length>1,'CSVには見出しと問題が必要です');const headers=rows.shift();valid(new Set(headers).size===headers.length && headers.includes('id') && headers.includes('prompt'),'CSVの見出しが不正です');
-  return rows.map((values,i)=>{valid(values.length===headers.length,`CSV ${i+2}行目の列数が異なります`);const q=Object.fromEntries(headers.map((h,j)=>[h,values[j]]));for(const name of ['options','answer','images']) if(q[name]) {try {q[name]=JSON.parse(q[name]);}catch {throw new Error(`CSV ${i+2}行目の${name}はJSON形式で指定してください`);}}if(q.answer==='') delete q.answer;if(q.images==='') delete q.images;return q;});
+  return rows.map((values,i)=>{valid(values.length===headers.length,`CSV ${i+2}行目の列数が異なります`);const q=Object.fromEntries(headers.map((h,j)=>[h,values[j]]));for(const name of ['options','answer','images','solutionImages']) if(q[name]) {try {q[name]=JSON.parse(q[name]);}catch {throw new Error(`CSV ${i+2}行目の${name}はJSON形式で指定してください`);}}if(q.answer==='') delete q.answer;if(q.images==='') delete q.images;if(q.solutionImages==='') delete q.solutionImages;return q;});
 }
 export function previewImport(input,existing,examId) {return validateQuestions(typeof input==='string'?parseCSV(input):input,existing,true,examId);}

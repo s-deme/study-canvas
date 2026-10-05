@@ -3,13 +3,14 @@ import assert from 'node:assert/strict';
 import {existsSync,lstatSync,readFileSync,readdirSync} from 'node:fs';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
-import {BUILTIN_QUESTIONS} from '../web/catalog.mjs';
+import {BUILTIN_QUESTIONS,MATERIAL_INDEX,MATERIAL_PACKS,MATERIAL_EXAMS} from '../web/catalog.mjs';
 import {previewImport} from '../web/core.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url)),web=new URL('../web/',import.meta.url);
-const allowed=['_routes.json','app.mjs','core.mjs','catalog.mjs','render.mjs','index.html','sample-questions.json','sample-questions-v2.json','sample-questions.csv','styles.css','sync.mjs'];
+const allowed=['_routes.json','app.mjs','core.mjs','catalog.mjs','render.mjs','material.mjs','index.html','sample-questions.json','sample-questions-v2.json','sample-questions.csv','styles.css','sync.mjs'];
 assert.deepEqual(readdirSync(web).sort(),allowed.sort(),'web/に未承認のファイルがあります');
 for(const name of allowed) assert.ok(lstatSync(new URL(name,web)).isFile());
 assert.deepEqual(BUILTIN_QUESTIONS,[],'試験問題集は同梱しません');
+assert.deepEqual([MATERIAL_INDEX,MATERIAL_PACKS,MATERIAL_EXAMS],[[],[],[]],'個人用教材索引は公開しません');
 for(const [name,count] of [['sample-questions.json',1],['sample-questions-v2.json',2],['sample-questions.csv',1]]) {
   const text=readFileSync(new URL(name,web),'utf8'),sample=previewImport(name.endsWith('.csv')?text:JSON.parse(text),[],'sg');
   assert.equal(sample.length,count);
@@ -23,9 +24,15 @@ const privateFiles=['private-data/questions.json','private-data/retired-material
 const texts=candidates.filter(path=>/\.(?:mjs|js|json|jsonc|csv|md|py|ps1|yml|cmd)$/.test(path)).map(path=>({path,text:readFileSync(new URL('../'+path,import.meta.url),'utf8')}));
 const worker=new URL('../build/cloud/index.js',import.meta.url);
 if(existsSync(worker)) texts.push({path:'build/cloud/index.js',text:readFileSync(worker,'utf8')});
+const packList=new URL('../private-data/material/packs.json',import.meta.url);
+if(existsSync(packList)) for(const p of JSON.parse(readFileSync(packList,'utf8'))) privateFiles.push('private-data/material/'+p.file);
+const additions=new URL('../private-data/additions/',import.meta.url);
+if(existsSync(additions)) for(const file of readdirSync(additions).filter(n=>n.endsWith('-manifest.json'))) {
+  for(const p of JSON.parse(readFileSync(new URL(file,additions),'utf8')).packs) privateFiles.push('private-data/additions/'+p.file);
+}
 for(const path of privateFiles) if(existsSync(new URL('../'+path,import.meta.url))) {
   const material=JSON.parse(readFileSync(new URL('../'+path,import.meta.url),'utf8'));
-  for(const q of material) for(const value of [q.prompt,q.passage,q.explanation,q.modelAnswer].filter(v=>typeof v==='string' && v.length>20)) {
+  for(const q of material) for(const value of (path.startsWith('private-data/material/')?[q.passage,q.modelAnswer,q.evaluationGuide]:[q.prompt,q.passage,q.explanation,q.modelAnswer]).filter(v=>typeof v==='string' && v.length>20)) {
     const escaped=JSON.stringify(value).slice(1,-1);
     for(const file of texts) assert.ok(!file.text.includes(value) && !file.text.includes(escaped),`非公開教材の文章が混入しています：${file.path}`);
   }

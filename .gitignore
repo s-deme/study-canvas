@@ -22,3 +22,6 @@ web/assets/
 scripts/build-ipa-material.py
 *.zip
 screenshots/
+
+__pycache__/
+*.pyc

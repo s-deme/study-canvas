@@ -59,3 +59,6 @@ node checks/web-check.mjs
 以前のSG・FE・簿記の61問と図表、生成スクリプトは手元の `private-data/retired-material/` に保管し、Git・静的配信・Workerの対象から外しています。保存データの互換性のため問題IDの識別だけを維持し、問題本文は同梱しません。手元に非公開教材がある場合は公開ファイルとWorkerにその本文・解説が混入していないことも検査します。
 
 Git管理されたプロジェクトでは、公開候補の取得に失敗した場合もチェックを停止します。非公開教材、`wrangler.local.jsonc`、`.dev.vars`、`.env`、生成物を強制的にGitへ追加しても公開チェックで拒否します。`checks/publication-guard-check.mjs` は使い捨てリポジトリとダミーファイルで、この拒否と安全な設定例の許可を検証します。
+
+
+本人用の教材復帰・年度別教材・公開版との分離については [本人用教材の管理](private-material.md) を参照してください。

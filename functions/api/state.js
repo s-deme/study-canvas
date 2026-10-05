@@ -1,7 +1,7 @@
 import {validateState} from '../../web/core.mjs';
 
-import {BUILTIN_QUESTIONS} from '../../web/catalog.mjs';
-const base = BUILTIN_QUESTIONS;
+import {BUILTIN_QUESTIONS,MATERIAL_INDEX} from '../../web/catalog.mjs';
+const base = [...BUILTIN_QUESTIONS,...MATERIAL_INDEX];
 const MAX_BYTES = 10 * 1024 * 1024;
 const json = (value,status=200) => Response.json(value,{status});
 

@@ -39,7 +39,7 @@ export async function authFixture() {
     return data+'.'+Buffer.from(signature).toString('base64url');
   }};
 }
-export async function servePreview(port=8767) {
+export async function servePreview(port=8767,{webRoot=new URL('../web/',import.meta.url),getState=onRequestGet,putState=onRequestPut}={}) {
   const fixture=await authFixture(), token=await fixture.token();
   const server=createServer(async (req,res)=>{
     try {
@@ -49,13 +49,13 @@ export async function servePreview(port=8767) {
       const request=new Request(url,{method:req.method,headers,...(!['GET','HEAD'].includes(req.method)?{body:Buffer.concat(parts)}:{})});
       const context={env:fixture.env,data:{},request,functionPath:'',waitUntil:()=>{},passThroughOnException:()=>{},next:async () => {
         if (url.pathname==='/api/config') return config(context);
-        if (url.pathname==='/api/state') return req.method==='PUT'?onRequestPut(context):onRequestGet(context);
+        if (url.pathname==='/api/state') return req.method==='PUT'?putState(context):getState(context);
         const path=url.pathname==='/'?'index.html':url.pathname.slice(1);
         // Serve only flat, known web assets. Nothing outside web/ is reachable.
-        if (!/^[a-zA-Z0-9_.-]+\.(html|css|mjs|json|csv)$/.test(path)) return new Response('Not found',{status:404});
+        if (path.includes('..') || !/^(?:[a-zA-Z0-9_-]+\/)*[a-zA-Z0-9_.-]+\.(html|css|mjs|json|csv|png|webp)$/.test(path)) return new Response('Not found',{status:404});
         try {
           const types={html:'text/html; charset=utf-8',css:'text/css; charset=utf-8',mjs:'text/javascript; charset=utf-8',json:'application/json',csv:'text/csv; charset=utf-8',png:'image/png'};
-          return new Response(readFileSync(new URL('../web/'+path,import.meta.url)),{headers:{'Content-Type':types[path.split('.').at(-1)]}});
+          return new Response(readFileSync(new URL(path,webRoot)),{headers:{'Content-Type':types[path.split('.').at(-1)]}});
         } catch { return new Response('Not found',{status:404}); }
       }};
       const response=await middleware(context);
