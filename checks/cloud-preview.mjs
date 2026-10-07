@@ -52,9 +52,9 @@ export async function servePreview(port=8767,{webRoot=new URL('../web/',import.m
         if (url.pathname==='/api/state') return req.method==='PUT'?putState(context):getState(context);
         const path=url.pathname==='/'?'index.html':url.pathname.slice(1);
         // Serve only flat, known web assets. Nothing outside web/ is reachable.
-        if (path.includes('..') || !/^(?:[a-zA-Z0-9_-]+\/)*[a-zA-Z0-9_.-]+\.(html|css|mjs|json|csv|png|webp)$/.test(path)) return new Response('Not found',{status:404});
+        if (path.includes('..') || !/^(?:[a-zA-Z0-9_-]+\/)*[a-zA-Z0-9_.-]+\.(html|css|mjs|json|csv|png|webp|mp3)$/.test(path)) return new Response('Not found',{status:404});
         try {
-          const types={html:'text/html; charset=utf-8',css:'text/css; charset=utf-8',mjs:'text/javascript; charset=utf-8',json:'application/json',csv:'text/csv; charset=utf-8',png:'image/png'};
+          const types={html:'text/html; charset=utf-8',css:'text/css; charset=utf-8',mjs:'text/javascript; charset=utf-8',json:'application/json',csv:'text/csv; charset=utf-8',png:'image/png',mp3:'audio/mpeg'};
           return new Response(readFileSync(new URL(path,webRoot)),{headers:{'Content-Type':types[path.split('.').at(-1)]}});
         } catch { return new Response('Not found',{status:404}); }
       }};

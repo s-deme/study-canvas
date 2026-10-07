@@ -1,0 +1,409 @@
+{
+  "version": 1,
+  "sources": [
+    {
+      "id": "gist:amapyon/477930159cb5b0c47f401b0d4a09b1aa",
+      "url": "https://gist.github.com/amapyon/477930159cb5b0c47f401b0d4a09b1aa",
+      "resources": [
+        {
+          "url": "https://gist.githubusercontent.com/amapyon/477930159cb5b0c47f401b0d4a09b1aa/raw/de2f3767abeaca03a2b3cc1b11cdb2212b4b6468/gistfile1.txt",
+          "files": [
+            "ipa-github-links.txt"
+          ],
+          "sha256": "a9fb21a64671d65cc0681d75e2e91d37a9abd8b28307230794aa35c65bf3570d",
+          "bytes": 61757
+        }
+      ]
+    },
+    {
+      "id": "repo:aistairc/medllm_qa_benchmark",
+      "url": "https://github.com/aistairc/medllm_qa_benchmark",
+      "resources": [
+        {
+          "url": "https://raw.githubusercontent.com/aistairc/medllm_qa_benchmark/main/data/ja/DenQA/denqa.jsonl",
+          "files": [
+            "dentist-github-data.txt"
+          ],
+          "sha256": "2c1f02c51a1fe587ed693dd20430a4d1e0485319882f957e1f02cabc12602d29",
+          "bytes": 319327
+        },
+        {
+          "url": "https://raw.githubusercontent.com/aistairc/medllm_qa_benchmark/main/data/ja/IgakuQA/igakuqa.jsonl",
+          "files": [
+            "doctor-github-data.txt"
+          ],
+          "sha256": "d036ca1cfc8eb547457e39b89146fddf0d1978a63e66fcfce0537bf7f8741bf6",
+          "bytes": 1579621
+        }
+      ]
+    },
+    {
+      "id": "repo:bioinfo-tsukuba/kensagishiqa",
+      "url": "https://github.com/bioinfo-tsukuba/kensagishiqa",
+      "resources": [
+        {
+          "url": "https://raw.githubusercontent.com/bioinfo-tsukuba/kensagishiqa/7ad9c85b789193567f81b1a8431d33dba791223f/%2866AM%29%E8%87%A8%E5%BA%8A%E6%A4%9C%E6%9F%BB%E6%8A%80%E5%B8%AB%E5%95%8F%E9%A1%8C.jsonl",
+          "files": [
+            "clinical-lab-github-66-AM.txt"
+          ],
+          "sha256": "0a4e640656eef779058b2ebbfcbe23e01e8e2ce4e5dbaa74f4a90fcab472e1d7",
+          "bytes": 35218
+        },
+        {
+          "url": "https://raw.githubusercontent.com/bioinfo-tsukuba/kensagishiqa/7ad9c85b789193567f81b1a8431d33dba791223f/%2866PM%29%E8%87%A8%E5%BA%8A%E6%A4%9C%E6%9F%BB%E6%8A%80%E5%B8%AB%E5%95%8F%E9%A1%8C.jsonl",
+          "files": [
+            "clinical-lab-github-66-PM.txt"
+          ],
+          "sha256": "948414a92fa351d2de05a4554e58766f845a38e32d5b9c2930ebc1c20c0432e2",
+          "bytes": 33236
+        },
+        {
+          "url": "https://raw.githubusercontent.com/bioinfo-tsukuba/kensagishiqa/7ad9c85b789193567f81b1a8431d33dba791223f/%2867AM%29%E8%87%A8%E5%BA%8A%E6%A4%9C%E6%9F%BB%E6%8A%80%E5%B8%AB%E5%95%8F%E9%A1%8C.jsonl",
+          "files": [
+            "clinical-lab-github-67-AM.txt"
+          ],
+          "sha256": "ed31c364e990f30eff8b4db704dd7c23ec55fe7fc108047e7b90005ecc6dc595",
+          "bytes": 33928
+        },
+        {
+          "url": "https://raw.githubusercontent.com/bioinfo-tsukuba/kensagishiqa/7ad9c85b789193567f81b1a8431d33dba791223f/%2867PM%29%E8%87%A8%E5%BA%8A%E6%A4%9C%E6%9F%BB%E6%8A%80%E5%B8%AB%E5%95%8F%E9%A1%8C.jsonl",
+          "files": [
+            "clinical-lab-github-67-PM.txt"
+          ],
+          "sha256": "591b8eaec78c54618792e9d762b03dc37e818dfe423e03e0de806845753bd123",
+          "bytes": 33684
+        },
+        {
+          "url": "https://raw.githubusercontent.com/bioinfo-tsukuba/kensagishiqa/7ad9c85b789193567f81b1a8431d33dba791223f/%2868AM%29%E8%87%A8%E5%BA%8A%E6%A4%9C%E6%9F%BB%E6%8A%80%E5%B8%AB%E5%95%8F%E9%A1%8C.jsonl",
+          "files": [
+            "clinical-lab-github-68-AM.txt"
+          ],
+          "sha256": "172bb9e64142e14dc5c232606b2e7e8c2d02302675ef38fbe6020927202e444f",
+          "bytes": 33795
+        },
+        {
+          "url": "https://raw.githubusercontent.com/bioinfo-tsukuba/kensagishiqa/7ad9c85b789193567f81b1a8431d33dba791223f/%2868PM%29%E8%87%A8%E5%BA%8A%E6%A4%9C%E6%9F%BB%E6%8A%80%E5%B8%AB%E5%95%8F%E9%A1%8C.jsonl",
+          "files": [
+            "clinical-lab-github-68-PM.txt"
+          ],
+          "sha256": "f645a8ed65113f9e5d5ba75733ec7ad2eb4e262734de687262cd5ae5d4c9711e",
+          "bytes": 34113
+        },
+        {
+          "url": "https://raw.githubusercontent.com/bioinfo-tsukuba/kensagishiqa/7ad9c85b789193567f81b1a8431d33dba791223f/%2869AM%29%E8%87%A8%E5%BA%8A%E6%A4%9C%E6%9F%BB%E6%8A%80%E5%B8%AB%E5%95%8F%E9%A1%8C.jsonl",
+          "files": [
+            "clinical-lab-github-69-AM.txt"
+          ],
+          "sha256": "995352fdca65d6c1be41b14bc749ed50a980e23bb3cca1c2b6b8ef5219d23a90",
+          "bytes": 35859
+        },
+        {
+          "url": "https://raw.githubusercontent.com/bioinfo-tsukuba/kensagishiqa/7ad9c85b789193567f81b1a8431d33dba791223f/%2869PM%29%E8%87%A8%E5%BA%8A%E6%A4%9C%E6%9F%BB%E6%8A%80%E5%B8%AB%E5%95%8F%E9%A1%8C.jsonl",
+          "files": [
+            "clinical-lab-github-69-PM.txt"
+          ],
+          "sha256": "d14f57582e1aa2ca35aef1f27bfee27bdbe692fb433900cbb4147c73d1886517",
+          "bytes": 34425
+        }
+      ]
+    },
+    {
+      "id": "repo:consuke/denken-with-llm",
+      "url": "https://github.com/consuke/denken-with-llm",
+      "resources": [
+        {
+          "url": "https://raw.githubusercontent.com/consuke/denken-with-llm/main/data/questions/riron.json",
+          "files": [
+            "denken3-github.json"
+          ],
+          "sha256": "187aa18081eea87ecb957106cd773027907d3fd86206ce0a965ebaac07df77c0",
+          "bytes": 10750
+        }
+      ]
+    },
+    {
+      "id": "repo:estkita1985kanri-png/mankan-quest",
+      "url": "https://github.com/estkita1985kanri-png/mankan-quest",
+      "resources": [
+        {
+          "url": "https://raw.githubusercontent.com/estkita1985kanri-png/mankan-quest/4cccb62be391666afc992b49cf342b83090fe4f6/index.html",
+          "files": [
+            "estate-candidate-mankan-quest.html"
+          ],
+          "sha256": "71e91abbb2c0d917471858a59a26b2419664407a2e2905abba35f8de525a4690",
+          "bytes": 85861
+        }
+      ]
+    },
+    {
+      "id": "repo:furumix2000/fp3-quiz-app",
+      "url": "https://github.com/furumix2000/fp3-quiz-app",
+      "resources": [
+        {
+          "url": "https://raw.githubusercontent.com/furumix2000/fp3-quiz-app/4afe9ffd8c1679c44280df92f702dfdc5f3dee30/quiz_data_fp3_202305.js",
+          "files": [
+            "finance-github-furumix2000-fp3-quiz-app-quiz_data_fp3_202305.js.txt"
+          ],
+          "sha256": "bb0dd4dad931e001de6c0a708ecab989f41b727635e82c30f59963570dbf792a",
+          "bytes": 31171
+        }
+      ]
+    },
+    {
+      "id": "repo:halutohayac-oss/kanrisya-study2",
+      "url": "https://github.com/halutohayac-oss/kanrisya-study2",
+      "resources": [
+        {
+          "url": "https://raw.githubusercontent.com/halutohayac-oss/kanrisya-study2/498a300f904cfe806d119f7d164133b0da706501/index.html",
+          "files": [
+            "estate-candidate-KANRISYA-STUDY2.html"
+          ],
+          "sha256": "7bdf99bea54f92cc87d377fc7c7dca36d50411de7af85db580add429c25c2585",
+          "bytes": 29439
+        }
+      ]
+    },
+    {
+      "id": "repo:inamuu/itpassportexams",
+      "url": "https://github.com/inamuu/itpassportexams",
+      "resources": [
+        {
+          "url": "https://raw.githubusercontent.com/inamuu/itpassportexams/main/site/data/questions.json",
+          "files": [
+            "ip-github.json"
+          ],
+          "sha256": "90af560623cbf5b24959aa19c4c9c6fa92c9b28139b3f5bb5733d935509de968",
+          "bytes": 267419
+        }
+      ]
+    },
+    {
+      "id": "repo:inumanma/pharmacist-bench",
+      "url": "https://github.com/inumanma/pharmacist-bench",
+      "resources": [
+        {
+          "url": "https://raw.githubusercontent.com/inumanma/pharmacist-bench/main/data/exam-111/questions.jsonl",
+          "files": [
+            "pharmacist-github-data.txt"
+          ],
+          "sha256": "a313aeafd32bbf64732ad1985992421dfcd34c130c2a8c2220188ddb168707bc",
+          "bytes": 398430
+        }
+      ]
+    },
+    {
+      "id": "repo:kei-kmj/kanken_practice_note",
+      "url": "https://github.com/kei-kmj/kanken_practice_note",
+      "resources": [
+        {
+          "url": "https://raw.githubusercontent.com/kei-kmj/kanken_practice_note/4cc182d20286823eeebd114f1f4ffb18c9701efc/LICENSE",
+          "files": [
+            "kanken-practice-license.txt"
+          ],
+          "sha256": "757baa4e2f2773a0a157c835a0f73805686a36cb5aa090240ed30287b323f70c",
+          "bytes": 1064
+        },
+        {
+          "url": "https://raw.githubusercontent.com/kei-kmj/kanken_practice_note/4cc182d20286823eeebd114f1f4ffb18c9701efc/README.md",
+          "files": [
+            "kanken-practice-readme.txt"
+          ],
+          "sha256": "5655cab1f8551a58a772178d66a2a1e035f9483d3924288a88ff5f3d8cd97011",
+          "bytes": 944
+        },
+        {
+          "url": "https://raw.githubusercontent.com/kei-kmj/kanken_practice_note/4cc182d20286823eeebd114f1f4ffb18c9701efc/db/seeds.rb",
+          "files": [
+            "kanken-practice-seeds.txt"
+          ],
+          "sha256": "54511a8db4a4f6876be169b43e2248bbe083762b52a9338e8eb581b7a9e00647",
+          "bytes": 404
+        }
+      ]
+    },
+    {
+      "id": "repo:kosukekkk-ops/fe-master-app",
+      "url": "https://github.com/kosukekkk-ops/fe-master-app",
+      "resources": [
+        {
+          "url": "https://raw.githubusercontent.com/kosukekkk-ops/fe-master-app/master/docs/qualifications/fe/questions_b.json",
+          "files": [
+            "fe-github-b.json"
+          ],
+          "sha256": "3efda7af83b17f5860b1a3220c9d966aa91d3578adadeef1674fc0f5ffe26fa4",
+          "bytes": 14959
+        },
+        {
+          "url": "https://raw.githubusercontent.com/kosukekkk-ops/fe-master-app/master/docs/qualifications/fe/questions_official.json",
+          "files": [
+            "fe-github-official.json"
+          ],
+          "sha256": "34907457cd520d2461bc789abd16100de9e0269e946950a10621f2217ceacca1",
+          "bytes": 108999
+        }
+      ]
+    },
+    {
+      "id": "repo:morikagesho/boki-quise",
+      "url": "https://github.com/morikagesho/boki-quise",
+      "resources": [
+        {
+          "url": "https://raw.githubusercontent.com/morikagesho/boki-quise/2b150e35d6ca06dc9d52ffcc453f93ce4160474e/README.md",
+          "files": [
+            "finance-github-morikagesho-boki-quise-README.md.txt"
+          ],
+          "sha256": "88b7cec7ad53599c10c8a80ea5ce53356f0301884cf69f6fe6a4da610bc7f245",
+          "bytes": 71
+        }
+      ]
+    },
+    {
+      "id": "repo:nekomarugt/j-kokushi-portal",
+      "url": "https://github.com/nekomarugt/j-kokushi-portal",
+      "resources": [
+        {
+          "url": "https://raw.githubusercontent.com/nekomarugt/j-kokushi-portal/7a5076bd2a8b57f2eaea4ded4aaa68307c39096e/anatomy/questions.json",
+          "files": [
+            "judo-github-anatomy.json"
+          ],
+          "sha256": "9ed866ebfaf53aa6ab7a7c8005034b1e305a5b4c4554c22945bc23384f15e67c",
+          "bytes": 193791
+        }
+      ]
+    },
+    {
+      "id": "repo:nktkt/bookkeeping-practice",
+      "url": "https://github.com/nktkt/bookkeeping-practice",
+      "resources": [
+        {
+          "url": "https://raw.githubusercontent.com/nktkt/bookkeeping-practice/bb3d86cd0ed719c3bb6983195c39a07624db57a1/README.md",
+          "files": [
+            "finance-github-nktkt-bookkeeping-practice-README.md.txt"
+          ],
+          "sha256": "4c7d32e657d3a90c0ad6d896eb3baceb7791cccc414eca48dba1dd017bd8b12d",
+          "bytes": 2261
+        }
+      ]
+    },
+    {
+      "id": "repo:officeharukaze/denko2",
+      "url": "https://github.com/officeharukaze/denko2",
+      "resources": [
+        {
+          "url": "https://raw.githubusercontent.com/officeharukaze/denko2/main/config.js",
+          "files": [
+            "denko2-github-config.txt"
+          ],
+          "sha256": "7f028a02edc5ece713989e2f00839a454f4d758e0cf3493dcd0b1b579b22fbc6",
+          "bytes": 16595
+        }
+      ]
+    },
+    {
+      "id": "repo:onochin/assistant-surveyor-pwa",
+      "url": "https://github.com/onochin/assistant-surveyor-pwa",
+      "resources": [
+        {
+          "url": "https://raw.githubusercontent.com/onochin/assistant-surveyor-pwa/main/data/2025_R07/exam.json",
+          "files": [
+            "surveyor-github-2025.json"
+          ],
+          "sha256": "8a0751fbd71325e24b7ef5ceba680206a60580319ef267c4d2f7263a0f4e43f5",
+          "bytes": 41910
+        }
+      ]
+    },
+    {
+      "id": "repo:onokumao-png/gokaku-denki-quiz",
+      "url": "https://github.com/onokumao-png/gokaku-denki-quiz",
+      "resources": [
+        {
+          "url": "https://raw.githubusercontent.com/onokumao-png/gokaku-denki-quiz/main/src/data/questions.ts",
+          "files": [
+            "denki-github-data.txt"
+          ],
+          "sha256": "ff43309f6f0f21f87756159e22907ded25055281fa08f7e8879928ddbcb481f4",
+          "bytes": 470020
+        }
+      ]
+    },
+    {
+      "id": "repo:renatusauctor/cpa-tantou-kakomon-drill",
+      "url": "https://github.com/renatusauctor/cpa-tantou-kakomon-drill",
+      "resources": [
+        {
+          "url": "https://raw.githubusercontent.com/renatusauctor/cpa-tantou-kakomon-drill/874d1a2375858e1fe4751a797f48cd35e2e7f6bd/build_kakomon_payload.py",
+          "files": [
+            "finance-github-RenatusAuctor-cpa-tantou-kakomon-drill-build_kakomon_payload.py.txt"
+          ],
+          "sha256": "ceaba0f8f5fe6af40d5090bc7abab346810439691349c7c0d495aa158fbad7cc",
+          "bytes": 4274
+        }
+      ]
+    },
+    {
+      "id": "repo:ronodera662/fp-study-app",
+      "url": "https://github.com/ronodera662/fp-study-app",
+      "resources": [
+        {
+          "url": "https://raw.githubusercontent.com/ronodera662/fp-study-app/286b44a07e8bb4fd157c6fd9014c017582a6e10f/README.md",
+          "files": [
+            "finance-github-ronodera662-fp-study-app-README.md.txt"
+          ],
+          "sha256": "07df902095e6794f59dc8c21c221ccc0f417ec3174b90b6ebd264af315c7d7ee",
+          "bytes": 9459
+        },
+        {
+          "url": "https://raw.githubusercontent.com/ronodera662/fp-study-app/286b44a07e8bb4fd157c6fd9014c017582a6e10f/public/data/fp2_2021_01.json",
+          "files": [
+            "finance-github-ronodera662-fp-study-app-public-data-fp2_2021_01.json.txt"
+          ],
+          "sha256": "f3e4a8c3cc676da235636857c1e201e41124a6a0877955acf166fab6c57871d7",
+          "bytes": 112028
+        }
+      ]
+    },
+    {
+      "id": "repo:seika759931-cloud/quiz-app_web",
+      "url": "https://github.com/seika759931-cloud/quiz-app_web",
+      "resources": [
+        {
+          "url": "https://raw.githubusercontent.com/seika759931-cloud/quiz-app_web/9170fb73d67b776a7a216a6129df2d74c87b2789/mondai.csv",
+          "files": [
+            "nurse-github.csv"
+          ],
+          "sha256": "e7860c68c5aa27a7c033a9b5bf0a7d48a63ebd6bc44b8d9b0b400f0f5adf7567",
+          "bytes": 1370592
+        }
+      ]
+    },
+    {
+      "id": "repo:xinyue119-code/boki1-cards",
+      "url": "https://github.com/xinyue119-code/boki1-cards",
+      "resources": [
+        {
+          "url": "https://raw.githubusercontent.com/xinyue119-code/boki1-cards/baf15ba88a0526fd2f82c64e70b99a9898de81e7/README.md",
+          "files": [
+            "finance-github-xinyue119-code-boki1-cards-README.md.txt"
+          ],
+          "sha256": "a2a4cbcfba6fcd1cc6f84cd851e0ae13366a7f967ac129437a91cc86bff7c80f",
+          "bytes": 10386
+        }
+      ]
+    },
+    {
+      "id": "repo:yma3mama-tech/hoikushi-shiken-app",
+      "url": "https://github.com/yma3mama-tech/hoikushi-shiken-app",
+      "resources": [
+        {
+          "url": "https://raw.githubusercontent.com/yma3mama-tech/hoikushi-shiken-app/4d6f268c787529f63d318fc7dad00f78b545ac3c/index.html",
+          "files": [
+            "childcare-github.html"
+          ],
+          "sha256": "71f2cf5f020aec7d2404d8d853a99c61dc769ebb08f7c47bf0bf4c99efff0a05",
+          "bytes": 638235
+        }
+      ]
+    }
+  ]
+}

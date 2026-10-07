@@ -19,7 +19,7 @@ for(const [name,count] of [['sample-questions.json',1],['sample-questions-v2.jso
 const git=spawnSync('git',['ls-files','--cached','--others','--exclude-standard','-z'],{cwd:root,encoding:'utf8'});
 if(existsSync(new URL('../.git',import.meta.url))) assert.equal(git.status,0,'Git公開候補を確認できません：'+(git.stderr || git.error?.message || 'Gitの実行に失敗しました'));
 const candidates=git.status===0?git.stdout.split('\0').filter(Boolean):allowed.map(name=>'web/'+name);
-assert.ok(!candidates.some(path=>/^(?:private-data\/|dist\/|(?:.*\/)?build\/|node_modules\/|\.wrangler\/|\.npm-cache\/|screenshots\/|wrangler\.local\.jsonc$|web\/questions\.json$|web\/assets\/)|(?:^|\/)\.(?:dev\.vars|env)(?!\.example$)[^/]*$|(?:^|\/)(?:ipa-material\.mjs|ipa-manifest\.json|build-ipa-material\.py)$|\.(?:zip|log)$/i.test(path)),'Git公開候補に非公開教材・個人設定・生成物が含まれています');
+assert.ok(!candidates.some(path=>/^(?:private-data\/|tmp\/|dist\/|(?:.*\/)?build\/|node_modules\/|\.wrangler\/|\.npm-cache\/|screenshots\/|wrangler\.local\.jsonc$|web\/questions\.json$|web\/assets\/)|(?:^|\/)\.(?:dev\.vars|env)(?!\.example$)[^/]*$|(?:^|\/)(?:ipa-material\.mjs|ipa-manifest\.json|build-ipa-material\.py)$|\.(?:zip|log)$/i.test(path)),'Git公開候補に非公開教材・個人設定・生成物が含まれています');
 const privateFiles=['private-data/questions.json','private-data/retired-material/questions-v2.json'];
 const texts=candidates.filter(path=>/\.(?:mjs|js|json|jsonc|csv|md|py|ps1|yml|cmd)$/.test(path)).map(path=>({path,text:readFileSync(new URL('../'+path,import.meta.url),'utf8')}));
 const worker=new URL('../build/cloud/index.js',import.meta.url);

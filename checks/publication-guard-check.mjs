@@ -16,7 +16,7 @@ try {
   assert.equal(run().status,0);
   const failedGit=run({GIT_DIR:join(dir,'missing-git')});
   assert.notEqual(failedGit.status,0);assert.ok(failedGit.stderr.includes('Git公開候補を確認できません'));
-  for(const file of ['private-data/dummy.json','wrangler.local.jsonc','.dev.vars','.dev.vars.backup','.env','node_modules/dummy.json','build/dummy.json','dist/dummy.json','ipa-material.mjs','ipa-manifest.json','scripts/build-ipa-material.py']) {
+  for(const file of ['private-data/dummy.json','tmp/teaching-material.png','wrangler.local.jsonc','.dev.vars','.dev.vars.backup','.env','node_modules/dummy.json','build/dummy.json','dist/dummy.json','ipa-material.mjs','ipa-manifest.json','scripts/build-ipa-material.py']) {
     const full=join(dir,file);mkdirSync(join(full,'..'),{recursive:true});writeFileSync(full,'{}');
     git('add','--force','--',file);
     const result=run();assert.notEqual(result.status,0,file);assert.ok(result.stderr.includes('Git公開候補に非公開教材・個人設定・生成物が含まれています'),file);

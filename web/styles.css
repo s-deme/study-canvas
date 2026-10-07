@@ -90,6 +90,7 @@ textarea { resize:vertical; }
 form label { display:block; font-weight:600; }
 [hidden] { display:none !important; }
 .question-image { display:block; width:100%; height:auto; background:white; border-radius:6px; margin:16px 0; }
+audio { display:block; width:100%; max-width:100%; margin:12px 0; }
 .passage { border-left:3px solid var(--primary); padding-left:16px; margin-bottom:20px; }
 .table-scroll { overflow-x:auto; max-width:100%; margin:16px 0; }
 table { border-collapse:collapse; width:100%; }
