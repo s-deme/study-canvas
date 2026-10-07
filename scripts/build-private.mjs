@@ -48,6 +48,11 @@ const candidates=loadGithubCandidates(root,[...original,...restored,...existingP
 const business=loadGithubMaterial(root,[...original,...restored,...existingPacks.flatMap(p=>p.rows),...additions.packs.flatMap(p=>p.rows),...github.packs.flatMap(p=>p.rows),...candidates.packs.flatMap(p=>p.rows)],'business-report.json','business-verification.json');
 github.exams.push(...business.exams);github.packs.push(...business.packs);
 if(process.argv.includes('--cloud')) assert.ok(!business.packs.some(p=>p.localOnly),'経営・事務・販売の個人学習用教材はローカル利用限定です。');
+for(const kind of ['welfare','public-examples']) {
+const welfare=loadGithubMaterial(root,[...original,...restored,...existingPacks.flatMap(p=>p.rows),...additions.packs.flatMap(p=>p.rows),...github.packs.flatMap(p=>p.rows),...candidates.packs.flatMap(p=>p.rows)],kind+'-report.json',kind+'-verification.json');
+github.exams.push(...welfare.exams);github.packs.push(...welfare.packs);
+if(process.argv.includes('--cloud')) assert.ok(!welfare.packs.some(p=>p.localOnly),'追加の個人学習用教材はローカル利用限定です。');
+}
 const medical=loadMedicalMaterial(root,[...original,...restored,...existingPacks.flatMap(p=>p.rows),...additions.packs.flatMap(p=>p.rows),...github.packs.flatMap(p=>p.rows),...candidates.packs.flatMap(p=>p.rows)]);
 github.exams.push(...medical.exams);github.packs.push(...medical.packs);
 if(process.argv.includes('--cloud')) assert.ok(!medical.packs.some(p=>p.localOnly),'JMed48kは非商用利用限定です。クラウド配備には提供元の利用許諾を確認してください。');

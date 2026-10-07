@@ -1,6 +1,6 @@
 # 問題未登録試験のGitHub調査台帳
 
-集計日：2026-10-07（日本時間）。現在の問題未登録は153試験。未調査・検索未確認は10試験。
+集計日：2026-10-07（日本時間）。現在の問題未登録は141試験。未調査・検索未確認は10試験。
 
 正本は [調査データ](github-exam-search.json)。試験IDごとに検索日・検索語・結果URL・判定を履歴として保存します。この文書は `npm run inventory:exams` で生成します。登録数は [試験管理表](exam-inventory.md) と同じビルドです。
 
@@ -21,10 +21,10 @@
 
 | 状態 | 試験数 |
 | --- | ---: |
-| 検索済み・候補未発見 | 103 |
+| 検索済み・候補未発見 | 92 |
 | 検索済み・要精査 | 34 |
 | 候補あり・本文未確認 | 0 |
-| 既存候補保留 | 6 |
+| 既存候補保留 | 5 |
 | 検索未確認 | 0 |
 | 問題本文確認済み | 0 |
 | 未調査 | 10 |
@@ -82,9 +82,6 @@
 | 司法試験予備試験 | shiho-yobi | 検索済み・要精査 | 2026-10-07 | site:github.com "司法試験予備試験" 過去問 問題 | 検索結果あり。試験・級の一致、設問本文の有無は要精査。 / [結果URL・履歴](github-exam-search.json) |
 | 司法書士試験 | shihoshoshi | 検索済み・要精査 | 2026-10-07 | site:github.com "司法書士試験" 過去問 問題 | 検索結果あり。試験・級の一致、設問本文の有無は要精査。 / [結果URL・履歴](github-exam-search.json) |
 | 土地家屋調査士試験 | land-surveyor | 既存候補保留 | 2026-10-07 | site:github.com "土地家屋調査士試験" 過去問 問題 | [確認先](https://github.com/ThREE100/chosashi-app) / 固定コミットのsrc/data/takuitsu.jsonに本文データあり（meta.count=413）。教材の収録許諾を確認できないため保留。 / [結果URL・履歴](github-exam-search.json) |
-| ビジネス実務法務検定1級 | business-law1 | 検索済み・候補未発見 | 2026-10-07 | site:github.com "ビジネス実務法務検定1級" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
-| ビジネス実務法務検定2級 | business-law2 | 検索済み・候補未発見 | 2026-10-07 | site:github.com "ビジネス実務法務検定2級" 過去問 問題 | [確認先](https://gist.github.com/Yuki-CircularIn-finty1/edbfcf3574ddcb2284a3a26a3a4227af) / 見つかったGistは用語集で設問ではない。確認した検索範囲で問題候補未発見。 / [結果URL・履歴](github-exam-search.json) |
-| ビジネス実務法務検定3級 | business-law3 | 検索済み・候補未発見 | 2026-10-07 | site:github.com "ビジネス実務法務検定3級" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
 | 日商簿記1級 | boki1 | 既存候補保留 | 2026-10-07 | 簿記 問題 | GitHub APIで再調査。固定コミットのツリー・本文またはREADMEを保存。独自教材のライセンス未確認のため新規GitHub本文の収録は保留。CPAは参照された公式原本と公式正答を別途取得。 / [結果URL・履歴](github-exam-search.json) |
 | 日商簿記2級 | boki2 | 既存候補保留 | 2026-10-07 | 簿記 問題 | GitHub APIで再調査。固定コミットのツリー・本文またはREADMEを保存。独自教材のライセンス未確認のため新規GitHub本文の収録は保留。CPAは参照された公式原本と公式正答を別途取得。 / [結果URL・履歴](github-exam-search.json) |
 | 日商簿記初級 | boki-basic | 検索済み・候補未発見 | 2026-10-07 | site:github.com "日商簿記初級" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
@@ -173,21 +170,12 @@
 | 救急救命士国家試験 | emergency-tech | 検索済み・候補未発見 | 2026-10-07 | site:github.com "救急救命士国家試験" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
 | 公認心理師試験 | psychologist | 検索済み・候補未発見 | 2026-10-07 | site:github.com "公認心理師試験" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
 | 登録販売者試験 | drug-seller | 検索済み・候補未発見 | 2026-10-07 | site:github.com "登録販売者試験" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
-| 社会福祉士国家試験 | social-worker | 既存候補保留 | 2026-10-07 | site:github.com "社会福祉士国家試験" 過去問 問題 | [確認先](https://github.com/probono-a/shakaifukushi-quiz) / 既存候補probono-a/shakaifukushi-quizは問題非同梱で保留済み。新しい問題本文は未確認。 / [結果URL・履歴](github-exam-search.json) |
-| 介護福祉士国家試験 | care-worker | 検索済み・候補未発見 | 2026-10-07 | site:github.com "介護福祉士国家試験" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
-| 精神保健福祉士国家試験 | mental-social-worker | 検索済み・候補未発見 | 2026-10-07 | site:github.com "精神保健福祉士国家試験" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
-| 福祉住環境コーディネーター検定1級 | welfare-housing1 | 検索済み・候補未発見 | 2026-10-07 | site:github.com "福祉住環境コーディネーター検定1級" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
-| 福祉住環境コーディネーター検定2級 | welfare-housing2 | 検索済み・候補未発見 | 2026-10-07 | site:github.com "福祉住環境コーディネーター検定2級" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
-| 福祉住環境コーディネーター検定3級 | welfare-housing3 | 検索済み・候補未発見 | 2026-10-07 | site:github.com "福祉住環境コーディネーター検定3級" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
 | 食生活アドバイザー2級 | food-advisor2 | 検索済み・候補未発見 | 2026-10-07 | site:github.com "食生活アドバイザー2級" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
 | 食生活アドバイザー3級 | food-advisor3 | 検索済み・候補未発見 | 2026-10-07 | site:github.com "食生活アドバイザー3級" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
 | 色彩検定1級 | color1 | 検索済み・要精査 | 2026-10-07 | site:github.com "色彩検定1級" 過去問 問題 | 検索結果あり。試験・級の一致、設問本文の有無は要精査。 / [結果URL・履歴](github-exam-search.json) |
 | 色彩検定2級 | color2 | 検索済み・要精査 | 2026-10-07 | site:github.com "色彩検定2級" 過去問 問題 | 検索結果あり。試験・級の一致、設問本文の有無は要精査。 / [結果URL・履歴](github-exam-search.json) |
 | 色彩検定3級 | color3 | 検索済み・要精査 | 2026-10-07 | site:github.com "色彩検定3級" 過去問 問題 | 検索結果あり。試験・級の一致、設問本文の有無は要精査。 / [結果URL・履歴](github-exam-search.json) |
 | 色彩検定UC級 | color-uc | 検索済み・候補未発見 | 2026-10-07 | site:github.com "色彩検定UC級" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
-| カラーコーディネーター検定 スタンダードクラス | color-coordinator-standard | 検索済み・候補未発見 | 2026-10-07 | site:github.com "カラーコーディネーター検定 スタンダードクラス" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
-| カラーコーディネーター検定 アドバンスクラス | color-coordinator-advanced | 検索済み・候補未発見 | 2026-10-07 | site:github.com "カラーコーディネーター検定 アドバンスクラス" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
-| 環境社会検定（eco検定） | eco | 検索済み・候補未発見 | 2026-10-07 | site:github.com "環境社会検定（eco検定）" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
 | 国家公務員一般職（高卒者試験） | civil-regular-high | 検索済み・候補未発見 | 2026-10-07 | site:github.com "国家公務員一般職（高卒者試験）" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
 | 皇宮護衛官採用試験（大卒程度試験） | imperial-guard-univ | 未調査 | — | — | 次回の検索対象 |
 | 刑務官採用試験（大卒程度試験） | prison-officer-univ | 未調査 | — | — | 次回の検索対象 |

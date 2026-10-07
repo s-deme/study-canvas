@@ -23,10 +23,21 @@ for(const pack of MATERIAL_PACKS) {
 }
 assert.equal(existing.length,manifest.questions);
 const keys=new Set(existing.map(questionKey));assert.equal(keys.size,existing.length);
-const kind=process.argv[2] || 'food';assert.ok(['food','safety','history','finance','construction','math','business','electricity'].includes(kind));
-const foodIds=new Set(MATERIAL_PACKS.filter(p=>p.id.startsWith('archive-'+kind+'-')).map(p=>p.id));
-const loaded=loadGithubMaterial(root,existing.filter(q=>!q.id.startsWith(kind+'-')),kind+'-report.json',kind+'-verification.json');
+const kind=process.argv[2] || 'food',kinds=kind.split(',');
+assert.ok(kinds.every(k=>['food','safety','history','finance','construction','math','business','electricity','welfare','public-examples'].includes(k)));
+const foodIds=new Set(MATERIAL_PACKS.filter(p=>kinds.some(k=>p.id.startsWith('archive-'+k+'-'))).map(p=>p.id));
+const loaded={exams:[],packs:[],report:{added:0}},unaffected=existing.filter(q=>!kinds.some(k=>q.id.startsWith(k+'-')));
+for(const k of kinds) {
+ const part=loadGithubMaterial(root,[...unaffected,...loaded.packs.flatMap(p=>p.rows)],k+'-report.json',k+'-verification.json');
+ loaded.exams.push(...part.exams);loaded.packs.push(...part.packs);loaded.report.added+=part.report.added;
+}
 const replacements=new Map(),removed=new Set();
+if(process.argv.includes('--replace')) for(const p of loaded.packs.filter(p=>foodIds.has(p.id))) {
+ const prior=validateQuestions(JSON.parse(readFileSync(join(web,MATERIAL_PACKS.find(old=>old.id===p.id).url))));
+ const shape=q=>[questionKey(q),q.type,q.year,q.term,q.subject,q.options.length,q.images,q.solutionImages,q.audio || []];
+ assert.deepEqual(p.rows.map(shape),prior.map(shape),'Replacement must preserve index fields, assets and order');
+ replacements.set(p.id,p.rows);
+}
 if(kind==='construction') {
  const candidateKeys=new Set(MATERIAL_PACKS.filter(p=>p.id.startsWith('candidate-')).flatMap(p=>JSON.parse(readFileSync(join(web,p.url))).map(questionKey)));
  const candidates=loadGithubCandidates(root,[...existing.filter(q=>!candidateKeys.has(questionKey(q))),...loaded.packs.flatMap(p=>p.rows)]);
@@ -45,7 +56,7 @@ mkdirSync(join(web,'assets/github-material'),{recursive:true});
 const copiedAssets=new Set();
 for(const pack of packs) if(replacements.has(pack.id)) writeFileSync(join(web,pack.url),JSON.stringify(replacements.get(pack.id)));
 for(const {rows,...pack} of loaded.packs) {
- if(foodIds.has(pack.id)){assert.equal(MATERIAL_PACKS.find(p=>p.id===pack.id).sha256,hash(JSON.stringify(rows)),'Registered food pack changed');continue;}
+ if(foodIds.has(pack.id)){assert.equal(packs.find(p=>p.id===pack.id).sha256,hash(JSON.stringify(rows)),'Registered food pack changed');continue;}
  assert.equal(pack.localOnly,true);
  for(const q of rows) {
   assert.ok(!keys.has(questionKey(q)));keys.add(questionKey(q));

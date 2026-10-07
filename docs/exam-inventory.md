@@ -1,6 +1,6 @@
 # 試験管理表
 
-集計日：2026-10-07（日本時間）。339試験の登録先、既存の自作教材を含め355試験・教材、21カテゴリ、登録問題合計94,775問。
+集計日：2026-10-07（日本時間）。339試験の登録先、既存の自作教材を含め355試験・教材、21カテゴリ、登録問題合計95,996問。
 
 級・種別は別の登録先として扱い、年度・科目は問題側で管理します。「問題未登録」は登録先だけ準備した状態です。収録内容と取得元は [GitHub経由の過去問収録](github-material.md) と [本人用教材の管理](private-material.md) を参照してください。全試験の出題範囲や本番形式への対応を意味しません。音声・面接・実技の本番再現や公式スコア換算は対象外です。
 
@@ -18,7 +18,7 @@
 | --- | ---: | ---: | ---: | ---: |
 | IT・AI | 52 | 19 | 33 | 14955 |
 | 会計・金融 | 15 | 4 | 11 | 3530 |
-| 法律・行政 | 10 | 4 | 6 | 1003 |
+| 法律・行政 | 10 | 7 | 3 | 1006 |
 | 経営・事務・販売 | 19 | 18 | 1 | 3441 |
 | 英語 | 12 | 0 | 12 | 0 |
 | 外国語 | 25 | 0 | 25 | 0 |
@@ -30,11 +30,11 @@
 | 不動産 | 4 | 3 | 1 | 3935 |
 | 安全・消防・設備 | 38 | 15 | 23 | 1955 |
 | 医療・健康 | 24 | 18 | 6 | 23298 |
-| 福祉・介護・保育 | 7 | 1 | 6 | 752 |
+| 福祉・介護・保育 | 7 | 7 | 0 | 1965 |
 | 農業・食品 | 8 | 6 | 2 | 2396 |
 | 観光・運輸 | 5 | 5 | 0 | 2730 |
-| デザイン・生活 | 8 | 2 | 6 | 2043 |
-| 環境・自然科学 | 2 | 1 | 1 | 566 |
+| デザイン・生活 | 8 | 4 | 4 | 2045 |
+| 環境・自然科学 | 2 | 2 | 0 | 569 |
 | 公務員 | 23 | 12 | 11 | 1979 |
 | 自作一般教材 | 11 | 11 | 0 | 551 |
 
@@ -125,9 +125,9 @@
 | 司法試験予備試験 | shiho-yobi | 0 | 問題未登録 | [公式案内](https://www.moj.go.jp/qualification_test.html) |
 | 司法書士試験 | shihoshoshi | 0 | 問題未登録 | [公式案内](https://www.moj.go.jp/qualification_test.html) |
 | 土地家屋調査士試験 | land-surveyor | 0 | 問題未登録 | [公式案内](https://www.moj.go.jp/qualification_test.html) |
-| ビジネス実務法務検定1級 | business-law1 | 0 | 問題未登録 | [公式案内](https://kentei.tokyo-cci.or.jp/houmu/) |
-| ビジネス実務法務検定2級 | business-law2 | 0 | 問題未登録 | [公式案内](https://kentei.tokyo-cci.or.jp/houmu/) |
-| ビジネス実務法務検定3級 | business-law3 | 0 | 問題未登録 | [公式案内](https://kentei.tokyo-cci.or.jp/houmu/) |
+| ビジネス実務法務検定1級 | business-law1 | 1 | 登録あり | [公式案内](https://kentei.tokyo-cci.or.jp/houmu/) |
+| ビジネス実務法務検定2級 | business-law2 | 1 | 登録あり | [公式案内](https://kentei.tokyo-cci.or.jp/houmu/) |
+| ビジネス実務法務検定3級 | business-law3 | 1 | 登録あり | [公式案内](https://kentei.tokyo-cci.or.jp/houmu/) |
 | 行政書士試験向け自作対策教材 | gyosei-original | 50 | 登録あり | — |
 
 ## 経営・事務・販売
@@ -403,13 +403,13 @@
 
 | 試験・教材 | ID | 登録数 | 状態 | 公式案内 |
 | --- | --- | ---: | --- | --- |
-| 社会福祉士国家試験 | social-worker | 0 | 問題未登録 | [公式案内](https://www.sssc.or.jp/) |
-| 介護福祉士国家試験 | care-worker | 0 | 問題未登録 | [公式案内](https://www.sssc.or.jp/) |
-| 精神保健福祉士国家試験 | mental-social-worker | 0 | 問題未登録 | [公式案内](https://www.sssc.or.jp/) |
+| 社会福祉士国家試験 | social-worker | 408 | 登録あり | [公式案内](https://www.sssc.or.jp/) |
+| 介護福祉士国家試験 | care-worker | 374 | 登録あり | [公式案内](https://www.sssc.or.jp/) |
+| 精神保健福祉士国家試験 | mental-social-worker | 427 | 登録あり | [公式案内](https://www.sssc.or.jp/) |
 | 保育士試験 | childcare | 752 | 登録あり | [公式案内](https://www.hoyokyo.or.jp/exam/) |
-| 福祉住環境コーディネーター検定1級 | welfare-housing1 | 0 | 問題未登録 | [公式案内](https://kentei.tokyo-cci.or.jp/fukushi/) |
-| 福祉住環境コーディネーター検定2級 | welfare-housing2 | 0 | 問題未登録 | [公式案内](https://kentei.tokyo-cci.or.jp/fukushi/) |
-| 福祉住環境コーディネーター検定3級 | welfare-housing3 | 0 | 問題未登録 | [公式案内](https://kentei.tokyo-cci.or.jp/fukushi/) |
+| 福祉住環境コーディネーター検定1級 | welfare-housing1 | 1 | 登録あり | [公式案内](https://kentei.tokyo-cci.or.jp/fukushi/) |
+| 福祉住環境コーディネーター検定2級 | welfare-housing2 | 1 | 登録あり | [公式案内](https://kentei.tokyo-cci.or.jp/fukushi/) |
+| 福祉住環境コーディネーター検定3級 | welfare-housing3 | 2 | 登録あり | [公式案内](https://kentei.tokyo-cci.or.jp/fukushi/) |
 
 ## 農業・食品
 
@@ -442,8 +442,8 @@
 | 色彩検定2級 | color2 | 0 | 問題未登録 | [公式案内](https://www.aft.or.jp/exam-orders) |
 | 色彩検定3級 | color3 | 0 | 問題未登録 | [公式案内](https://www.aft.or.jp/exam-orders) |
 | 色彩検定UC級 | color-uc | 0 | 問題未登録 | [公式案内](https://www.aft.or.jp/exam-orders) |
-| カラーコーディネーター検定 スタンダードクラス | color-coordinator-standard | 0 | 問題未登録 | [公式案内](https://kentei.tokyo-cci.or.jp/color/) |
-| カラーコーディネーター検定 アドバンスクラス | color-coordinator-advanced | 0 | 問題未登録 | [公式案内](https://kentei.tokyo-cci.or.jp/color/) |
+| カラーコーディネーター検定 スタンダードクラス | color-coordinator-standard | 1 | 登録あり | [公式案内](https://kentei.tokyo-cci.or.jp/color/) |
+| カラーコーディネーター検定 アドバンスクラス | color-coordinator-advanced | 1 | 登録あり | [公式案内](https://kentei.tokyo-cci.or.jp/color/) |
 | 理容師国家試験 | barber | 1013 | 登録あり | [公式案内](https://www.mhlw.go.jp/kouseiroudoushou/shikaku_shiken/index.html) |
 | 美容師国家試験 | beautician | 1030 | 登録あり | [公式案内](https://www.mhlw.go.jp/kouseiroudoushou/shikaku_shiken/index.html) |
 
@@ -451,7 +451,7 @@
 
 | 試験・教材 | ID | 登録数 | 状態 | 公式案内 |
 | --- | --- | ---: | --- | --- |
-| 環境社会検定（eco検定） | eco | 0 | 問題未登録 | [公式案内](https://kentei.tokyo-cci.or.jp/eco/) |
+| 環境社会検定（eco検定） | eco | 3 | 登録あり | [公式案内](https://kentei.tokyo-cci.or.jp/eco/) |
 | 気象予報士試験 | weather | 566 | 登録あり | [公式案内](https://www.jmbsc.or.jp/jp/examination/examination-1.html) |
 
 ## 公務員
