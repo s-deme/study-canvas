@@ -11,4 +11,9 @@ for text in ['[{q:process.exit()}]', '[...other]', '[{q:`${fetch("url")}`}]', '[
     try: literal.Literal(text).value()
     except (AssertionError, ValueError): pass
     else: raise AssertionError('Executable or ambiguous literal accepted: ' + text)
-print('PASS: JavaScript data literals, escapes, comments, TypeScript annotations, expression and duplicate-key refusal')
+assert literal.Literal("{text: 'a' + /* join */ 'b' + `c`}").value() == {'text': 'abc'}
+for text in ["'a' + run()", "'a' + 2", "'a' + `${run()}`"]:
+    try: literal.Literal(text).value()
+    except (ValueError, AssertionError): pass
+    else: raise AssertionError('Executable concatenation accepted')
+print('PASS: JavaScript data literals, concatenation and executable-expression refusal')

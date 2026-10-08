@@ -1,6 +1,6 @@
 # 試験管理表
 
-集計日：2026-10-07（日本時間）。339試験の登録先、既存の自作教材を含め355試験・教材、21カテゴリ、登録問題合計95,996問。
+集計日：2026-10-08（日本時間）。339試験の登録先、既存の自作教材を含め368試験・教材、24カテゴリ、登録問題合計198,268問。
 
 級・種別は別の登録先として扱い、年度・科目は問題側で管理します。「問題未登録」は登録先だけ準備した状態です。収録内容と取得元は [GitHub経由の過去問収録](github-material.md) と [本人用教材の管理](private-material.md) を参照してください。全試験の出題範囲や本番形式への対応を意味しません。音声・面接・実技の本番再現や公式スコア換算は対象外です。
 
@@ -16,20 +16,20 @@
 
 | カテゴリ | 試験・教材数 | 登録あり | 問題未登録 | 登録問題数 |
 | --- | ---: | ---: | ---: | ---: |
-| IT・AI | 52 | 19 | 33 | 14955 |
-| 会計・金融 | 15 | 4 | 11 | 3530 |
-| 法律・行政 | 10 | 7 | 3 | 1006 |
+| IT・AI | 52 | 21 | 31 | 18386 |
+| 会計・金融 | 15 | 6 | 9 | 5377 |
+| 法律・行政 | 10 | 8 | 2 | 1559 |
 | 経営・事務・販売 | 19 | 18 | 1 | 3441 |
 | 英語 | 12 | 0 | 12 | 0 |
 | 外国語 | 25 | 0 | 25 | 0 |
 | 日本語・国語 | 17 | 17 | 0 | 3957 |
-| 数学・統計 | 23 | 16 | 7 | 480 |
+| 数学・統計 | 23 | 18 | 5 | 537 |
 | 歴史・地理 | 11 | 11 | 0 | 198 |
-| 電気・通信 | 26 | 24 | 2 | 19216 |
+| 電気・通信 | 26 | 24 | 2 | 24999 |
 | 建築・土木 | 15 | 15 | 0 | 7790 |
 | 不動産 | 4 | 3 | 1 | 3935 |
-| 安全・消防・設備 | 38 | 15 | 23 | 1955 |
-| 医療・健康 | 24 | 18 | 6 | 23298 |
+| 安全・消防・設備 | 38 | 38 | 0 | 5242 |
+| 医療・健康 | 24 | 19 | 5 | 23417 |
 | 福祉・介護・保育 | 7 | 7 | 0 | 1965 |
 | 農業・食品 | 8 | 6 | 2 | 2396 |
 | 観光・運輸 | 5 | 5 | 0 | 2730 |
@@ -37,6 +37,9 @@
 | 環境・自然科学 | 2 | 2 | 0 | 569 |
 | 公務員 | 23 | 12 | 11 | 1979 |
 | 自作一般教材 | 11 | 11 | 0 | 551 |
+| 食品・生活 | 1 | 1 | 0 | 70 |
+| 学校教育・高等学校 | 3 | 3 | 0 | 26984 |
+| 一般教材・義務教育 | 9 | 9 | 0 | 60141 |
 
 ## IT・AI
 
@@ -44,7 +47,7 @@
 | --- | --- | ---: | --- | --- |
 | G検定 | gken | 240 | 登録あり | [公式案内](https://www.jdla.org/certificate/) |
 | 情報セキュリティマネジメント | sg | 460 | 登録あり | [公式案内](https://www.ipa.go.jp/shiken/kubun/index.html) |
-| 基本情報技術者 | fe | 1624 | 登録あり | [公式案内](https://www.ipa.go.jp/shiken/kubun/index.html) |
+| 基本情報技術者 | fe | 4536 | 登録あり | [公式案内](https://www.ipa.go.jp/shiken/kubun/index.html) |
 | ITパスポート | ip | 1900 | 登録あり | [公式案内](https://www.ipa.go.jp/shiken/kubun/index.html) |
 | 応用情報技術者 | ap | 2469 | 登録あり | [公式案内](https://www.ipa.go.jp/shiken/kubun/index.html) |
 | ITストラテジスト | st | 532 | 登録あり | [公式案内](https://www.ipa.go.jp/shiken/kubun/index.html) |
@@ -58,8 +61,8 @@
 | 情報処理安全確保支援士 | sc | 1074 | 登録あり | [公式案内](https://www.ipa.go.jp/shiken/kubun/index.html) |
 | E資格 | eken | 0 | 問題未登録 | [公式案内](https://www.jdla.org/certificate/) |
 | Generative AI Test | jdla-generative | 0 | 問題未登録 | [公式案内](https://www.jdla.org/certificate/) |
-| Python 3 エンジニア認定基礎試験 | python-basic | 0 | 問題未登録 | [公式案内](https://pythonic-exam.com/exam) |
-| Python 3 エンジニア認定実践試験 | python-practical | 0 | 問題未登録 | [公式案内](https://pythonic-exam.com/exam) |
+| Python 3 エンジニア認定基礎試験 | python-basic | 308 | 登録あり | [公式案内](https://pythonic-exam.com/exam) |
+| Python 3 エンジニア認定実践試験 | python-practical | 187 | 登録あり | [公式案内](https://pythonic-exam.com/exam) |
 | Python 3 エンジニア認定データ分析試験 | python-data | 0 | 問題未登録 | [公式案内](https://pythonic-exam.com/exam) |
 | Python 3 エンジニア認定データ分析実践試験 | python-data-practical | 0 | 問題未登録 | [公式案内](https://pythonic-exam.com/exam) |
 | Linux Essentials | linux-essentials | 276 | 登録あり | [公式案内](https://www.lpi.org/our-certifications/summary-of-lpi-certifications/) |
@@ -70,7 +73,7 @@
 | LPIC-3 Virtualization and Containerization | lpic3-305 | 0 | 問題未登録 | [公式案内](https://www.lpi.org/our-certifications/summary-of-lpi-certifications/) |
 | LPIC-3 High Availability and Storage Clusters | lpic3-306 | 0 | 問題未登録 | [公式案内](https://www.lpi.org/our-certifications/summary-of-lpi-certifications/) |
 | AWS Certified Cloud Practitioner | aws-clf | 597 | 登録あり | [公式案内](https://aws.amazon.com/jp/certification/) |
-| AWS Certified AI Practitioner | aws-aif | 504 | 登録あり | [公式案内](https://aws.amazon.com/jp/certification/) |
+| AWS Certified AI Practitioner | aws-aif | 528 | 登録あり | [公式案内](https://aws.amazon.com/jp/certification/) |
 | AWS Certified Solutions Architect - Associate | aws-saa | 997 | 登録あり | [公式案内](https://aws.amazon.com/jp/certification/) |
 | AWS Certified Developer - Associate | aws-dva | 0 | 問題未登録 | [公式案内](https://aws.amazon.com/jp/certification/) |
 | AWS Certified Solutions Architect - Professional | aws-sap | 0 | 問題未登録 | [公式案内](https://aws.amazon.com/jp/certification/) |
@@ -99,14 +102,14 @@
 
 | 試験・教材 | ID | 登録数 | 状態 | 公式案内 |
 | --- | --- | ---: | --- | --- |
-| 日商簿記3級 | boki3 | 99 | 登録あり | [公式案内](https://www.kentei.ne.jp/bookkeeping) |
-| 日商簿記1級 | boki1 | 0 | 問題未登録 | [公式案内](https://www.kentei.ne.jp/bookkeeping) |
-| 日商簿記2級 | boki2 | 0 | 問題未登録 | [公式案内](https://www.kentei.ne.jp/bookkeeping) |
+| 日商簿記3級 | boki3 | 228 | 登録あり | [公式案内](https://www.kentei.ne.jp/bookkeeping) |
+| 日商簿記1級 | boki1 | 379 | 登録あり | [公式案内](https://www.kentei.ne.jp/bookkeeping) |
+| 日商簿記2級 | boki2 | 315 | 登録あり | [公式案内](https://www.kentei.ne.jp/bookkeeping) |
 | 日商簿記初級 | boki-basic | 0 | 問題未登録 | [公式案内](https://www.kentei.ne.jp/bookkeeping) |
 | 日商原価計算初級 | cost-basic | 0 | 問題未登録 | [公式案内](https://www.kentei.ne.jp/bookkeeping) |
 | FP技能検定1級 | fp1 | 0 | 問題未登録 | [公式案内](https://www.jafp.or.jp/exam/) |
-| FP技能検定2級 | fp2 | 800 | 登録あり | [公式案内](https://www.jafp.or.jp/exam/) |
-| FP技能検定3級 | fp3 | 360 | 登録あり | [公式案内](https://www.jafp.or.jp/exam/) |
+| FP技能検定2級 | fp2 | 1540 | 登録あり | [公式案内](https://www.jafp.or.jp/exam/) |
+| FP技能検定3級 | fp3 | 644 | 登録あり | [公式案内](https://www.jafp.or.jp/exam/) |
 | 税理士試験 | zeirishi | 0 | 問題未登録 | [公式案内](https://www.nta.go.jp/taxes/zeirishi/zeirishishiken/zeirishi.htm) |
 | 公認会計士試験 | cpa | 2271 | 登録あり | [公式案内](https://www.fsa.go.jp/cpaaob/kouninkaikeishi-shiken/) |
 | 一種外務員資格試験 | securities1 | 0 | 問題未登録 | [公式案内](https://www.jsda.or.jp/gaimuin/) |
@@ -124,7 +127,7 @@
 | 司法試験 | shiho | 538 | 登録あり | [公式案内](https://www.moj.go.jp/qualification_test.html) |
 | 司法試験予備試験 | shiho-yobi | 0 | 問題未登録 | [公式案内](https://www.moj.go.jp/qualification_test.html) |
 | 司法書士試験 | shihoshoshi | 0 | 問題未登録 | [公式案内](https://www.moj.go.jp/qualification_test.html) |
-| 土地家屋調査士試験 | land-surveyor | 0 | 問題未登録 | [公式案内](https://www.moj.go.jp/qualification_test.html) |
+| 土地家屋調査士試験 | land-surveyor | 553 | 登録あり | [公式案内](https://www.moj.go.jp/qualification_test.html) |
 | ビジネス実務法務検定1級 | business-law1 | 1 | 登録あり | [公式案内](https://kentei.tokyo-cci.or.jp/houmu/) |
 | ビジネス実務法務検定2級 | business-law2 | 1 | 登録あり | [公式案内](https://kentei.tokyo-cci.or.jp/houmu/) |
 | ビジネス実務法務検定3級 | business-law3 | 1 | 登録あり | [公式案内](https://kentei.tokyo-cci.or.jp/houmu/) |
@@ -242,8 +245,8 @@
 | 算数検定11級 | suken11 | 20 | 登録あり | [公式案内](https://www.su-gaku.net/suken/) |
 | 統計検定1級 | statistics1 | 20 | 登録あり | [公式案内](https://www.toukei-kentei.jp/) |
 | 統計検定準1級 | statistics-pre1 | 0 | 問題未登録 | [公式案内](https://www.toukei-kentei.jp/) |
-| 統計検定2級 | statistics2 | 0 | 問題未登録 | [公式案内](https://www.toukei-kentei.jp/) |
-| 統計検定3級 | statistics3 | 0 | 問題未登録 | [公式案内](https://www.toukei-kentei.jp/) |
+| 統計検定2級 | statistics2 | 15 | 登録あり | [公式案内](https://www.toukei-kentei.jp/) |
+| 統計検定3級 | statistics3 | 42 | 登録あり | [公式案内](https://www.toukei-kentei.jp/) |
 | 統計検定4級 | statistics4 | 0 | 問題未登録 | [公式案内](https://www.toukei-kentei.jp/) |
 | 統計検定 統計調査士 | statistics-survey | 0 | 問題未登録 | [公式案内](https://www.toukei-kentei.jp/) |
 | 統計検定 専門統計調査士 | statistics-specialist | 0 | 問題未登録 | [公式案内](https://www.toukei-kentei.jp/) |
@@ -271,11 +274,11 @@
 
 | 試験・教材 | ID | 登録数 | 状態 | 公式案内 |
 | --- | --- | ---: | --- | --- |
-| 第一種電気工事士 | electrician1 | 300 | 登録あり | [公式案内](https://www.shiken.or.jp/) |
-| 第二種電気工事士 | electrician2 | 550 | 登録あり | [公式案内](https://www.shiken.or.jp/) |
-| 第一種電気主任技術者 | denken1 | 1258 | 登録あり | [公式案内](https://www.shiken.or.jp/) |
-| 第二種電気主任技術者 | denken2 | 1150 | 登録あり | [公式案内](https://www.shiken.or.jp/) |
-| 第三種電気主任技術者 | denken3 | 640 | 登録あり | [公式案内](https://www.shiken.or.jp/) |
+| 第一種電気工事士 | electrician1 | 528 | 登録あり | [公式案内](https://www.shiken.or.jp/) |
+| 第二種電気工事士 | electrician2 | 769 | 登録あり | [公式案内](https://www.shiken.or.jp/) |
+| 第一種電気主任技術者 | denken1 | 2640 | 登録あり | [公式案内](https://www.shiken.or.jp/) |
+| 第二種電気主任技術者 | denken2 | 3952 | 登録あり | [公式案内](https://www.shiken.or.jp/) |
+| 第三種電気主任技術者 | denken3 | 1792 | 登録あり | [公式案内](https://www.shiken.or.jp/) |
 | 電気通信主任技術者 伝送交換主任技術者 | telecom-transmission | 1319 | 登録あり | [公式案内](https://www.dekyo.or.jp/shiken/) |
 | 電気通信主任技術者 線路主任技術者 | telecom-line | 1319 | 登録あり | [公式案内](https://www.dekyo.or.jp/shiken/) |
 | 工事担任者 総合通信 | telecom-installer-general | 3976 | 登録あり | [公式案内](https://www.dekyo.or.jp/shiken/) |
@@ -331,44 +334,44 @@
 
 | 試験・教材 | ID | 登録数 | 状態 | 公式案内 |
 | --- | --- | ---: | --- | --- |
-| 危険物取扱者 甲種 | hazmat-a | 0 | 問題未登録 | [公式案内](https://www.shoubo-shiken.or.jp/kikenbutsu/) |
-| 危険物取扱者 乙種第1類 | hazmat-b1 | 0 | 問題未登録 | [公式案内](https://www.shoubo-shiken.or.jp/kikenbutsu/) |
-| 危険物取扱者 乙種第2類 | hazmat-b2 | 0 | 問題未登録 | [公式案内](https://www.shoubo-shiken.or.jp/kikenbutsu/) |
-| 危険物取扱者 乙種第3類 | hazmat-b3 | 0 | 問題未登録 | [公式案内](https://www.shoubo-shiken.or.jp/kikenbutsu/) |
-| 危険物取扱者 乙種第4類 | hazmat-b4 | 35 | 登録あり | [公式案内](https://www.shoubo-shiken.or.jp/kikenbutsu/) |
-| 危険物取扱者 乙種第5類 | hazmat-b5 | 0 | 問題未登録 | [公式案内](https://www.shoubo-shiken.or.jp/kikenbutsu/) |
-| 危険物取扱者 乙種第6類 | hazmat-b6 | 0 | 問題未登録 | [公式案内](https://www.shoubo-shiken.or.jp/kikenbutsu/) |
+| 危険物取扱者 甲種 | hazmat-a | 45 | 登録あり | [公式案内](https://www.shoubo-shiken.or.jp/kikenbutsu/) |
+| 危険物取扱者 乙種第1類 | hazmat-b1 | 135 | 登録あり | [公式案内](https://www.shoubo-shiken.or.jp/kikenbutsu/) |
+| 危険物取扱者 乙種第2類 | hazmat-b2 | 184 | 登録あり | [公式案内](https://www.shoubo-shiken.or.jp/kikenbutsu/) |
+| 危険物取扱者 乙種第3類 | hazmat-b3 | 186 | 登録あり | [公式案内](https://www.shoubo-shiken.or.jp/kikenbutsu/) |
+| 危険物取扱者 乙種第4類 | hazmat-b4 | 150 | 登録あり | [公式案内](https://www.shoubo-shiken.or.jp/kikenbutsu/) |
+| 危険物取扱者 乙種第5類 | hazmat-b5 | 136 | 登録あり | [公式案内](https://www.shoubo-shiken.or.jp/kikenbutsu/) |
+| 危険物取扱者 乙種第6類 | hazmat-b6 | 35 | 登録あり | [公式案内](https://www.shoubo-shiken.or.jp/kikenbutsu/) |
 | 危険物取扱者 丙種 | hazmat-c | 50 | 登録あり | [公式案内](https://www.shoubo-shiken.or.jp/kikenbutsu/) |
-| 消防設備士 甲種特類 | fire-a-special | 0 | 問題未登録 | [公式案内](https://www.shoubo-shiken.or.jp/shoubou/) |
-| 消防設備士 甲種第1類 | fire-a1 | 0 | 問題未登録 | [公式案内](https://www.shoubo-shiken.or.jp/shoubou/) |
-| 消防設備士 甲種第2類 | fire-a2 | 0 | 問題未登録 | [公式案内](https://www.shoubo-shiken.or.jp/shoubou/) |
-| 消防設備士 甲種第3類 | fire-a3 | 0 | 問題未登録 | [公式案内](https://www.shoubo-shiken.or.jp/shoubou/) |
-| 消防設備士 甲種第4類 | fire-a4 | 0 | 問題未登録 | [公式案内](https://www.shoubo-shiken.or.jp/shoubou/) |
-| 消防設備士 甲種第5類 | fire-a5 | 0 | 問題未登録 | [公式案内](https://www.shoubo-shiken.or.jp/shoubou/) |
-| 消防設備士 乙種第1類 | fire-b1 | 0 | 問題未登録 | [公式案内](https://www.shoubo-shiken.or.jp/shoubou/) |
-| 消防設備士 乙種第2類 | fire-b2 | 0 | 問題未登録 | [公式案内](https://www.shoubo-shiken.or.jp/shoubou/) |
-| 消防設備士 乙種第3類 | fire-b3 | 0 | 問題未登録 | [公式案内](https://www.shoubo-shiken.or.jp/shoubou/) |
-| 消防設備士 乙種第4類 | fire-b4 | 0 | 問題未登録 | [公式案内](https://www.shoubo-shiken.or.jp/shoubou/) |
-| 消防設備士 乙種第5類 | fire-b5 | 0 | 問題未登録 | [公式案内](https://www.shoubo-shiken.or.jp/shoubou/) |
-| 消防設備士 乙種第6類 | fire-b6 | 0 | 問題未登録 | [公式案内](https://www.shoubo-shiken.or.jp/shoubou/) |
-| 消防設備士 乙種第7類 | fire-b7 | 0 | 問題未登録 | [公式案内](https://www.shoubo-shiken.or.jp/shoubou/) |
+| 消防設備士 甲種特類 | fire-a-special | 4 | 登録あり | [公式案内](https://www.shoubo-shiken.or.jp/shoubou/) |
+| 消防設備士 甲種第1類 | fire-a1 | 69 | 登録あり | [公式案内](https://www.shoubo-shiken.or.jp/shoubou/) |
+| 消防設備士 甲種第2類 | fire-a2 | 22 | 登録あり | [公式案内](https://www.shoubo-shiken.or.jp/shoubou/) |
+| 消防設備士 甲種第3類 | fire-a3 | 20 | 登録あり | [公式案内](https://www.shoubo-shiken.or.jp/shoubou/) |
+| 消防設備士 甲種第4類 | fire-a4 | 239 | 登録あり | [公式案内](https://www.shoubo-shiken.or.jp/shoubou/) |
+| 消防設備士 甲種第5類 | fire-a5 | 14 | 登録あり | [公式案内](https://www.shoubo-shiken.or.jp/shoubou/) |
+| 消防設備士 乙種第1類 | fire-b1 | 23 | 登録あり | [公式案内](https://www.shoubo-shiken.or.jp/shoubou/) |
+| 消防設備士 乙種第2類 | fire-b2 | 23 | 登録あり | [公式案内](https://www.shoubo-shiken.or.jp/shoubou/) |
+| 消防設備士 乙種第3類 | fire-b3 | 23 | 登録あり | [公式案内](https://www.shoubo-shiken.or.jp/shoubou/) |
+| 消防設備士 乙種第4類 | fire-b4 | 29 | 登録あり | [公式案内](https://www.shoubo-shiken.or.jp/shoubou/) |
+| 消防設備士 乙種第5類 | fire-b5 | 16 | 登録あり | [公式案内](https://www.shoubo-shiken.or.jp/shoubou/) |
+| 消防設備士 乙種第6類 | fire-b6 | 1236 | 登録あり | [公式案内](https://www.shoubo-shiken.or.jp/shoubou/) |
+| 消防設備士 乙種第7類 | fire-b7 | 17 | 登録あり | [公式案内](https://www.shoubo-shiken.or.jp/shoubou/) |
 | 消防設備士 甲種 筆記公開問題（各類の抜粋） | fire-a-public | 34 | 登録あり | [公式案内](https://www.shoubo-shiken.or.jp/shoubou/) |
 | 消防設備士 乙種 筆記公開問題（各類の抜粋） | fire-b-public | 42 | 登録あり | [公式案内](https://www.shoubo-shiken.or.jp/shoubou/) |
 | 第一種衛生管理者 | health1 | 88 | 登録あり | [公式案内](https://www.exam.or.jp/) |
 | 第二種衛生管理者 | health2 | 330 | 登録あり | [公式案内](https://www.exam.or.jp/) |
-| 特級ボイラー技士 | boiler-special | 0 | 問題未登録 | [公式案内](https://www.exam.or.jp/) |
+| 特級ボイラー技士 | boiler-special | 48 | 登録あり | [公式案内](https://www.exam.or.jp/) |
 | 一級ボイラー技士 | boiler1 | 80 | 登録あり | [公式案内](https://www.exam.or.jp/) |
-| 二級ボイラー技士 | boiler2 | 760 | 登録あり | [公式案内](https://www.exam.or.jp/) |
+| 二級ボイラー技士 | boiler2 | 810 | 登録あり | [公式案内](https://www.exam.or.jp/) |
 | ボイラー整備士 | boiler-maintenance | 60 | 登録あり | [公式案内](https://www.exam.or.jp/) |
-| クレーン・デリック運転士（限定なし） | crane-derrick | 0 | 問題未登録 | [公式案内](https://www.exam.or.jp/) |
+| クレーン・デリック運転士（限定なし） | crane-derrick | 80 | 登録あり | [公式案内](https://www.exam.or.jp/) |
 | 移動式クレーン運転士 | mobile-crane | 80 | 登録あり | [公式案内](https://www.exam.or.jp/) |
 | 揚貨装置運転士 | lifting-derrick | 80 | 登録あり | [公式案内](https://www.exam.or.jp/) |
 | 潜水士 | diver | 80 | 登録あり | [公式案内](https://www.exam.or.jp/) |
-| 第一種作業環境測定士 | work-environment1 | 0 | 問題未登録 | [公式案内](https://www.exam.or.jp/) |
-| 第二種作業環境測定士 | work-environment2 | 0 | 問題未登録 | [公式案内](https://www.exam.or.jp/) |
+| 第一種作業環境測定士 | work-environment1 | 360 | 登録あり | [公式案内](https://www.exam.or.jp/) |
+| 第二種作業環境測定士 | work-environment2 | 160 | 登録あり | [公式案内](https://www.exam.or.jp/) |
 | 労働衛生コンサルタント | health-consultant | 90 | 登録あり | [公式案内](https://www.exam.or.jp/) |
 | 労働安全コンサルタント | safety-consultant | 90 | 登録あり | [公式案内](https://www.exam.or.jp/) |
-| 消防設備士向け共通対策教材（GitHub） | github-fire-common | 56 | 登録あり | — |
+| 消防設備士向け共通対策教材（GitHub） | github-fire-common | 74 | 登録あり | — |
 
 ## 医療・健康
 
@@ -396,7 +399,7 @@
 | あん摩マッサージ指圧師国家試験 | massage-therapist | 954 | 登録あり | [公式案内](https://www.mhlw.go.jp/kouseiroudoushou/shikaku_shiken/index.html) |
 | 柔道整復師国家試験 | judo-therapist | 1760 | 登録あり | [公式案内](https://www.mhlw.go.jp/kouseiroudoushou/shikaku_shiken/index.html) |
 | 公認心理師試験 | psychologist | 0 | 問題未登録 | [公式案内](https://www.mhlw.go.jp/kouseiroudoushou/shikaku_shiken/index.html) |
-| 登録販売者試験 | drug-seller | 0 | 問題未登録 | [公式案内](https://www.mhlw.go.jp/kouseiroudoushou/shikaku_shiken/index.html) |
+| 登録販売者試験 | drug-seller | 119 | 登録あり | [公式案内](https://www.mhlw.go.jp/kouseiroudoushou/shikaku_shiken/index.html) |
 | 第二種衛生管理者向け自作対策教材 | health2-original | 50 | 登録あり | — |
 
 ## 福祉・介護・保育
@@ -497,3 +500,31 @@
 | 自作自然科学教材 | original-science | 48 | 登録あり | — |
 | 自作統計教材 | original-statistics | 48 | 登録あり | — |
 | 自作世界史教材 | original-world-history | 48 | 登録あり | — |
+
+## 食品・生活
+
+| 試験・教材 | ID | 登録数 | 状態 | 公式案内 |
+| --- | --- | ---: | --- | --- |
+| 食品安全の対策教材（GitHub・資格対応未確定） | github-food-safety | 70 | 登録あり | — |
+
+## 学校教育・高等学校
+
+| 試験・教材 | ID | 登録数 | 状態 | 公式案内 |
+| --- | --- | ---: | --- | --- |
+| 高校1年 | school-high-1 | 11047 | 登録あり | — |
+| 高校2年 | school-high-2 | 12113 | 登録あり | — |
+| 高校3年 | school-high-3 | 3824 | 登録あり | — |
+
+## 一般教材・義務教育
+
+| 試験・教材 | ID | 登録数 | 状態 | 公式案内 |
+| --- | --- | ---: | --- | --- |
+| 小学1年 | school-1 | 1768 | 登録あり | — |
+| 小学2年 | school-2 | 8793 | 登録あり | — |
+| 小学3年 | school-3 | 3074 | 登録あり | — |
+| 小学4年 | school-4 | 4612 | 登録あり | — |
+| 小学5年 | school-5 | 3956 | 登録あり | — |
+| 小学6年 | school-6 | 5931 | 登録あり | — |
+| 中学1年 | school-7 | 10657 | 登録あり | — |
+| 中学2年 | school-8 | 10945 | 登録あり | — |
+| 中学3年 | school-9 | 10405 | 登録あり | — |

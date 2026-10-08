@@ -6,6 +6,7 @@ import {fileURLToPath,pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
 import {loadGithubMaterial} from './github-material.mjs';
 import {loadGithubCandidates} from './github-candidates.mjs';
+import {loadSchoolMaterial} from './school-material.mjs';
 import {recoverPrivateBuild,updatePrivateBuild} from './private-build-update.mjs';
 import {DEFAULT_EXAMS,validateQuestions,questionKey} from '../web/core.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url)),out=resolve(root,'build/private');let web=join(out,'web');
@@ -24,13 +25,19 @@ for(const pack of MATERIAL_PACKS) {
 assert.equal(existing.length,manifest.questions);
 const keys=new Set(existing.map(questionKey));assert.equal(keys.size,existing.length);
 const kind=process.argv[2] || 'food',kinds=kind.split(',');
-assert.ok(kinds.every(k=>['food','safety','history','finance','construction','math','business','electricity','welfare','public-examples'].includes(k)));
-const foodIds=new Set(MATERIAL_PACKS.filter(p=>kinds.some(k=>p.id.startsWith('archive-'+k+'-'))).map(p=>p.id));
+assert.ok(kinds.every(k=>['food','safety','history','finance','construction','math','business','electricity','denken','welfare','public-examples','hazmat','github-hazmat','github-denken','github-candidates','school'].includes(k)));
+const foodIds=new Set(MATERIAL_PACKS.filter(p=>kinds.some(k=>p.id.startsWith(k==='school'?'school-':'archive-'+k+'-'))).map(p=>p.id));
 const loaded={exams:[],packs:[],report:{added:0}},unaffected=existing.filter(q=>!kinds.some(k=>q.id.startsWith(k+'-')));
 for(const k of kinds) {
- const part=loadGithubMaterial(root,[...unaffected,...loaded.packs.flatMap(p=>p.rows)],k+'-report.json',k+'-verification.json');
+ const prior=[...unaffected,...loaded.packs.flatMap(p=>p.rows)];
+ const part=k==='school'?loadSchoolMaterial(root,prior):k.startsWith('github-')?loadGithubCandidates(root,prior):loadGithubMaterial(root,prior,k+'-report.json',k+'-verification.json');
+ if(k==='school') {part.packs=part.packs.filter(p=>/^school-[1-9]$/.test(p.examId));part.exams=part.exams.filter(e=>/^school-[1-9]$/.test(e.id));part.report.added=part.packs.reduce((n,p)=>n+p.count,0);}
+ if(k==='github-hazmat') {part.packs=part.packs.filter(p=>/^hazmat-b[1-6]$/.test(p.examId));part.report.added=part.packs.reduce((n,p)=>n+p.count,0);part.exams=part.exams.filter(e=>part.packs.some(p=>p.examId===e.id));}
+ if(k==='github-denken') {part.packs=part.packs.filter(p=>/^denken[123]$/.test(p.examId));part.report.added=part.packs.reduce((n,p)=>n+p.count,0);part.exams=part.exams.filter(e=>part.packs.some(p=>p.examId===e.id));}
  loaded.exams.push(...part.exams);loaded.packs.push(...part.packs);loaded.report.added+=part.report.added;
 }
+// Incremental GitHub imports may only add new packs; re-imports use the full builder.
+for(const pack of loaded.packs) if(pack.id.startsWith('candidate-')) assert.ok(!MATERIAL_PACKS.some(p=>p.id===pack.id),'Existing candidate pack requires full rebuild: '+pack.id);
 const replacements=new Map(),removed=new Set();
 if(process.argv.includes('--replace')) for(const p of loaded.packs.filter(p=>foodIds.has(p.id))) {
  const prior=validateQuestions(JSON.parse(readFileSync(join(web,MATERIAL_PACKS.find(old=>old.id===p.id).url))));
@@ -60,7 +67,7 @@ for(const {rows,...pack} of loaded.packs) {
  assert.equal(pack.localOnly,true);
  for(const q of rows) {
   assert.ok(!keys.has(questionKey(q)));keys.add(questionKey(q));
-  for(const image of [...q.images,...q.solutionImages]) if(!copiedAssets.has(image.src)) {cpSync(join(root,'private-data/github-material/prepared/assets',image.src.split('/').at(-1)),join(web,image.src));copiedAssets.add(image.src);}
+  for(const image of [...q.images,...q.solutionImages]) if(!copiedAssets.has(image.src)) {const family=image.src.startsWith('assets/github-candidates/')?'github-candidates':'github-material';mkdirSync(join(web,'assets',family),{recursive:true});cpSync(join(root,'private-data',family,'prepared/assets',image.src.split('/').at(-1)),join(web,image.src));copiedAssets.add(image.src);}
   index.push({id:q.id,examId:q.examId,type:q.type,options:q.options.map((_,i)=>String(i)),catalogOnly:true,year:q.year,term:q.term,subject:q.subject});
  }
  const bytes=JSON.stringify(rows),url='material/'+pack.id+'.json';writeFileSync(join(web,url),bytes);
@@ -73,4 +80,4 @@ cpSync(join(root,'web/exams.mjs'),join(web,'exams.mjs'));
 writeFileSync(join(web,'catalog.mjs'),`// Generated private index.\nexport const BUILTIN_QUESTIONS=[];\nexport const MATERIAL_INDEX=${JSON.stringify(index)};\nexport const MATERIAL_PACKS=${JSON.stringify(packs)};\nexport const MATERIAL_EXAMS=${JSON.stringify(exams)};\n`);
 writeFileSync(join(stage,'manifest.json'),JSON.stringify({...manifest,questions:index.length,files,packs,exams:[...DEFAULT_EXAMS,...exams].map(e=>({id:e.id,name:e.name,count:index.filter(q=>q.examId===e.id).length}))},null,2));
 });
-console.log(`Local ${kind} import: ${loaded.report.added} verified questions; ${index.length} total`);
+console.log(`Local ${kind} import: ${loaded.report.added} format-validated questions; ${index.length} total`);

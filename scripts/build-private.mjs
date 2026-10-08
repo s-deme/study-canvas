@@ -8,6 +8,8 @@ import {loadAdditionalMaterial} from './additional-material.mjs';
 import {loadGithubMaterial} from './github-material.mjs';
 import {loadGithubCandidates} from './github-candidates.mjs';
 import {loadMedicalMaterial} from './medical-material.mjs';
+import {loadLocalPractice} from './local-practice.mjs';
+import {loadSchoolMaterial} from './school-material.mjs';
 import {recoverPrivateBuild,updatePrivateBuild} from './private-build-update.mjs';
 
 const root=fileURLToPath(new URL('../',import.meta.url)),out=resolve(root,'build/private');
@@ -45,10 +47,11 @@ const electricity=loadGithubMaterial(root,[...original,...restored,...existingPa
 github.exams.push(...electricity.exams);github.packs.push(...electricity.packs);
 if(process.argv.includes('--cloud')) assert.ok(!github.packs.some(p=>p.localOnly),'個人利用限定の教材があります。クラウド配備には提供元の利用許諾を確認してください。');
 const candidates=loadGithubCandidates(root,[...original,...restored,...existingPacks.flatMap(p=>p.rows),...additions.packs.flatMap(p=>p.rows),...github.packs.flatMap(p=>p.rows)]);
+if(process.argv.includes('--cloud')) assert.ok(!candidates.packs.some(p=>p.localOnly),'ローカル学習限定のGitHub教材があります。');
 const business=loadGithubMaterial(root,[...original,...restored,...existingPacks.flatMap(p=>p.rows),...additions.packs.flatMap(p=>p.rows),...github.packs.flatMap(p=>p.rows),...candidates.packs.flatMap(p=>p.rows)],'business-report.json','business-verification.json');
 github.exams.push(...business.exams);github.packs.push(...business.packs);
 if(process.argv.includes('--cloud')) assert.ok(!business.packs.some(p=>p.localOnly),'経営・事務・販売の個人学習用教材はローカル利用限定です。');
-for(const kind of ['welfare','public-examples']) {
+for(const kind of ['welfare','public-examples','hazmat','fire','denken']) {
 const welfare=loadGithubMaterial(root,[...original,...restored,...existingPacks.flatMap(p=>p.rows),...additions.packs.flatMap(p=>p.rows),...github.packs.flatMap(p=>p.rows),...candidates.packs.flatMap(p=>p.rows)],kind+'-report.json',kind+'-verification.json');
 github.exams.push(...welfare.exams);github.packs.push(...welfare.packs);
 if(process.argv.includes('--cloud')) assert.ok(!welfare.packs.some(p=>p.localOnly),'追加の個人学習用教材はローカル利用限定です。');
@@ -56,6 +59,12 @@ if(process.argv.includes('--cloud')) assert.ok(!welfare.packs.some(p=>p.localOnl
 const medical=loadMedicalMaterial(root,[...original,...restored,...existingPacks.flatMap(p=>p.rows),...additions.packs.flatMap(p=>p.rows),...github.packs.flatMap(p=>p.rows),...candidates.packs.flatMap(p=>p.rows)]);
 github.exams.push(...medical.exams);github.packs.push(...medical.packs);
 if(process.argv.includes('--cloud')) assert.ok(!medical.packs.some(p=>p.localOnly),'JMed48kは非商用利用限定です。クラウド配備には提供元の利用許諾を確認してください。');
+const practice=loadLocalPractice(root,[...original,...restored,...existingPacks.flatMap(p=>p.rows),...additions.packs.flatMap(p=>p.rows),...github.packs.flatMap(p=>p.rows),...candidates.packs.flatMap(p=>p.rows)]);
+github.exams.push(...practice.exams);github.packs.push(...practice.packs);
+const school=loadSchoolMaterial(root,[...original,...restored,...existingPacks.flatMap(p=>p.rows),...additions.packs.flatMap(p=>p.rows),...github.packs.flatMap(p=>p.rows),...candidates.packs.flatMap(p=>p.rows)]);
+if(process.argv.includes('--cloud')) assert.ok(!school.packs.some(p=>p.localOnly),'一般教材はローカル本人用教材として登録しています。');
+github.exams.push(...school.exams);github.packs.push(...school.packs);
+console.log(`Original practice: ${practice.packs.reduce((n,p)=>n+p.count,0)} questions; ${practice.duplicates.length} text/numeric duplicates excluded`);
 console.log(updatePrivateBuild(out,stage=>{
 const out=stage;
 // Generate separately; replace the successful output only after all checks pass.
@@ -107,7 +116,7 @@ cpSync(join(material,'audit.json'),join(out,'web/material/audit.json'));
 if(existsSync(join(material,'verification.json'))) cpSync(join(material,'verification.json'),join(out,'web/material/verification.json'));
 writeFileSync(join(out,'web/material/expansion-report.json'),JSON.stringify(additions.report,null,2));
 const files=[];
-function walk(dir) {for(const name of readdirSync(dir)){const p=join(dir,name);if(statSync(p).isDirectory()) walk(p);else {assert.ok(statSync(p).size<25*1024*1024,`Pages asset too large: ${p}`);files.push(p);}}}
+function walk(dir) {for(const name of readdirSync(dir)){const p=join(dir,name);if(statSync(p).isDirectory()) walk(p);else {if(process.argv.includes('--cloud')) assert.ok(statSync(p).size<25*1024*1024,`Pages asset too large: ${p}`);files.push(p);}}}
 walk(join(out,'web'));if(process.argv.includes('--cloud')) assert.ok(files.length<=20000,'Pages file limit exceeded; the full collection is available locally');
 writeFileSync(join(out,'manifest.json'),JSON.stringify({questions:index.length,files:files.length,exams:[...DEFAULT_EXAMS,...exams].map(e=>({id:e.id,name:e.name,count:index.filter(q=>q.examId===e.id).length})),packs},null,2));
 return `Private build: ${index.length} questions, ${packs.length} packs, ${files.length} assets`;

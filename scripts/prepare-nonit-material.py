@@ -25,7 +25,9 @@ def official_keys(doc,task):
             previous_a=None
             for w in labels:
                 m=re.fullmatch(r'問(\d+)(?:\(([ab])\))?',tidy(w[4]))
-                cells=at_row(words,w,right);assert cells and re.fullmatch('[1-5]',tidy(cells[0][4]))
+                cells=at_row(words,w,right);assert cells
+                cancelled=tidy(cells[0][4])=='※' and 'すべての受験者の解答を正解' in tidy(page.get_text())
+                assert cancelled or re.fullmatch('[1-5]',tidy(cells[0][4]))
                 # The displayed (b) row belongs to the immediately preceding (a).
                 # Some old PDFs retain an incorrect hidden number in that row's text layer.
                 if m is None or m[2]=='b':
@@ -34,7 +36,7 @@ def official_keys(doc,task):
                 else:
                     key=m[1]+(m[2] or '');previous_a=(m[1],w[1]) if m[2]=='a' else None
                 assert key not in keys,'Repeated ECEE answer label'
-                keys[key]=int(tidy(cells[0][4]))-1
+                keys[key]=None if cancelled else int(tidy(cells[0][4]))-1
         elif provider=='ECEE':
             for w in words:
                 if not re.fullmatch(r'\d+',tidy(w[4])):continue

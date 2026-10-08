@@ -44,7 +44,7 @@ export function loadGithubCandidates(root,existing) {
       kept.push(q);
     }
     if(kept.length) packs.push({id:pack.id,repo:pack.repo,examId:pack.examId,subject:pack.repo,count:kept.length,sources:pack.sources.map(s=>({...s,file:s.path})),
-      verification:report.notice,rows:kept});
+      verification:report.notice,...(pack.localOnly?{localOnly:true}:{}),rows:kept});
   }
   const registered=[...DEFAULT_EXAMS,...EXAM_CATALOG,...report.exams],used=new Set(packs.map(p=>p.examId));
   const exams=[...used].filter(id=>!existing.some(q=>q.examId===id)).map(id=>validateExam(registered.find(e=>e.id===id)));

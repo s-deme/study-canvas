@@ -9,9 +9,18 @@ import {validateQuestions,emptyState,newSession,submit,finish,questionKey} from 
 const root=new URL('../',import.meta.url),hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const manifest=JSON.parse(readFileSync(new URL('build/private/manifest.json',root))),existing=manifest.packs.filter(p=>!p.id.startsWith('candidate-')).flatMap(p=>JSON.parse(readFileSync(new URL('build/private/web/'+p.url,root))));
 const result=loadGithubCandidates(fileURLToPath(root),existing);
-assert.equal(result.report.repositoryCount,45);assert.ok(result.report.added>5000);
+assert.equal(result.report.repositoryCount,result.report.repositories.length);
+assert.equal(new Set(result.report.repositories.map(r=>r.repo)).size,result.report.repositoryCount);
+assert.ok(result.report.repositoryCount>=71);assert.ok(result.report.added>5000);
+for(const [repo,count] of [['akiina999/otsu2-training',149],['M-HMMY/kikenbutsu_otsu4_exam_app',105],['tetsu0950120/otsu3',151],['tetsu0950120/otsu5',101],['hutatumekozou/kikenbutu-otsu1syu',100]]) {
+  const packs=result.packs.filter(p=>p.repo===repo);
+  assert.equal(packs.reduce((n,p)=>n+p.count,0),count);assert.ok(packs.every(p=>p.localOnly));
+}
+const before=JSON.parse(readFileSync(new URL('private-data/github-candidates/hazmat-baseline.json',root)));
+for(const p of before.packs.filter(p=>p.repo!=='iamirtasam/AWS-AI-Practitioner-Exam-Mock'))assert.equal(manifest.packs.find(b=>b.id===p.id)?.sha256,p.sha256,'Previous pack changed: '+p.id);
 const aif=result.packs.filter(p=>p.repo==='iamirtasam/AWS-AI-Practitioner-Exam-Mock').flatMap(p=>p.rows);
-assert.equal(aif.length,504);
+assert.equal(aif.length,528);
+assert.equal(aif.filter(q=>q.type==='written').length,24);
 assert.equal(aif.filter(q=>q.type==='single').length,417);
 assert.equal(aif.filter(q=>q.type==='multiple').length,87);
 for(const q of aif) {
@@ -21,7 +30,8 @@ for(const q of aif) {
   const sourceId=[...text.matchAll(/\bid:\s*"([^"]+)"/g)].find(m=>'github-'+hash('iamirtasam/AWS-AI-Practitioner-Exam-Mock|'+m[1]).slice(0,24)===q.id);
   assert.ok(sourceId);
   const answer=JSON.parse(text.slice(sourceId.index).match(/answer:\s*(\[[\d,\s]+\])/)[1]);
-  assert.deepEqual(Array.isArray(q.answer)?q.answer:[q.answer],answer);
+  if(q.type==='written') assert.equal(q.modelAnswer.split('\n')[0],answer.map(i=>i+1).join(' → '));
+  else assert.deepEqual(Array.isArray(q.answer)?q.answer:[q.answer],answer);
 }
 for(const [repo,exam,type] of [['keisks/j_bar_exam','shiho','written'],['stueja/lpic-1-102-500-anki-flashcards','lpic1','written'],['MCCMDave/linux-essentials-quiz','linux-essentials','single'],['CarbonRaven/AWS-Quiz-SAA-C03','aws-saa',null]]) {
   const rows=result.packs.filter(p=>p.repo===repo).flatMap(p=>p.rows);

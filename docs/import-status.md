@@ -1,6 +1,6 @@
 # 教材の取り込み状況
 
-集計日：2026-10-07（日本時間）。[試験管理表](exam-inventory.md) と同じローカル本人用ビルドから自動生成します。直接編集しません。
+集計日：2026-10-08（日本時間）。[試験管理表](exam-inventory.md) と同じローカル本人用ビルドから自動生成します。直接編集しません。
 
 件数は重複除外後にビルドへ収録された問題数です。取得ファイル数・変換候補数とは区別します。クラウド配備・内容検証の合否を示す表ではありません。ビルド後に `npm run inventory:exams` で両文書を更新してください。
 
@@ -8,11 +8,12 @@
 
 | 収録元 | 登録問題数 |
 | --- | ---: | ---: |
-| 既存・自作・復帰教材 | 4286 |
-| 公式原本追加教材 | 74541 |
+| 既存・自作・復帰教材 | 39981 |
+| 公式原本追加教材 | 79902 |
 | 外部公開過去問（JMed48k・正答未独立照合） | 5941 |
-| GitHub候補教材 | 11228 |
-| **合計** | **95996** |
+| GitHub候補教材 | 19955 |
+| 学校向け外部教材（正答未独立照合） | 52489 |
+| **合計** | **198268** |
 
 公式原本追加教材にはJLPTを含みます。JLPTの件数をこの合計へ再加算しません。既存教材にはFP・IPA・自作教材などを含みます。年度違いの再出題や試験別の共通午前Ⅰは別の出題として数えます。意味が近い問題の全面的な除去は保証しません。
 
@@ -64,9 +65,40 @@
 | [stueja/lpic-1-102-500-anki-flashcards](https://github.com/stueja/lpic-1-102-500-anki-flashcards/tree/7555455260bea19447b485e235db5eddcfd9febb) | 639 | 収録あり | 同一試験の本文・共通本文・選択肢が既存問題と一致（1件） |
 | [MCCMDave/linux-essentials-quiz](https://github.com/MCCMDave/linux-essentials-quiz/tree/0bb38557635cb1443037cac8e9a202b98f5d6116) | 276 | 収録あり | なし |
 | [CarbonRaven/AWS-Quiz-SAA-C03](https://github.com/CarbonRaven/AWS-Quiz-SAA-C03/tree/cb847d5ab9733fa6663385a9a1adbcda98e6f590) | 997 | 収録あり | 選択肢不備（19件） / 重複選択肢（2件） |
-| [iamirtasam/AWS-AI-Practitioner-Exam-Mock](https://github.com/iamirtasam/AWS-AI-Practitioner-Exam-Mock/tree/ac64b85382987814f4d86c811af10b4c1e94047a) | 504 | 収録あり | 並べ替え形式は未対応（24件） |
-| [ikuma-hiroyuki/python_engineer_basic_demo](https://github.com/ikuma-hiroyuki/python_engineer_basic_demo/tree/1dc6079993288065435dbcd714b2f96996836087) | 0 | 未収録 | 本文データあり。教材の収録許諾を確認できず保留（1件） |
-| [ThREE100/chosashi-app](https://github.com/ThREE100/chosashi-app/tree/22fbc96e5cb9886082ffc46e281dfa11c65ca413) | 0 | 未収録 | 本文データあり。教材の収録許諾を確認できず保留（1件） |
+| [akiina999/otsu2-training](https://github.com/akiina999/otsu2-training/tree/d8232fba101f81c2c6c59c1f4dcb35dcf79f6ea4) | 149 | 収録あり | 同一試験の本文・共通本文・選択肢が既存問題と一致（1件） |
+| [M-HMMY/kikenbutsu_otsu4_exam_app](https://github.com/M-HMMY/kikenbutsu_otsu4_exam_app/tree/ab91eba24067500362f36d524a76d73cd789e978) | 105 | 収録あり | なし |
+| [tetsu0950120/otsu3](https://github.com/tetsu0950120/otsu3/tree/15cfc691dd80552e361ba9e01c6561a6e24f1308) | 151 | 収録あり | なし |
+| [tetsu0950120/otsu5](https://github.com/tetsu0950120/otsu5/tree/b4cd732e0a20539817973c6db53c405e2e25fa1d) | 101 | 収録あり | なし |
+| [hutatumekozou/kikenbutu-otsu1syu](https://github.com/hutatumekozou/kikenbutu-otsu1syu/tree/ce5908b5c7a50a3d26f28325b5f7cd4dd810a5b2) | 100 | 収録あり | なし |
+| [iamirtasam/AWS-AI-Practitioner-Exam-Mock](https://github.com/iamirtasam/AWS-AI-Practitioner-Exam-Mock/tree/ac64b85382987814f4d86c811af10b4c1e94047a) | 528 | 収録あり | なし |
+| [ikuma-hiroyuki/python_engineer_basic_demo](https://github.com/ikuma-hiroyuki/python_engineer_basic_demo/tree/1dc6079993288065435dbcd714b2f96996836087) | 82 | 収録あり | 同一試験の本文・共通本文・選択肢が既存問題と一致（3件） |
+| [ThREE100/chosashi-app](https://github.com/ThREE100/chosashi-app/tree/22fbc96e5cb9886082ffc46e281dfa11c65ca413) | 553 | 収録あり | 提供元の取得失敗・削除問題または正答不明（6件） / 重複選択肢（1件） / 必要図版の対応未確定（2件） / 選択肢不備（4件） / 提供元の正答と解説内の説明が矛盾（2件） / 同一試験の本文・共通本文・選択肢が既存問題と一致（3件） / 記述問題の必要図版または模範解答なし（18件） |
+| [morikagesho/boki-quise](https://github.com/morikagesho/boki-quise/tree/2b150e35d6ca06dc9d52ffcc453f93ce4160474e) | 0 | 未収録 | 配布された学習問題・正答の実体なし（1件） |
+| [nktkt/bookkeeping-practice](https://github.com/nktkt/bookkeeping-practice/tree/bb3d86cd0ed719c3bb6983195c39a07624db57a1) | 269 | 収録あり | なし |
+| [renatusauctor/cpa-tantou-kakomon-drill](https://github.com/renatusauctor/cpa-tantou-kakomon-drill/tree/874d1a2375858e1fe4751a797f48cd35e2e7f6bd) | 0 | 未収録 | 対応する公式原本は別経路で収録済み。第三者教材の抜粋カードは追加しない（1件） |
+| [ronodera662/fp-study-app](https://github.com/ronodera662/fp-study-app/tree/286b44a07e8bb4fd157c6fd9014c017582a6e10f) | 740 | 収録あり | なし |
+| [xinyue119-code/boki1-cards](https://github.com/xinyue119-code/boki1-cards/tree/baf15ba88a0526fd2f82c64e70b99a9898de81e7) | 313 | 収録あり | なし |
+| [furumix2000/fp3-quiz-app](https://github.com/furumix2000/fp3-quiz-app/tree/4afe9ffd8c1679c44280df92f702dfdc5f3dee30) | 354 | 収録あり | 必要図版が仮URLまたは未取得（14件） / 同一試験の本文・共通本文・選択肢が既存問題と一致（2件） |
+| [kosukekkk-ops/fe-master-app](https://github.com/kosukekkk-ops/fe-master-app/tree/11eb4fe420dd194bb9773450801f5bcd759ec55e) | 2632 | 収録あり | HTML図表の対応未確認（6件） |
+| [AzFukami/Touhan-Quiz](https://github.com/AzFukami/Touhan-Quiz/tree/ca7ef538185cfeaad349a4fa7ac4979a0285cac2) | 119 | 収録あり | 栄養機能食品の届出に関する設問・正答・解説の矛盾（消費者庁FAQ照合）（1件） |
+| [ot6-shibainu/ot6-shibainu-pwa](https://github.com/ot6-shibainu/ot6-shibainu-pwa/tree/350c85e96004e2e5f40d2dfe6a96897b0d44c90c) | 240 | 収録あり | 必要図版の対応未確認（10件） |
+| [kids-jobai28/shoubou-quiz](https://github.com/kids-jobai28/shoubou-quiz/tree/f777e0032b7ea97ce3c5c738d528535cba4ddbbc) | 0 | 未収録 | 有料区画を含む。無料区画にも法令問題の条件不足があり今回は非収録（1件） |
+| [kazuyan1004-a11y/fire-quiz-app](https://github.com/kazuyan1004-a11y/fire-quiz-app/tree/b00c100a7a0a4da304b8c563e2462c89f4fabdbf) | 10 | 収録あり | なし |
+| [onokumao-png/gokaku-denki-quiz](https://github.com/onokumao-png/gokaku-denki-quiz/tree/8434af0dcba1b4a8f8aab13013dcc31ee20e671b) | 419 | 収録あり | 図表・写真を参照するが提供元データに図版なし（258件） / 重複選択肢（5件） / 同一試験の本文・共通本文・選択肢が既存問題と一致（9件） / 選択肢不備（1件） |
+| [shinki5301-art/-6](https://github.com/shinki5301-art/-6/tree/81e9198cfe5c0d097cc6ee633976aa91e58313c7) | 2 | 収録あり | なし |
+| [mitsugeek/shoubo-shiken](https://github.com/mitsugeek/shoubo-shiken/tree/642ecb82c3aec477962236b7859514c2b894be5c) | 87 | 収録あり | 同一試験の本文・共通本文・選択肢が既存問題と一致（6件） |
+| [hkosu813-ux/shobo-quiz](https://github.com/hkosu813-ux/shobo-quiz/tree/2a9b0eb699a47990babbda38ef45d3f3ae3fe519) | 184 | 収録あり | 必要図表の対応未確認（7件） |
+| [terukatsu58-hash/Shobo-quiz](https://github.com/terukatsu58-hash/Shobo-quiz/tree/09a53504eec4b8e379cb8eaa2a7393c94b4a007a) | 14 | 収録あり | なし |
+| [m3tk0616-lab/shobo-tokurui-quiz](https://github.com/m3tk0616-lab/shobo-tokurui-quiz/tree/04163315e22d508fd35f8f83e05ba9c545baf250) | 0 | 未収録 | 冒頭のルートBの正答説明と引用条文に疑義。条文・全正答の確認まで保留（1件） |
+| [jiagyebo19891011/shoubou-otsu6](https://github.com/jiagyebo19891011/shoubou-otsu6/tree/e20c04dd84cea99d386d2978bffa313190b7225c) | 748 | 収録あり | 同一試験の本文・共通本文・選択肢が既存問題と一致（42件） |
+| [yousukeee/otsu6-cards](https://github.com/yousukeee/otsu6-cards/tree/9b4720e6ef3716aa956b48aa1e7d82cecb94207a) | 110 | 収録あり | なし |
+| [tyaamarukusu-svg/study-os-shobo6](https://github.com/tyaamarukusu-svg/study-os-shobo6/tree/1679fb8d1e19b5783cf5080090d9402fd8e3c189) | 0 | 未収録 | 購入者向けアクセス区画・市販参考書由来の表示があるため非収録（1件） |
+| [altxxxtla-lab/shoubou-setsubishi-drill](https://github.com/altxxxtla-lab/shoubou-setsubishi-drill/tree/f046c76a58551c0e4d87523883025bdb43de809c) | 126 | 収録あり | なし |
+| [5garashi/denken2](https://github.com/5garashi/denken2/tree/a980ad6bb134ce68bc674f59d3e27278e26a6c94) | 120 | 収録あり | なし |
+| [nakasyo3519/denken3all](https://github.com/nakasyo3519/denken3all/tree/bdeb66077002b6635b4a9832c0a5a0ac60b45a06) | 13 | 収録あり | 2009年度以降は公式原本の同一試験を収録（302件） / 図版照合が必要（2件） |
+| [yamkenic/denken1-app](https://github.com/yamkenic/denken1-app/tree/ed75c7df87a015749e26ed1097027f7c469c199e) | 0 | 未収録 | 公式過去問と重複・一部は問題本文の代わりに概要や空欄指示のみ（1件） |
+| [nemi2nd-dot/denken2-app](https://github.com/nemi2nd-dot/denken2-app/tree/319fb379e2c5ebed4d85347188d1d71972ce89bf) | 962 | 収録あり | 問題が参照する図版・配置の確認が必要（2件） / 提供元JavaScriptの構文不備（6件） / 選択肢不備（1件） |
+| [ayatonikuman/denken3](https://github.com/ayatonikuman/denken3/tree/5d8b310e5aca86b5b7fc1910fb68fc865b218696) | 0 | 未収録 | 学習予定表・外部リンクのみで問題本文なし（1件） |
 
 非収録理由は変換時点の記録です。公式原本から別経路で収録できた場合も、この取得元の未収録状態とは区別します（例：GitHubのJLPT OCR候補とJLPT公式教材）。
 

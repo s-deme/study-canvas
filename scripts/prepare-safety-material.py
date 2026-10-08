@@ -21,13 +21,17 @@ def acquire():
             cells=row.find_all('td')
             if not cells:continue
             label=cells[0].get_text(strip=True)
-            exam=NAMES.get(label) if kind=='license' else 'work-environment1' if kind=='measure' else 'health-consultant' if label.startswith('労働衛生') else 'safety-consultant' if label.startswith('産業安全') else None
+            exam=('boiler-special' if label=='特級ボイラー技士' else NAMES.get(label)) if kind=='license' else 'work-environment1' if kind=='measure' else 'health-consultant' if label.startswith('労働衛生') else 'safety-consultant' if label.startswith('産業安全') else None
             if not exam:continue
             for a in row.find_all('a',href=True):
-                if not a['href'].lower().endswith('.pdf'):continue
+                feb=re.search(r'/20260217(?:-([2-4]))?/$',a['href']) if kind=='measure' else None
+                if not a['href'].lower().endswith('.pdf') and not feb:continue
                 link=urljoin(url,a['href']);year=re.search(r'令和(\d+)',a.get_text())[1]
-                stem='safety-'+Path(link).stem
+                stem='safety-measure-feb-'+(feb[1] or '1') if feb else 'safety-'+Path(link).stem
                 tasks.append(dict(provider='SAFETY',examId=exam,year=str(2018+int(year)),term=a.get_text(strip=True),subject=label,sourceFile=stem+'.pdf',answerFile=stem+'.pdf',file=stem+'.json',url=link,localOnly=True))
+                if exam=='boiler-special':tasks[-1].update(kind='special-boiler',year=str(2017+int(year)),term=str(2017+int(year))+'年度実施・正答例付き',subject='特級ボイラー技士 4科目')
+                if kind=='measure' and label in ('労働衛生一般','労働衛生関係法令','デザイン・サンプリング','分析に関する概論'):
+                    tasks.append({**tasks[-1],'examId':'work-environment2','file':stem+'-second.json'})
     external='https://kouronpub.com/past_issues/boiler/2qboiler_index.html'
     source=fetcher.fetch(external,'safety-external-boiler.html')
     html=BeautifulSoup((SRC/source['file']).read_bytes(),'html.parser')
@@ -52,7 +56,18 @@ def acquire():
     (SRC/'safety-discovery.json').write_bytes(base.ipa.encode(tasks))
     print('Downloaded',len(tasks),'papers')
 
+def scanned_review(doc):
+    path=SRC/'safety-scanned-review.json'
+    if not path.exists() or not doc.name:return None
+    review=json.loads(path.read_bytes())
+    if Path(doc.name).name!=review['file']:return None
+    assert base.ipa.sha(Path(doc.name).read_bytes())==review['sha256'],'Reviewed PDF changed'
+    assert len(review['starts'])==len(review['answers'])==45
+    return review
+
 def starts(doc,expected=None):
+    review=scanned_review(doc)
+    if review:return [tuple(row) for row in review['starts']]
     found=[]
     for pn,page in enumerate(doc):
         for block in page.get_text('dict')['blocks']:
@@ -70,17 +85,58 @@ def starts(doc,expected=None):
 
 def keys(doc):
     seq=starts(doc)
-    result={}
+    result={};extra={p:extra_marks(doc[p]) for p in range(len(doc))}
     for i,(number,pn,y) in enumerate(seq):
         ep,ey=seq[i+1][1:] if i+1<len(seq) else (len(doc)-1,doc[-1].rect.height)
         body='\n'.join(norm(''.join(s['text'] for s in line['spans'])) for p in range(pn,ep+1) for b in doc[p].get_text('dict')['blocks'] for line in b.get('lines',[]) if (p,line['bbox'][1])>=(pn,y) and (p,line['bbox'][1])<(ep,ey))
         marks=re.findall(r'[○〇◯]\s*\(([1-5])\)',body)
+        if not marks:
+            marks=[str(a+1) for p in range(pn,ep+1) for a,r in extra[p] if (p,r[1])>=(pn,y-2) and (p,r[1])<(ep,ey-2)]
         assert len(marks)==1,(number,marks)
         result[number]=int(marks[0])-1
     assert result and sorted(result)==list(range(1,len(result)+1))
     return result
 
-def clean(page):
+def extra_marks(page):
+    """Read separately positioned text circles and outlined circles beside option labels."""
+    labels=[];circles=[];result=[]
+    for block in page.get_text('dict')['blocks']:
+        for line in block.get('lines',[]):
+            value=norm(''.join(s['text'] for s in line['spans'])).strip()
+            m=re.match(r'^\(([1-5])\)|^([1-5])(?:\s|$)',value)
+            if m:labels.append((int(m[1] or m[2])-1,fitz.Rect(line['bbox'])))
+            if value in '○〇◯' and value:
+                circles.extend(fitz.Rect(s['bbox']) for s in line['spans'] if s['text'].strip() in ('○','〇','◯'))
+    for rect in circles:
+        near=[a for a,r in labels if abs((r.y0+r.y1-rect.y0-rect.y1)/2)<4 and -8<r.x0-rect.x1<15]
+        if not near:near=[a for a,r in labels if abs((r.x0+r.x1-rect.x0-rect.x1)/2)<5 and 5<r.y0-rect.y1<18]
+        assert len(near)==1,('Separate answer mark',page.number,rect,near)
+        result.append((near[0],list(rect)))
+    drawings=page.get_drawings()
+    vector_labels=[(int(m[1])-1,fitz.Rect(w[:4])) for w in page.get_text('words') if (m:=re.match(r'^([1-5])(?:\s|$)',norm(w[4]).strip()))]
+    for answer,label in vector_labels:
+        # ponytail: fixed official margin; reject changed PDF layouts instead of guessing.
+        if not 80<label.x0<400:continue
+        region=fitz.Rect(label.x0-22,label.y0-4,label.x0+.2,label.y1+4)
+        pieces=[d['rect'] for d in drawings if region.contains(d['rect']) and (d.get('fill')==(0.0,0.0,0.0) or d.get('color')==(0.0,0.0,0.0))]
+        if not pieces:continue
+        rect=fitz.Rect(pieces[0])
+        for piece in pieces[1:]:rect|=piece
+        if not (6<rect.width<15 and 6<rect.height<15 and .8<rect.width/rect.height<1.2):continue
+        center=fitz.Rect(rect.x0+rect.width*.35,rect.y0+rect.height*.35,rect.x1-rect.width*.35,rect.y1-rect.height*.35)
+        pix=page.get_pixmap(clip=center,colorspace=fitz.csGRAY,alpha=False)
+        assert min(pix.samples)>220,('Answer mark is not a hollow circle',page.number,rect)
+        result.append((answer,list(rect+(-.5,-.5,.5,.5))))
+    review=SRC/'safety-mark-review.json'
+    if review.exists() and page.parent.name:
+        for item in json.loads(review.read_bytes()):
+            if item['file']==Path(page.parent.name).name and item['page']==page.number:
+                assert base.ipa.sha(Path(page.parent.name).read_bytes())==item['sha256']
+                assert not any(fitz.Rect(r).intersects(fitz.Rect(item['rect'])) for a,r in result),'Duplicate reviewed mark'
+                result.append((item['answer'],item['rect']))
+    return result
+
+def clean(page,extra=None):
     # Only the official answer circle before an option label is removed.
     rects=[]
     for block in page.get_text('rawdict')['blocks']:
@@ -89,11 +145,15 @@ def clean(page):
             for i,c in enumerate(chars):
                 if c['c'] in '○〇◯' and re.match(r'\s*\([1-5]\)',norm(''.join(v['c'] for v in chars[i+1:]))):
                     rects.append(list(c['bbox']))
+    if extra is None:extra=[r for a,r in extra_marks(page)]
+    rects+=extra
     for rect in rects:page.add_redact_annot(rect,fill=(1,1,1))
-    if rects:page.apply_redactions(images=0,graphics=0)
+    if rects:page.apply_redactions(images=0,graphics=2 if extra else 0)
     return rects
 
 def table_keys(doc,kind):
+    review=scanned_review(doc)
+    if review:return {n:a-1 for n,a in enumerate(review['answers'],1)}
     if kind in ('hazmat','fire'):
         page=next(p for p in doc if '問題番号' in p.get_text() and '解答' in p.get_text())
         numbers=re.findall(r'^\s*(\d+)\s*$',norm(page.get_text()),re.M)
@@ -103,6 +163,7 @@ def table_keys(doc,kind):
         result={}
         for page in doc:
             words=page.get_text('words')
+            if not any(re.fullmatch('[1-5]',norm(w[4])) for w in words):continue
             for w in words:
                 m=re.fullmatch(r'問\s*(\d+)',norm(w[4]))
                 if not m:continue
@@ -113,9 +174,35 @@ def table_keys(doc,kind):
     assert result and sorted(result)==list(range(1,len(result)+1)) and all(0<=a<5 for a in result.values())
     return result
 
+def special_rows(task):
+    doc=fitz.open(SRC/task['sourceFile']);stem=Path(task['file']).stem
+    covers=[p.number for p in doc if norm(p.get_text()).startswith('特級ボイラー技士免許試験問題')]
+    solutions=[p.number for p in doc if re.search(r'(構造|取扱|燃料|法令)正答例1/',norm(p.get_text()))]
+    assert len(covers)==len(solutions)==4
+    rows=[];evidence=[];cache={}
+    for group,cover in enumerate(covers):
+        end=covers[group+1] if group<3 else solutions[0]
+        part=fitz.open();part.insert_pdf(doc,from_page=cover+1,to_page=end-1)
+        seq=starts(part);assert len(seq)==6
+        subject=norm(doc[cover].get_text()).splitlines()[1]
+        answer_end=solutions[group+1] if group<3 else len(doc)
+        answer_pictures=[base.picture(doc,p,stem,cache) for p in range(solutions[group],answer_end)]
+        for i,(number,pn,y) in enumerate(seq):
+            last=seq[i+1][1] if i<5 else len(part)
+            pictures=[base.picture(doc,p+cover+1,stem,cache) for p in range(pn,last)]
+            assert pictures
+            title=f'{task["year"]}年 特級ボイラー技士 {subject} 問{number}'
+            q=dict(id=stem+f'-q{group*6+number:03}',examId=task['examId'],type='written',year=task['year'],term=task['term'],subject=subject,category='過去問',topic=title,prompt=title+'\n原本画像の該当問題を解答し、公式正答・正答例で自己採点してください。',options=[],answer=None,modelAnswer=f'{subject} 問{number}の公式正答・正答例は解答画像を参照してください。',images=[x[0] for x in pictures],solutionImages=[x[0] for x in answer_pictures],source='安全衛生技術試験協会 公式公表問題・正答例（本人用）',sourceUrl=task['url'],explanation='原本の数式・図表を保持しています。公表当時の法令・制度が前提です。',explanationSource='公式PDFの正答・正答例')
+            rows.append(q);evidence.append(dict(id=q['id'],number=group*6+number,answer=None,images=[x[1] for x in pictures],solutionImages=[x[1] for x in answer_pictures]))
+    return rows,evidence
+
 def prepare(task):
     task={**task,'verificationLabel':('提供元掲載正答表・問題番号・原本画像の画素一致を検査（公論出版の正答、全問目視・理由解説は未実施）' if task.get('kind')=='external' else '公式正答・問題番号・画像を検査。正答印付き資料は印のみ除去した演習画像と原本解答画像を保持（全問目視・理由解説は未実施）')}
     try:
+        if task.get('kind')=='special-boiler':
+            rows,evidence=special_rows(task)
+            task['verificationLabel']='公式問題24問・4科目と正答例画像を照合。原本画像で自己採点（全問目視・理由解説は未実施）'
+            return base.finish(task,rows,evidence,[])
         doc=fitz.open(SRC/task['sourceFile'])
         kind=task.get('kind');answers=table_keys(fitz.open(SRC/task['answerFile']),kind) if kind else keys(doc)
         seq=starts(doc,len(answers) if kind=='fire' else None)
@@ -172,15 +259,22 @@ def main():
         data=(OUT/pack['file']).read_bytes();assert base.ipa.sha(data)==pack['sha256']
         for source in pack['sources']:assert base.ipa.sha((SRC/source['file']).read_bytes())==source['sha256']
         doc=fitz.open(SRC/pack['sourceFile']);ans=fitz.open(SRC/pack['answerFile'])
-        answers=table_keys(ans,pack['kind']) if pack.get('kind') else keys(ans)
-        seq=starts(doc,len(answers) if pack.get('kind')=='fire' else None)
-        assert set(answers)=={n for n,p,y in seq}
+        special=pack.get('kind')=='special-boiler'
+        if special:
+            expected,evidence=special_rows(pack)
+            assert json.loads(data)==expected and pack['questions']==evidence
+            answers={n:None for n in range(1,25)}
+        else:
+            answers=table_keys(ans,pack['kind']) if pack.get('kind') else keys(ans)
+            seq=starts(doc,len(answers) if pack.get('kind')=='fire' else None)
+            assert set(answers)=={n for n,p,y in seq}
         rows=json.loads(data);assert len(rows)==len(pack['questions'])==pack['count']==len(answers)
         seen=set()
         for q,e in zip(rows,pack['questions']):
             assert q['id']==e['id'] and q['answer']==e['answer']==answers[e['number']]
             assert q['examId']==pack['examId'] and q['sourceUrl']==pack['url'] and q['year']==pack['year']
-            assert 0<=q['answer']<len(q['options'])
+            if special:assert q['type']=='written' and q['modelAnswer'] and q['solutionImages']
+            else:assert 0<=q['answer']<len(q['options'])
             for image,record in zip(q['images']+q['solutionImages'],e['images']+e['solutionImages']):
                 assert image['src']=='assets/github-material/'+record['file']
                 if record['file'] in seen:continue
@@ -188,12 +282,13 @@ def main():
                 page=doc[record['page']]
                 if record.get('removedMarks'):
                     copy=fitz.open();copy.insert_pdf(doc,from_page=page.number,to_page=page.number)
-                    assert clean(copy[0])==record['removedMarks'];page=copy[0]
+                    assert clean(copy[0],[r for a,r in extra_marks(page)])==record['removedMarks'];page=copy[0]
                 pix=page.get_pixmap(matrix=fitz.Matrix(1.5,1.5),alpha=False)
                 with Image.open(path) as image:assert image.size==(pix.width,pix.height) and image.convert('RGB').tobytes()==pix.samples,record['file']
         return
     if '--fetch' in sys.argv:return acquire()
-    packs=[prepare(t) for t in json.loads((SRC/'safety-discovery.json').read_bytes())]
+    previous={p['file']:p for p in json.loads((OUT/'safety-report.json').read_bytes())['packs']} if '--retry' in sys.argv else {}
+    packs=[previous[t['file']] if previous.get(t['file'],{}).get('status')=='prepared' else prepare(t) for t in json.loads((SRC/'safety-discovery.json').read_bytes())]
     (OUT/'safety-report.json').write_bytes(base.ipa.encode({'packs':packs}))
     for p in packs:print(p['file'],p['status'],p.get('count',p.get('reason')))
 if __name__=='__main__':main()

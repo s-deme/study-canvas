@@ -1,6 +1,6 @@
 # 問題未登録試験のGitHub調査台帳
 
-集計日：2026-10-07（日本時間）。現在の問題未登録は141試験。未調査・検索未確認は10試験。
+集計日：2026-10-08（日本時間）。現在の問題未登録は110試験。未調査・検索未確認は10試験。
 
 正本は [調査データ](github-exam-search.json)。試験IDごとに検索日・検索語・結果URL・判定を履歴として保存します。この文書は `npm run inventory:exams` で生成します。登録数は [試験管理表](exam-inventory.md) と同じビルドです。
 
@@ -21,10 +21,10 @@
 
 | 状態 | 試験数 |
 | --- | ---: |
-| 検索済み・候補未発見 | 92 |
-| 検索済み・要精査 | 34 |
+| 検索済み・候補未発見 | 66 |
+| 検索済み・要精査 | 33 |
 | 候補あり・本文未確認 | 0 |
-| 既存候補保留 | 5 |
+| 既存候補保留 | 1 |
 | 検索未確認 | 0 |
 | 問題本文確認済み | 0 |
 | 未調査 | 10 |
@@ -48,8 +48,6 @@
 | --- | --- | --- | --- | --- | --- |
 | E資格 | eken | 検索済み・要精査 | 2026-10-07 | site:github.com E資格 practice questions | 検索結果あり。試験・級の一致、設問本文の有無は要精査。 / [結果URL・履歴](github-exam-search.json) |
 | Generative AI Test | jdla-generative | 検索済み・要精査 | 2026-10-07 | site:github.com Generative AI Test practice questions | 検索結果あり。試験・級の一致、設問本文の有無は要精査。 / [結果URL・履歴](github-exam-search.json) |
-| Python 3 エンジニア認定基礎試験 | python-basic | 既存候補保留 | 2026-10-07 | site:github.com Python 3 エンジニア認定基礎試験 practice questions | [確認先](https://github.com/ikuma-hiroyuki/python_engineer_basic_demo) / 固定コミットのjsons内に生成模擬問題の本文・正答あり。教材の収録許諾を確認できないため保留。 / [結果URL・履歴](github-exam-search.json) |
-| Python 3 エンジニア認定実践試験 | python-practical | 検索済み・要精査 | 2026-10-07 | site:github.com Python 3 エンジニア認定実践試験 practice questions | 検索結果あり。試験・級の一致、設問本文の有無は要精査。 / [結果URL・履歴](github-exam-search.json) |
 | Python 3 エンジニア認定データ分析試験 | python-data | 検索済み・要精査 | 2026-10-07 | site:github.com Python 3 エンジニア認定データ分析試験 practice questions | 検索結果あり。試験・級の一致、設問本文の有無は要精査。 / [結果URL・履歴](github-exam-search.json) |
 | Python 3 エンジニア認定データ分析実践試験 | python-data-practical | 検索済み・要精査 | 2026-10-07 | site:github.com Python 3 エンジニア認定データ分析実践試験 practice questions | 検索結果あり。試験・級の一致、設問本文の有無は要精査。 / [結果URL・履歴](github-exam-search.json) |
 | LPIC-2 | lpic2 | 検索済み・要精査 | 2026-10-07 | site:github.com LPIC-2 practice questions | 検索結果あり。試験・級の一致、設問本文の有無は要精査。 / [結果URL・履歴](github-exam-search.json) |
@@ -81,9 +79,6 @@
 | 日商プログラミング検定 EXPERT | nissho-program-expert | 検索済み・候補未発見 | 2026-10-07 | site:github.com "日商プログラミング検定 EXPERT" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
 | 司法試験予備試験 | shiho-yobi | 検索済み・要精査 | 2026-10-07 | site:github.com "司法試験予備試験" 過去問 問題 | 検索結果あり。試験・級の一致、設問本文の有無は要精査。 / [結果URL・履歴](github-exam-search.json) |
 | 司法書士試験 | shihoshoshi | 検索済み・要精査 | 2026-10-07 | site:github.com "司法書士試験" 過去問 問題 | 検索結果あり。試験・級の一致、設問本文の有無は要精査。 / [結果URL・履歴](github-exam-search.json) |
-| 土地家屋調査士試験 | land-surveyor | 既存候補保留 | 2026-10-07 | site:github.com "土地家屋調査士試験" 過去問 問題 | [確認先](https://github.com/ThREE100/chosashi-app) / 固定コミットのsrc/data/takuitsu.jsonに本文データあり（meta.count=413）。教材の収録許諾を確認できないため保留。 / [結果URL・履歴](github-exam-search.json) |
-| 日商簿記1級 | boki1 | 既存候補保留 | 2026-10-07 | 簿記 問題 | GitHub APIで再調査。固定コミットのツリー・本文またはREADMEを保存。独自教材のライセンス未確認のため新規GitHub本文の収録は保留。CPAは参照された公式原本と公式正答を別途取得。 / [結果URL・履歴](github-exam-search.json) |
-| 日商簿記2級 | boki2 | 既存候補保留 | 2026-10-07 | 簿記 問題 | GitHub APIで再調査。固定コミットのツリー・本文またはREADMEを保存。独自教材のライセンス未確認のため新規GitHub本文の収録は保留。CPAは参照された公式原本と公式正答を別途取得。 / [結果URL・履歴](github-exam-search.json) |
 | 日商簿記初級 | boki-basic | 検索済み・候補未発見 | 2026-10-07 | site:github.com "日商簿記初級" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
 | 日商原価計算初級 | cost-basic | 検索済み・要精査 | 2026-10-07 | site:github.com 原価計算 初級 問題 | 検索結果あり。試験・級の一致、設問本文の有無は要精査。 / [結果URL・履歴](github-exam-search.json) |
 | FP技能検定1級 | fp1 | 検索済み・候補未発見 | 2026-10-07 | site:github.com "FP技能検定1級" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
@@ -132,8 +127,6 @@
 | ドイツ語技能検定4級 | german4 | 検索済み・候補未発見 | 2026-10-07 | site:github.com "ドイツ語技能検定4級" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
 | ドイツ語技能検定5級 | german5 | 検索済み・候補未発見 | 2026-10-07 | site:github.com "ドイツ語技能検定5級" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
 | 統計検定準1級 | statistics-pre1 | 検索済み・候補未発見 | 2026-10-07 | site:github.com 統計検定 過去問 / site:github.com 統計検定 問題 pdf | 数学・統計の再検索。公式原本・解答で日本語数学375問、英語数学50問、統計1級20問、DS公式サンプル10問をローカル追加。GitHubの受験記・補助リンク・学習管理実装は過去問データとして採用しない。対象試験の問題全文と公式解答がそろう追加GitHub問題データは検索範囲で未確認。CBTの非公開問題は収録しない。 追記：準2級英語版の別問題25問も公式解答と照合し、合計480問（日本語数学375・英語数学75・統計1級20・DS公式サンプル10）とした。 / [結果URL・履歴](github-exam-search.json) |
-| 統計検定2級 | statistics2 | 検索済み・候補未発見 | 2026-10-07 | site:github.com 統計検定 過去問 / site:github.com 統計検定 問題 pdf | 数学・統計の再検索。公式原本・解答で日本語数学375問、英語数学50問、統計1級20問、DS公式サンプル10問をローカル追加。GitHubの受験記・補助リンク・学習管理実装は過去問データとして採用しない。対象試験の問題全文と公式解答がそろう追加GitHub問題データは検索範囲で未確認。CBTの非公開問題は収録しない。 追記：準2級英語版の別問題25問も公式解答と照合し、合計480問（日本語数学375・英語数学75・統計1級20・DS公式サンプル10）とした。 / [結果URL・履歴](github-exam-search.json) |
-| 統計検定3級 | statistics3 | 検索済み・候補未発見 | 2026-10-07 | site:github.com 統計検定 過去問 / site:github.com 統計検定 問題 pdf | 数学・統計の再検索。公式原本・解答で日本語数学375問、英語数学50問、統計1級20問、DS公式サンプル10問をローカル追加。GitHubの受験記・補助リンク・学習管理実装は過去問データとして採用しない。対象試験の問題全文と公式解答がそろう追加GitHub問題データは検索範囲で未確認。CBTの非公開問題は収録しない。 追記：準2級英語版の別問題25問も公式解答と照合し、合計480問（日本語数学375・英語数学75・統計1級20・DS公式サンプル10）とした。 / [結果URL・履歴](github-exam-search.json) |
 | 統計検定4級 | statistics4 | 検索済み・候補未発見 | 2026-10-07 | site:github.com 統計検定 過去問 / site:github.com 統計検定 問題 pdf | 数学・統計の再検索。公式原本・解答で日本語数学375問、英語数学50問、統計1級20問、DS公式サンプル10問をローカル追加。GitHubの受験記・補助リンク・学習管理実装は過去問データとして採用しない。対象試験の問題全文と公式解答がそろう追加GitHub問題データは検索範囲で未確認。CBTの非公開問題は収録しない。 追記：準2級英語版の別問題25問も公式解答と照合し、合計480問（日本語数学375・英語数学75・統計1級20・DS公式サンプル10）とした。 / [結果URL・履歴](github-exam-search.json) |
 | 統計検定 統計調査士 | statistics-survey | 検索済み・候補未発見 | 2026-10-07 | site:github.com 統計検定 過去問 / site:github.com 統計検定 問題 pdf | 数学・統計の再検索。公式原本・解答で日本語数学375問、英語数学50問、統計1級20問、DS公式サンプル10問をローカル追加。GitHubの受験記・補助リンク・学習管理実装は過去問データとして採用しない。対象試験の問題全文と公式解答がそろう追加GitHub問題データは検索範囲で未確認。CBTの非公開問題は収録しない。 追記：準2級英語版の別問題25問も公式解答と照合し、合計480問（日本語数学375・英語数学75・統計1級20・DS公式サンプル10）とした。 / [結果URL・履歴](github-exam-search.json) |
 | 統計検定 専門統計調査士 | statistics-specialist | 検索済み・候補未発見 | 2026-10-07 | site:github.com 統計検定 過去問 / site:github.com 統計検定 問題 pdf | 数学・統計の再検索。公式原本・解答で日本語数学375問、英語数学50問、統計1級20問、DS公式サンプル10問をローカル追加。GitHubの受験記・補助リンク・学習管理実装は過去問データとして採用しない。対象試験の問題全文と公式解答がそろう追加GitHub問題データは検索範囲で未確認。CBTの非公開問題は収録しない。 追記：準2級英語版の別問題25問も公式解答と照合し、合計480問（日本語数学375・英語数学75・統計1級20・DS公式サンプル10）とした。 / [結果URL・履歴](github-exam-search.json) |
@@ -141,35 +134,11 @@
 | 第三級アマチュア無線技士 | radio-amateur3 | 検索済み・候補未発見 | 2026-10-07 | site:github.com "第三級アマチュア無線技士" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
 | 第四級アマチュア無線技士 | radio-amateur4 | 検索済み・候補未発見 | 2026-10-07 | site:github.com "第四級アマチュア無線技士" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
 | 賃貸不動産経営管理士 | rental-manager | 検索済み・候補未発見 | 2026-10-07 | site:github.com "賃貸不動産経営管理士" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
-| 危険物取扱者 甲種 | hazmat-a | 検索済み・候補未発見 | 2026-10-07 | site:github.com "危険物取扱者 甲種" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
-| 危険物取扱者 乙種第1類 | hazmat-b1 | 検索済み・候補未発見 | 2026-10-07 | site:github.com "危険物取扱者 乙種第1類" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
-| 危険物取扱者 乙種第2類 | hazmat-b2 | 検索済み・候補未発見 | 2026-10-07 | site:github.com "危険物取扱者 乙種第2類" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
-| 危険物取扱者 乙種第3類 | hazmat-b3 | 検索済み・候補未発見 | 2026-10-07 | site:github.com "危険物取扱者 乙種第3類" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
-| 危険物取扱者 乙種第5類 | hazmat-b5 | 検索済み・候補未発見 | 2026-10-07 | site:github.com "危険物取扱者 乙種第5類" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
-| 危険物取扱者 乙種第6類 | hazmat-b6 | 検索済み・候補未発見 | 2026-10-07 | site:github.com "危険物取扱者 乙種第6類" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
-| 消防設備士 甲種特類 | fire-a-special | 検索済み・候補未発見 | 2026-10-07 | site:github.com "消防設備士 甲種特類" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
-| 消防設備士 甲種第1類 | fire-a1 | 検索済み・候補未発見 | 2026-10-07 | site:github.com "消防設備士 甲種第1類" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
-| 消防設備士 甲種第2類 | fire-a2 | 検索済み・候補未発見 | 2026-10-07 | site:github.com "消防設備士 甲種第2類" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
-| 消防設備士 甲種第3類 | fire-a3 | 検索済み・候補未発見 | 2026-10-07 | site:github.com "消防設備士 甲種第3類" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
-| 消防設備士 甲種第4類 | fire-a4 | 検索済み・候補未発見 | 2026-10-07 | site:github.com "消防設備士 甲種第4類" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
-| 消防設備士 甲種第5類 | fire-a5 | 検索済み・候補未発見 | 2026-10-07 | site:github.com "消防設備士 甲種第5類" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
-| 消防設備士 乙種第1類 | fire-b1 | 検索済み・候補未発見 | 2026-10-07 | site:github.com "消防設備士 乙種第1類" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
-| 消防設備士 乙種第2類 | fire-b2 | 検索済み・候補未発見 | 2026-10-07 | site:github.com "消防設備士 乙種第2類" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
-| 消防設備士 乙種第3類 | fire-b3 | 検索済み・候補未発見 | 2026-10-07 | site:github.com "消防設備士 乙種第3類" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
-| 消防設備士 乙種第4類 | fire-b4 | 検索済み・候補未発見 | 2026-10-07 | site:github.com "消防設備士 乙種第4類" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
-| 消防設備士 乙種第5類 | fire-b5 | 検索済み・候補未発見 | 2026-10-07 | site:github.com "消防設備士 乙種第5類" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
-| 消防設備士 乙種第6類 | fire-b6 | 検索済み・候補未発見 | 2026-10-07 | site:github.com "消防設備士 乙種第6類" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
-| 消防設備士 乙種第7類 | fire-b7 | 検索済み・候補未発見 | 2026-10-07 | site:github.com "消防設備士 乙種第7類" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
-| 特級ボイラー技士 | boiler-special | 検索済み・候補未発見 | 2026-10-07 | site:github.com "特級ボイラー技士" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
-| クレーン・デリック運転士（限定なし） | crane-derrick | 検索済み・候補未発見 | 2026-10-07 | site:github.com "クレーン・デリック運転士（限定なし）" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
-| 第一種作業環境測定士 | work-environment1 | 検索済み・候補未発見 | 2026-10-07 | site:github.com "第一種作業環境測定士" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
-| 第二種作業環境測定士 | work-environment2 | 検索済み・候補未発見 | 2026-10-07 | site:github.com "第二種作業環境測定士" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
 | 言語聴覚士国家試験 | speech-therapist | 検索済み・候補未発見 | 2026-10-07 | site:github.com "言語聴覚士国家試験" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
 | 歯科衛生士国家試験 | dental-hygienist | 検索済み・候補未発見 | 2026-10-07 | site:github.com "歯科衛生士国家試験" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
 | 歯科技工士国家試験 | dental-technician | 検索済み・候補未発見 | 2026-10-07 | site:github.com "歯科技工士国家試験" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
 | 救急救命士国家試験 | emergency-tech | 検索済み・候補未発見 | 2026-10-07 | site:github.com "救急救命士国家試験" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
 | 公認心理師試験 | psychologist | 検索済み・候補未発見 | 2026-10-07 | site:github.com "公認心理師試験" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
-| 登録販売者試験 | drug-seller | 検索済み・候補未発見 | 2026-10-07 | site:github.com "登録販売者試験" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
 | 食生活アドバイザー2級 | food-advisor2 | 検索済み・候補未発見 | 2026-10-07 | site:github.com "食生活アドバイザー2級" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
 | 食生活アドバイザー3級 | food-advisor3 | 検索済み・候補未発見 | 2026-10-07 | site:github.com "食生活アドバイザー3級" 過去問 問題 | 一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。 / [結果URL・履歴](github-exam-search.json) |
 | 色彩検定1級 | color1 | 検索済み・要精査 | 2026-10-07 | site:github.com "色彩検定1級" 過去問 問題 | 検索結果あり。試験・級の一致、設問本文の有無は要精査。 / [結果URL・履歴](github-exam-search.json) |

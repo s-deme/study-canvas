@@ -143,6 +143,29 @@
           ],
           "source": "https://github.com/ikuma-hiroyuki/python_engineer_basic_demo",
           "note": "固定コミットのjsons内に生成模擬問題の本文・正答あり。教材の収録許諾を確認できないため保留。"
+        },
+        {
+          "date": "2026-10-07",
+          "status": "confirmed",
+          "queries": [
+            "site:github.com Python 3 エンジニア認定基礎試験 practice questions"
+          ],
+          "results": [
+            "https://github.com/ikuma-hiroyuki/python_engineer_basic_demo",
+            "https://github.com/kenchiman/Resume",
+            "https://github.com/Lily0727K",
+            "https://github.com/jeronimoagullo/Python-Certification-toolkit-PCEP-PCAP-PCPP",
+            "https://github.com/wakuwakustudyworld/fe-kamokuB",
+            "https://github.com/gaku-devlog/gaku-devlog",
+            "https://github.com/dark-teal-coder/gitbook-PCEP-30-02-practice-test-compendium",
+            "https://github.com/ymd65536",
+            "https://github.com/yiskw713",
+            "https://gist.github.com/maehrm/48ec974a34f0380db3479633473b4748",
+            "https://gist.github.com/yutachaos/a335d50e5e5697e11340018129ec62f4",
+            "https://github.com/aszx87410/blog/issues/136"
+          ],
+          "source": "https://github.com/ikuma-hiroyuki/python_engineer_basic_demo",
+          "note": "生成模擬問題を本人用ローカル教材へ取り込み。公式問題とは扱わず、正答・解説は未検証。"
         }
       ]
     },
@@ -858,6 +881,17 @@
             "https://github.com/xinyue119-code/boki1-cards"
           ],
           "note": "GitHub APIで再調査。固定コミットのツリー・本文またはREADMEを保存。独自教材のライセンス未確認のため新規GitHub本文の収録は保留。CPAは参照された公式原本と公式正答を別途取得。"
+        },
+        {
+          "date": "2026-10-07",
+          "status": "confirmed",
+          "queries": [
+            "簿記 問題"
+          ],
+          "results": [
+            "https://github.com/xinyue119-code/boki1-cards"
+          ],
+          "note": "理論カードとExcelの章別演習・用語を本人用ローカル教材へ取り込み。公式問題ではなく内容未検証。"
         }
       ]
     },
@@ -888,6 +922,30 @@
             "https://github.com/morikagesho/boki-quise"
           ],
           "note": "GitHub APIで再調査。固定コミットのツリー・本文またはREADMEを保存。独自教材のライセンス未確認のため新規GitHub本文の収録は保留。CPAは参照された公式原本と公式正答を別途取得。"
+        },
+        {
+          "date": "2026-10-07",
+          "status": "confirmed",
+          "queries": [
+            "簿記 問題"
+          ],
+          "results": [
+            "https://github.com/nktkt/bookkeeping-practice",
+            "https://github.com/morikagesho/boki-quise"
+          ],
+          "note": "Excelの章別演習・用語を本人用ローカル教材へ取り込み。READMEのみの候補は問題実体なし。"
+        },
+        {
+          "date": "2026-10-08",
+          "status": "confirmed",
+          "queries": ["簿記2級", "boki license:mit", "簿記 license:mit", "簿記 license:cc0-1.0"],
+          "results": [
+            "https://github.com/xxarupakaxx/boki-studio",
+            "https://github.com/kazenari99/boki",
+            "https://github.com/Tpaefawzen/solve-boki",
+            "https://github.com/aztechaz357/project-gain"
+          ],
+          "note": "既存の収録は保持。追加調査したライセンス付き4候補は、問題実体なし・計算補助ツール・導入教材のため2級の新規問題として未採用。公式・非公式サイトも調査し、今回は独自作成221問を追加。詳細は docs/boki2-expansion.md、取得資料は private-data/boki2-expansion/。"
         }
       ]
     },
@@ -1140,6 +1198,18 @@
           ],
           "source": "https://github.com/ThREE100/chosashi-app",
           "note": "固定コミットのsrc/data/takuitsu.jsonに本文データあり（meta.count=413）。教材の収録許諾を確認できないため保留。"
+        },
+        {
+          "date": "2026-10-07",
+          "status": "confirmed",
+          "queries": [
+            "site:github.com \"土地家屋調査士試験\" 過去問 問題"
+          ],
+          "results": [
+            "https://github.com/takahashim/trc_opendata/blob/master/docs/TRCOpenBibData_20171125.txt"
+          ],
+          "source": "https://github.com/ThREE100/chosashi-app",
+          "note": "択一・暗記・用語・図版付き記述を本人用ローカル教材へ取り込み。不備・矛盾・図版欠落は理由を記録して除外。"
         }
       ]
     },
@@ -2885,6 +2955,18 @@
             "https://github.com/kou-sato-ds/stat-learning-data-pipeline"
           ],
           "note": "数学・統計の再検索。公式原本・解答で日本語数学375問、英語数学50問、統計1級20問、DS公式サンプル10問をローカル追加。GitHubの受験記・補助リンク・学習管理実装は過去問データとして採用しない。対象試験の問題全文と公式解答がそろう追加GitHub問題データは検索範囲で未確認。CBTの非公開問題は収録しない。 追記：準2級英語版の別問題25問も公式解答と照合し、合計480問（日本語数学375・英語数学75・統計1級20・DS公式サンプル10）とした。"
+        },
+        {
+          "date": "2026-10-08",
+          "status": "review",
+          "queries": [
+            "GitHub repositories API: 登録販売者 / 消防設備士 / 電気工事士 問題 / 統計検定; Web: 基本情報 GitHub 問題集"
+          ],
+          "results": [
+            "https://github.com/sw1227/stat-exam",
+            "https://github.com/yunozon/statistics_test_2"
+          ],
+          "note": "ユーザーの外部問題追加・再調査依頼による。固定コミット、収録・除外理由、範囲の不足はexpanded-question-import.md。統計ノートは問題集として追加せず。公式正答の全件独立照合は未実施。"
         }
       ]
     },
@@ -2930,6 +3012,18 @@
             "https://github.com/kou-sato-ds/stat-learning-data-pipeline"
           ],
           "note": "数学・統計の再検索。公式原本・解答で日本語数学375問、英語数学50問、統計1級20問、DS公式サンプル10問をローカル追加。GitHubの受験記・補助リンク・学習管理実装は過去問データとして採用しない。対象試験の問題全文と公式解答がそろう追加GitHub問題データは検索範囲で未確認。CBTの非公開問題は収録しない。 追記：準2級英語版の別問題25問も公式解答と照合し、合計480問（日本語数学375・英語数学75・統計1級20・DS公式サンプル10）とした。"
+        },
+        {
+          "date": "2026-10-08",
+          "status": "review",
+          "queries": [
+            "GitHub repositories API: 登録販売者 / 消防設備士 / 電気工事士 問題 / 統計検定; Web: 基本情報 GitHub 問題集"
+          ],
+          "results": [
+            "https://github.com/sw1227/stat-exam",
+            "https://github.com/yunozon/statistics_test_2"
+          ],
+          "note": "ユーザーの外部問題追加・再調査依頼による。固定コミット、収録・除外理由、範囲の不足はexpanded-question-import.md。統計ノートは問題集として追加せず。公式正答の全件独立照合は未実施。"
         }
       ]
     },
@@ -3493,6 +3587,13 @@
             "https://gist.github.com/erfolg1218/57a9a11d952d62730ff8bb057646acba"
           ],
           "note": "検索結果あり。試験・級の一致、設問本文の有無は要精査。"
+        },
+        {
+          "date": "2026-10-08",
+          "status": "review",
+          "queries": ["GitHub repositories API: denken (per_page=100)"],
+          "results": ["https://github.com/yamkenic/denken1-app"],
+          "note": "明示的な増量依頼で再調査。公式未収録1382問を追加。GitHub候補は公式との重複・本文不足のため追加なし。denken-import.md参照。"
         }
       ]
     },
@@ -3511,8 +3612,25 @@
             "https://gist.github.com/erfolg1218/57a9a11d952d62730ff8bb057646acba"
           ],
           "note": "検索結果あり。試験・級の一致、設問本文の有無は要精査。"
+        },
+        {
+          "date": "2026-10-08",
+          "status": "confirmed",
+          "queries": ["GitHub repositories API: denken (per_page=100)"],
+          "results": ["https://github.com/nemi2nd-dot/denken2-app", "https://github.com/5garashi/denken2"],
+          "note": "明示的な増量依頼で再調査。公開練習1082問、公式未収録1720問を追加。内容検証範囲・除外理由はdenken-import.md参照。"
         }
       ]
+    },
+    {
+      "examId": "denken3",
+      "history": [{
+        "date": "2026-10-08",
+        "status": "confirmed",
+        "queries": ["GitHub repositories API: denken (per_page=100)"],
+        "results": ["https://github.com/nakasyo3519/denken3all", "https://github.com/ayatonikuman/denken3"],
+        "note": "明示的な増量依頼で再調査。公式未収録1119問、2008年度GitHub教材13問を追加。内容検証範囲・除外理由はdenken-import.md参照。"
+      }]
     },
     {
       "examId": "telecom-transmission",
@@ -4130,6 +4248,18 @@
             "https://gist.github.com/itsuki-hayashi/996fdfeec58bad7f0e71aed15ea16e09"
           ],
           "note": "一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。"
+        },
+        {
+          "date": "2026-10-07",
+          "status": "confirmed",
+          "queries": [
+            "GitHub repository search: 危険物",
+            "GitHub repository search: otsu1"
+          ],
+          "results": [
+            "https://github.com/hutatumekozou/kikenbutu-otsu1syu"
+          ],
+          "note": "ユーザー指定で予想・練習問題も調査。本文・選択肢・提供元正答を確認し本人用登録。公式過去問・内容の独立検証済みとは扱わない。hazmat-import.md参照。"
         }
       ]
     },
@@ -4147,6 +4277,29 @@
             "https://gist.github.com/itsuki-hayashi/996fdfeec58bad7f0e71aed15ea16e09"
           ],
           "note": "一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。"
+        },
+        {
+          "date": "2026-10-07",
+          "status": "review",
+          "queries": [
+            "GitHub repository search: 危険物"
+          ],
+          "results": [
+            "https://github.com/akiina999/otsu2-training"
+          ],
+          "note": "READMEと問題JS一覧で乙2の独自問題候補を確認。利用許諾・全問正答は未確認。詳細 hazmat-import.md。"
+        },
+        {
+          "date": "2026-10-07",
+          "status": "confirmed",
+          "queries": [
+            "GitHub repository search: 危険物",
+            "GitHub repository search: otsu2"
+          ],
+          "results": [
+            "https://github.com/akiina999/otsu2-training"
+          ],
+          "note": "ユーザー指定で予想・練習問題も調査。本文・選択肢・提供元正答を確認し本人用登録。公式過去問・内容の独立検証済みとは扱わない。hazmat-import.md参照。"
         }
       ]
     },
@@ -4164,6 +4317,18 @@
             "https://gist.github.com/itsuki-hayashi/996fdfeec58bad7f0e71aed15ea16e09"
           ],
           "note": "一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。"
+        },
+        {
+          "date": "2026-10-07",
+          "status": "confirmed",
+          "queries": [
+            "GitHub repository search: 危険物",
+            "GitHub repository search: otsu3"
+          ],
+          "results": [
+            "https://github.com/tetsu0950120/otsu3"
+          ],
+          "note": "ユーザー指定で予想・練習問題も調査。本文・選択肢・提供元正答を確認し本人用登録。公式過去問・内容の独立検証済みとは扱わない。hazmat-import.md参照。"
         }
       ]
     },
@@ -4180,6 +4345,29 @@
             "https://github.com/game-soft/nintendo-ds"
           ],
           "note": "一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。"
+        },
+        {
+          "date": "2026-10-07",
+          "status": "review",
+          "queries": [
+            "GitHub repository search: 危険物"
+          ],
+          "results": [
+            "https://github.com/M-HMMY/kikenbutsu_otsu4_exam_app"
+          ],
+          "note": "READMEに確認問題105問の記載、問題ファイル一覧を確認。利用許諾・全問正答は未確認。詳細 hazmat-import.md。"
+        },
+        {
+          "date": "2026-10-07",
+          "status": "confirmed",
+          "queries": [
+            "GitHub repository search: 危険物",
+            "GitHub repository search: otsu4"
+          ],
+          "results": [
+            "https://github.com/M-HMMY/kikenbutsu_otsu4_exam_app"
+          ],
+          "note": "ユーザー指定で予想・練習問題も調査。本文・選択肢・提供元正答を確認し本人用登録。公式過去問・内容の独立検証済みとは扱わない。hazmat-import.md参照。"
         }
       ]
     },
@@ -4194,6 +4382,18 @@
           ],
           "results": [],
           "note": "一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。"
+        },
+        {
+          "date": "2026-10-07",
+          "status": "confirmed",
+          "queries": [
+            "GitHub repository search: 危険物",
+            "GitHub repository search: otsu5"
+          ],
+          "results": [
+            "https://github.com/tetsu0950120/otsu5"
+          ],
+          "note": "ユーザー指定で予想・練習問題も調査。本文・選択肢・提供元正答を確認し本人用登録。公式過去問・内容の独立検証済みとは扱わない。hazmat-import.md参照。"
         }
       ]
     },
@@ -4222,6 +4422,20 @@
           ],
           "results": [],
           "note": "一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。"
+        },
+        {
+          "date": "2026-10-08",
+          "status": "held",
+          "queries": [
+            "GitHub API: 消防設備士",
+            "GitHub API: shobo quiz",
+            "GitHub API: otsu6",
+            "GitHub API: 消防設備士 in:readme"
+          ],
+          "results": [
+            "https://github.com/m3tk0616-lab/shobo-tokurui-quiz"
+          ],
+          "note": "固定コミットの15問を確認。冒頭の正答説明・参照条文に疑義があり保留。"
         }
       ]
     },
@@ -4238,6 +4452,21 @@
             "https://gist.github.com/itsuki-hayashi/996fdfeec58bad7f0e71aed15ea16e09"
           ],
           "note": "一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。"
+        },
+        {
+          "date": "2026-10-08",
+          "status": "confirmed",
+          "queries": [
+            "GitHub API: 消防設備士",
+            "GitHub API: shobo quiz",
+            "GitHub API: otsu6",
+            "GitHub API: 消防設備士 in:readme"
+          ],
+          "results": [
+            "https://github.com/terukatsu58-hash/Shobo-quiz",
+            "https://github.com/altxxxtla-lab/shoubou-setsubishi-drill"
+          ],
+          "note": "固定コミットの問題・正答を確認しローカル教材へ変換。詳細はdocs/fire-import.md。正答の専門的検証は未実施。"
         }
       ]
     },
@@ -4284,6 +4513,21 @@
           ],
           "results": [],
           "note": "一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。"
+        },
+        {
+          "date": "2026-10-08",
+          "status": "confirmed",
+          "queries": [
+            "GitHub API: 消防設備士",
+            "GitHub API: shobo quiz",
+            "GitHub API: otsu6",
+            "GitHub API: 消防設備士 in:readme"
+          ],
+          "results": [
+            "https://github.com/hkosu813-ux/shobo-quiz",
+            "https://github.com/altxxxtla-lab/shoubou-setsubishi-drill"
+          ],
+          "note": "固定コミットの問題・正答を確認しローカル教材へ変換。詳細はdocs/fire-import.md。正答の専門的検証は未実施。"
         }
       ]
     },
@@ -4360,6 +4604,17 @@
           ],
           "results": [],
           "note": "一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。"
+        },
+        {
+          "date": "2026-10-08",
+          "status": "confirmed",
+          "queries": [
+            "GitHub repositories API: 登録販売者 / 消防設備士 / 電気工事士 問題 / 統計検定; Web: 基本情報 GitHub 問題集"
+          ],
+          "results": [
+            "https://github.com/kazuyan1004-a11y/fire-quiz-app"
+          ],
+          "note": "ユーザーの外部問題追加・再調査依頼による。固定コミット、収録・除外理由、範囲の不足はexpanded-question-import.md。統計ノートは問題集として追加せず。公式正答の全件独立照合は未実施。"
         }
       ]
     },
@@ -4388,6 +4643,37 @@
           ],
           "results": [],
           "note": "一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。"
+        },
+        {
+          "date": "2026-10-08",
+          "status": "confirmed",
+          "queries": [
+            "GitHub repositories API: 登録販売者 / 消防設備士 / 電気工事士 問題 / 統計検定; Web: 基本情報 GitHub 問題集"
+          ],
+          "results": [
+            "https://github.com/ot6-shibainu/ot6-shibainu-pwa",
+            "https://github.com/shinki5301-art/-6",
+            "https://github.com/kids-jobai28/shoubou-quiz"
+          ],
+          "note": "ユーザーの外部問題追加・再調査依頼による。固定コミット、収録・除外理由、範囲の不足はexpanded-question-import.md。統計ノートは問題集として追加せず。公式正答の全件独立照合は未実施。"
+        },
+        {
+          "date": "2026-10-08",
+          "status": "confirmed",
+          "queries": [
+            "GitHub API: 消防設備士",
+            "GitHub API: shobo quiz",
+            "GitHub API: otsu6",
+            "GitHub API: 消防設備士 in:readme"
+          ],
+          "results": [
+            "https://github.com/shinki5301-art/-6",
+            "https://github.com/mitsugeek/shoubo-shiken",
+            "https://github.com/jiagyebo19891011/shoubou-otsu6",
+            "https://github.com/yousukeee/otsu6-cards",
+            "https://github.com/altxxxtla-lab/shoubou-setsubishi-drill"
+          ],
+          "note": "固定コミットの問題・正答を確認しローカル教材へ変換。詳細はdocs/fire-import.md。正答の専門的検証は未実施。"
         }
       ]
     },
@@ -4824,6 +5110,18 @@
           ],
           "results": [],
           "note": "一次検索範囲で問題候補未発見。検索結果なし、または書誌・資格一覧等のみ。"
+        },
+        {
+          "date": "2026-10-08",
+          "status": "confirmed",
+          "queries": [
+            "GitHub repositories API: 登録販売者 / 消防設備士 / 電気工事士 問題 / 統計検定; Web: 基本情報 GitHub 問題集"
+          ],
+          "results": [
+            "https://github.com/AzFukami/Touhan-Quiz",
+            "https://github.com/nozawa-nine/registered-salesperson-quiz"
+          ],
+          "note": "ユーザーの外部問題追加・再調査依頼による。固定コミット、収録・除外理由、範囲の不足はexpanded-question-import.md。統計ノートは問題集として追加せず。公式正答の全件独立照合は未実施。"
         }
       ]
     },
@@ -5438,6 +5736,54 @@
             "https://github.com/iKora128/nmle-rta"
           ],
           "note": "2025年医師試験の別候補を発見。今回の追加は公式原本とJMed48kを優先。候補の独立した正答検証・重複照合・取り込みは未実施。固定コミット情報はローカル取得記録に保存。"
+        }
+      ]
+    },
+    {
+      "examId": "fe",
+      "history": [
+        {
+          "date": "2026-10-08",
+          "status": "confirmed",
+          "queries": [
+            "GitHub repositories API: 登録販売者 / 消防設備士 / 電気工事士 問題 / 統計検定; Web: 基本情報 GitHub 問題集"
+          ],
+          "results": [
+            "https://github.com/kosukekkk-ops/fe-master-app"
+          ],
+          "note": "ユーザーの外部問題追加・再調査依頼による。固定コミット、収録・除外理由、範囲の不足はexpanded-question-import.md。統計ノートは問題集として追加せず。公式正答の全件独立照合は未実施。"
+        }
+      ]
+    },
+    {
+      "examId": "electrician1",
+      "history": [
+        {
+          "date": "2026-10-08",
+          "status": "confirmed",
+          "queries": [
+            "GitHub repositories API: 登録販売者 / 消防設備士 / 電気工事士 問題 / 統計検定; Web: 基本情報 GitHub 問題集"
+          ],
+          "results": [
+            "https://github.com/onokumao-png/gokaku-denki-quiz"
+          ],
+          "note": "ユーザーの外部問題追加・再調査依頼による。固定コミット、収録・除外理由、範囲の不足はexpanded-question-import.md。統計ノートは問題集として追加せず。公式正答の全件独立照合は未実施。"
+        }
+      ]
+    },
+    {
+      "examId": "electrician2",
+      "history": [
+        {
+          "date": "2026-10-08",
+          "status": "confirmed",
+          "queries": [
+            "GitHub repositories API: 登録販売者 / 消防設備士 / 電気工事士 問題 / 統計検定; Web: 基本情報 GitHub 問題集"
+          ],
+          "results": [
+            "https://github.com/onokumao-png/gokaku-denki-quiz"
+          ],
+          "note": "ユーザーの外部問題追加・再調査依頼による。固定コミット、収録・除外理由、範囲の不足はexpanded-question-import.md。統計ノートは問題集として追加せず。公式正答の全件独立照合は未実施。"
         }
       ]
     }

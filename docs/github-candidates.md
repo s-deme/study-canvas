@@ -1,5 +1,27 @@
 # GitHubにある試験問題の候補一覧
 
+2026-10-08追記：電気主任技術者の明示的な増量依頼により再調査。公式原本の追加4,221問と、下記GitHub教材1,095問の詳細は [電験追加記録](denken-import.md) を参照してください。
+
+| 試験 | 固定したGitHub取得元 | 今回追加 |
+| --- | --- | ---: |
+| 電験二種 | [nemi2nd-dot/denken2-app](https://github.com/nemi2nd-dot/denken2-app/tree/319fb379e2c5ebed4d85347188d1d71972ce89bf) | 962 |
+| 電験二種 | [5garashi/denken2](https://github.com/5garashi/denken2/tree/a980ad6bb134ce68bc674f59d3e27278e26a6c94) | 120 |
+| 電験三種 | [nakasyo3519/denken3all](https://github.com/nakasyo3519/denken3all/tree/bdeb66077002b6635b4a9832c0a5a0ac60b45a06) | 13 |
+| 電験一種 | [yamkenic/denken1-app](https://github.com/yamkenic/denken1-app/tree/ed75c7df87a015749e26ed1097027f7c469c199e) | 0（公式との重複・本文不足） |
+| 電験三種 | [ayatonikuman/denken3](https://github.com/ayatonikuman/denken3/tree/5d8b310e5aca86b5b7fc1910fb68fc865b218696) | 0（学習予定表） |
+
+2026-10-08追記：明示的な再調査依頼を受け、新たな6取得元を確認し、5取得元から3,420問をローカル登録。[追加範囲・固定コミット・除外理由](expanded-question-import.md)を参照してください。
+
+2026-10-07追記：危険物乙種の非公式練習問題を本人用に追加。取得時のコミットは以下に固定し、[登録・検証記録](hazmat-import.md)に詳細を記録します。
+
+| 試験 | GitHub取得元 | 重複除外後の登録数 |
+| --- | --- | ---: |
+| 乙1 | [hutatumekozou/kikenbutu-otsu1syu](https://github.com/hutatumekozou/kikenbutu-otsu1syu/tree/ce5908b5c7a50a3d26f28325b5f7cd4dd810a5b2) | 100 |
+| 乙2 | [akiina999/otsu2-training](https://github.com/akiina999/otsu2-training/tree/d8232fba101f81c2c6c59c1f4dcb35dcf79f6ea4) | 149 |
+| 乙3 | [tetsu0950120/otsu3](https://github.com/tetsu0950120/otsu3/tree/15cfc691dd80552e361ba9e01c6561a6e24f1308) | 151 |
+| 乙4 | [M-HMMY/kikenbutsu_otsu4_exam_app](https://github.com/M-HMMY/kikenbutsu_otsu4_exam_app/tree/ab91eba24067500362f36d524a76d73cd789e978) | 105 |
+| 乙5 | [tetsu0950120/otsu5](https://github.com/tetsu0950120/otsu5/tree/b4cd732e0a20539817973c6db53c405e2e25fa1d) | 101 |
+
 試験ごとの検索済み・候補未発見・要精査の管理は [GitHub調査台帳](github-exam-search.md) を参照します。次回の検索は台帳の未調査だけを対象にし、候補未発見を再検索しません。
 
 このページは調査時点の記録です。現在の取得元別の収録状況は [取り込み状況](import-status.md)、実施時点の非収録理由・検証範囲は [取り込み記録](github-import-results.md) を参照してください。
@@ -75,6 +97,17 @@
 - [stueja/lpic-1-102-500-anki-flashcards](https://github.com/stueja/lpic-1-102-500-anki-flashcards/tree/7555455260bea19447b485e235db5eddcfd9febb)：LPIC-1試験102、deck.json。
 - [MCCMDave/linux-essentials-quiz](https://github.com/MCCMDave/linux-essentials-quiz/tree/0bb38557635cb1443037cac8e9a202b98f5d6116)：Linux Essentials、fragen.json。
 - [CarbonRaven/AWS-Quiz-SAA-C03](https://github.com/CarbonRaven/AWS-Quiz-SAA-C03/tree/cb847d5ab9733fa6663385a9a1adbcda98e6f590)：AWS SAA-C03、questions/。
+
+## 予想・練習問題の追加対象（2026-10-07）
+
+公式限定を解除したユーザー指定により、以下も本人用ローカル教材の対象とします。再配布許諾と内容の正しさは未確認です。結果は [追加記録](practice-import.md) を参照してください。
+
+- [furumix2000/fp3-quiz-app](https://github.com/furumix2000/fp3-quiz-app/tree/4afe9ffd8c1679c44280df92f702dfdc5f3dee30)
+- [morikagesho/boki-quise](https://github.com/morikagesho/boki-quise/tree/2b150e35d6ca06dc9d52ffcc453f93ce4160474e)
+- [nktkt/bookkeeping-practice](https://github.com/nktkt/bookkeeping-practice/tree/bb3d86cd0ed719c3bb6983195c39a07624db57a1)
+- [renatusauctor/cpa-tantou-kakomon-drill](https://github.com/renatusauctor/cpa-tantou-kakomon-drill/tree/874d1a2375858e1fe4751a797f48cd35e2e7f6bd)
+- [ronodera662/fp-study-app](https://github.com/ronodera662/fp-study-app/tree/286b44a07e8bb4fd157c6fd9014c017582a6e10f)
+- [xinyue119-code/boki1-cards](https://github.com/xinyue119-code/boki1-cards/tree/baf15ba88a0526fd2f82c64e70b99a9898de81e7)
 
 ## 既存の取得元
 

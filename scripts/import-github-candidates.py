@@ -45,10 +45,11 @@ def main():
             for item in row.get('tree', []):
                 path = item['path']; lower = path.lower()
                 if item['type'] != 'blob' or item.get('size', 0) > 25 * 1024 * 1024: continue
+                if row['repo'].lower() == 'renatusauctor/cpa-tantou-kakomon-drill' and path not in ('index.html', 'checklist.html'): continue
                 if any(s in lower for s in ('node_modules/', 'vendor/', 'package-lock', 'yarn.lock', '.claude/', 'bootstrap', 'jquery', '__pycache__')): continue
                 if row['repo'] == 'oga3999/kokushi' and not (lower.endswith(('.sql', '.csv', '.json', '.db')) or lower == 'index.html'): continue
                 if row['repo'] == 'kyuuki/kanken-rails' and not (lower.startswith('db/') or lower == 'readme.md'): continue
-                if lower.endswith(('.json', '.jsonl', '.csv', '.xlsx', '.db', '.sqlite', '.html', '.js', '.mjs', '.ts', '.tsx', '.py', '.txt', '.sql', '.pdf', '.png', '.jpg', '.jpeg', '.webp')) or 'license' in lower or lower.endswith('readme.md'):
+                if lower.endswith(('.json', '.jsonl', '.csv', '.xlsx', '.db', '.sqlite', '.html', '.js', '.mjs', '.ts', '.tsx', '.py', '.txt', '.sql', '.pdf', '.png', '.jpg', '.jpeg', '.webp', '.svg', '.swift')) or 'license' in lower or lower.endswith('readme.md'):
                     local_path = 'case-distinct/' + item['sha'] + '/' + path if path.casefold() in collisions else path
                     tasks.append((row, path, item['sha'], local_path))
         def save(task):

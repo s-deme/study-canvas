@@ -11,6 +11,10 @@ literal = importlib.util.module_from_spec(spec); spec.loader.exec_module(literal
 sha = lambda data: hashlib.sha256(data).hexdigest()
 encode = lambda data: (json.dumps(data, ensure_ascii=False, indent=2) + '\n').encode('utf-8')
 NOTICE = 'GitHub提供元の教材。公式原本との一致・正答・解説は未検証。取得時点の内容で、法改正等への対応は未確認。'
+LOCAL_ONLY_REPOS = {'akiina999/otsu2-training', 'M-HMMY/kikenbutsu_otsu4_exam_app', 'tetsu0950120/otsu3', 'tetsu0950120/otsu5', 'hutatumekozou/kikenbutu-otsu1syu'}
+LOCAL_ONLY_REPOS.update({'ikuma-hiroyuki/python_engineer_basic_demo', 'ThREE100/chosashi-app',
+                        'ronodera662/fp-study-app', 'furumix2000/fp3-quiz-app',
+                        'xinyue119-code/boki1-cards', 'nktkt/bookkeeping-practice'})
 
 def fingerprint(q):
     value = '\n'.join([q['prompt'], q.get('passage', ''), *q.get('options', [])])
@@ -32,6 +36,7 @@ def main():
     seen = {q['examId'] + '|' + fingerprint(q): {'examId': q['examId'], 'id': q['id']} for q in existing}
     packs, results, excluded = [], [], []
     custom_exams = [{'id': 'github-fire-common', 'name': '消防設備士向け共通対策教材（GitHub）', 'field': '安全・消防・設備', 'subjects': [], 'categories': []},
+                    {'id': 'github-food-safety', 'name': '食品安全の対策教材（GitHub・資格対応未確定）', 'field': '食品・生活', 'subjects': [], 'categories': []},
                     {'id': 'sme-consultant', 'name': '中小企業診断士試験', 'field': '経営・事務・販売', 'subjects': [], 'categories': []}]
 
     for repo_row in inventory:
@@ -55,6 +60,12 @@ def main():
 
         def reject(identity, reason):
             reasons[reason] += 1; excluded.append({'repo': repo, 'identity': str(identity), 'reason': reason})
+
+        def image_asset(file):
+            original = path_file(file); raw = original.read_bytes()
+            name = sha(raw) + original.suffix.lower()
+            (OUT / 'assets').mkdir(exist_ok=True); (OUT / 'assets' / name).write_bytes(raw)
+            return {'src': 'assets/github-candidates/' + name, 'alt': '提供元の問題・解答図版'}
 
         def emit(exam, identity, file, prompt, options=None, answer=None, model=None, **meta):
             identity = str(identity)
@@ -88,6 +99,8 @@ def main():
         def generic(exam, file, items, base=0, **meta):
             for n, q in enumerate(items):
                 identity = str(file) + '#' + str(q.get('id', n + 1))
+                if (q.get('questionImage') or q.get('imageChoices')) and not meta.get('images'):
+                    reject(identity, '必要図版が仮URLまたは未取得'); continue
                 prompt = q.get('prompt', q.get('question', q.get('q', q.get('text', q.get('body', '')))))
                 opts = q.get('options', q.get('choices', q.get('c')))
                 ans = q.get('correctIndex', q.get('answer', q.get('answers', q.get('correct', q.get('a')))))
@@ -112,7 +125,181 @@ def main():
                 emit(exam, identity, file, prompt, opts, ans, model, **extra)
 
         try:
-            if repo == 'iamirtasam/AWS-AI-Practitioner-Exam-Mock':
+            if repo == 'nemi2nd-dot/denken2-app':
+                for stem, subject in [('theory','理論'),('power','電力'),('machine','機械'),('law','法規')]:
+                    file='q_'+stem+'.js';text=read(file)
+                    # A malformed source row must not discard all the other data-only records.
+                    for match in re.finditer(r"\{id\s*:\s*'([^']+)'",text):
+                        try:q=literal.Literal(text,match.start()).value()
+                        except ValueError:reject(file+'#'+match[1],'提供元JavaScriptの構文不備');continue
+                        if re.search(r'図に|図の|下図|右図|次の図|対角に配置',q['q']):
+                            reject(file+'#'+q['id'],'問題が参照する図版・配置の確認が必要');continue
+                        generic('denken2',file,[q],subject=subject,category=q.get('cat',''),term='公開練習問題')
+            elif repo == '5garashi/denken2':
+                for path in sorted(folder.glob('0[1-4]_*.md')):
+                    file=path.name;subject={'01':'理論','02':'電力','03':'機械','04':'法規'}[file[:2]]
+                    for match in re.finditer(r'^## (問\d+[^\n]*)\n(.*?)(?=^## |\Z)',read(file),re.M|re.S):
+                        title,body=match.groups();parts=re.split(r'<details>\s*<summary>.*?</summary>',body,maxsplit=1,flags=re.S)
+                        if len(parts)!=2:reject(file+'#'+title,'解答区切りなし');continue
+                        answer=parts[1].split('</details>')[0].strip()
+                        emit('denken2',file+'#'+title,file,title+'\n'+parts[0].strip(),model=answer,subject=subject,term='公開練習問題',category='分野別演習')
+            elif repo == 'nakasyo3519/denken3all':
+                for stem,subject in [('riron','理論'),('denryoku','電力'),('kikai','機械'),('hoki','法規')]:
+                    file='denken3_'+stem+'_ronsetsu_quiz.html'
+                    items=json.loads(re.search(r'<script[^>]*id="quiz-data"[^>]*>(.*?)</script>',read(file),re.S)[1])
+                    for q in items:
+                        identity=file+'#'+str(q['qnum'])+'-'+q['year']
+                        if re.sub(r'\s+','',q['year'])!='平成20年':reject(identity,'2009年度以降は公式原本の同一試験を収録');continue
+                        if q.get('image') or re.search(r'図に|図の|下図|右図|図\s*\d',q['stem']):reject(identity,'図版照合が必要');continue
+                        emit('denken3',identity,file,q['stem'],q['choices'],q['answer']-1,subject=subject,year='2008',term='筆記試験',category=q['domain'],topic=q['topic'],explanation=q['explanation'])
+            elif repo == 'yamkenic/denken1-app':
+                for file in ['data/extended_questions.js','data/questions_legacy.js']:read(file)
+                reasons['公式過去問と重複・一部は問題本文の代わりに概要や空欄指示のみ']+=1
+            elif repo == 'ayatonikuman/denken3':
+                read('index.html');reasons['学習予定表・外部リンクのみで問題本文なし']+=1
+            elif repo == 'kosukekkk-ops/fe-master-app':
+                for file in sorted(folder.glob('docs/qualifications/fe/questions*.json')):
+                    relative = file.relative_to(folder)
+                    for q in data(relative)['questions']:
+                        identity = q['questionId']
+                        if q.get('bodyHtml'):
+                            reject(identity, 'HTML図表の対応未確認'); continue
+                        subject = '科目B' if file.name.startswith('questions_b') else '科目A'
+                        emit('fe', identity, relative, q['text'], q['choices'], q['correctIndex'],
+                             passage=q.get('program', ''), subject=subject,
+                             category=q.get('category', q.get('genre', '')), topic=q.get('subcat', ''),
+                             term='提供元の生成問題' if 'generated' in file.name or 'calc' in file.name else '提供元の再構成問題（公式未照合）',
+                             explanation=q['explanation']+'\n\n提供元の出題表示：'+q.get('source', ''))
+            elif repo in {'shinki5301-art/-6', 'mitsugeek/shoubo-shiken', 'hkosu813-ux/shobo-quiz',
+                          'terukatsu58-hash/Shobo-quiz', 'jiagyebo19891011/shoubou-otsu6',
+                          'yousukeee/otsu6-cards', 'altxxxtla-lab/shoubou-setsubishi-drill'}:
+                def fire(exam, identity, file, prompt, options=None, answer=None, model=None, **meta):
+                    if re.search(r'下図|上図|次の図|図に示|図の|写真に|写真の|下表|次の表|<img|<svg', prompt+'\n'+'\n'.join(options or [])):
+                        reject(identity, '必要図表の対応未確認'); return
+                    emit(exam, identity, file, prompt, options, answer, model,
+                         term='非公式練習教材（正答・改正対応未検証）', **meta)
+                if repo == 'shinki5301-art/-6':
+                    for n,q in enumerate(js('6', 'quizData'),1):
+                        fire('fire-b6', n, '6', q['q'], q['options'], q['ans'], subject=q['category'],
+                             explanation=html.unescape(re.sub(r'<br\s*/?>', '\n', q['exp'])))
+                elif repo == 'mitsugeek/shoubo-shiken':
+                    file='src/App.vue'; text=read(file)
+                    items=literal.Literal(text,re.search(r'const tests = reactive\(',text).end()).value()
+                    for n,q in enumerate(items,1):
+                        answers=[i for i,c in enumerate(q['choices']) if c['answer'] is True]
+                        if len(answers)!=1: reject(n,'正答が単一でない'); continue
+                        fire('fire-b6', n, file, q['question'], [c['choice'] for c in q['choices']], answers[0])
+                elif repo == 'hkosu813-ux/shobo-quiz':
+                    for q in js('index.html','DATA'):
+                        fire('fire-a4', q['id'], 'index.html', q['q'], q['ch'], [a-1 for a in q['ans']],
+                             subject=q['sec'], explanation=q['exp'])
+                elif repo == 'terukatsu58-hash/Shobo-quiz':
+                    for n,q in enumerate(js('questions.js','allQuestions'),1):
+                        fire('fire-a1', n, 'questions.js', q['question'], q['choices'], q['answer'],
+                             subject=q['category'], explanation=q['explanation'])
+                elif repo == 'jiagyebo19891011/shoubou-otsu6':
+                    for n,q in enumerate(js('index.html','questions'),1):
+                        assert type(q['a']) is bool
+                        fire('fire-b6', n, 'index.html', q['q'], ['正しい','誤り'], 0 if q['a'] else 1)
+                elif repo == 'yousukeee/otsu6-cards':
+                    # The second HTML is another UI over the same cards; do not count it twice.
+                    for q in js('index.html','ALL_CARDS'):
+                        fire('fire-b6', q['id'], 'index.html', q['front'], model=q['back'], subject=q['category'])
+                else:
+                    bank=js('index.html','BANK')
+                    groups=[('github-fire-common',bank['common'],{})]+[(exam,bank[key]['q'],bank[key]['cats'])
+                            for key,exam in [('ko1','fire-a1'),('ko4','fire-a4'),('otsu6','fire-b6')]]
+                    for exam,items,cats in groups:
+                        for q in items:
+                            fire(exam, q['i'], 'index.html', q['q'], q['o'], q['a'],
+                                 subject=cats.get(q['c'],q['c']), explanation=q['e'])
+            elif repo == 'm3tk0616-lab/shobo-tokurui-quiz':
+                read('index.html')
+                reject('all', '冒頭のルートBの正答説明と引用条文に疑義。条文・全正答の確認まで保留')
+            elif repo == 'tyaamarukusu-svg/study-os-shobo6':
+                read('data/questions.json')
+                reject('all', '購入者向けアクセス区画・市販参考書由来の表示があるため非収録')
+            elif repo == 'ot6-shibainu/ot6-shibainu-pwa':
+                for q in data('questions.json'):
+                    if q.get('visual'):
+                        reject(q['no'], '必要図版の対応未確認'); continue
+                    keys = list(q['choices'])
+                    emit('fire-b6', q['no'], 'questions.json', q['question'], list(q['choices'].values()),
+                         keys.index(q['answer']), subject=q['category'], category=q.get('law_section', ''),
+                         term='非公式オリジナル問題', explanation=q['explanation'])
+            elif repo == 'AzFukami/Touhan-Quiz':
+                chapters = {1:'医薬品に共通する特性と基本的な知識', 2:'人体の働きと医薬品', 3:'主な医薬品とその作用',
+                            4:'薬事関係法規・制度', 5:'医薬品の適正使用・安全対策'}
+                for q in js('script.js', 'quizData'):
+                    if q['questionNumber'] == 3:
+                        reject(3, '栄養機能食品の届出に関する設問・正答・解説の矛盾（消費者庁FAQ照合）'); continue
+                    labels = dict(re.findall(r'\b([a-d]):\s*(正しい|正|誤り|誤)', q['explanation']))
+                    selected_labels = dict(re.findall(r'\(([a-d])\)(正|誤)', q['options'][q['answer']]))
+                    if selected_labels and any(k in labels and labels[k][0] != v for k,v in selected_labels.items()):
+                        reject(q['questionNumber'], '選択された正誤組合せと提供元解説が不一致'); continue
+                    emit('drug-seller', q['questionNumber'], 'script.js', q['question'], q['options'], q['answer'],
+                         subject=chapters[q['chapter']], category='第'+str(q['chapter'])+'章',
+                         term='非公式練習問題（改正対応未確認）', explanation=q['explanation'])
+            elif repo == 'onokumao-png/gokaku-denki-quiz':
+                for q in js('src/data/questions.ts', 'questions'):
+                    if re.search(r'図|写真|次の表|下表|表に示|表の', q['question']+'\n'+'\n'.join(q['choices'])):
+                        reject(q['id'], '図表・写真を参照するが提供元データに図版なし'); continue
+                    emit({'denki1':'electrician1','denki2':'electrician2'}[q['category']], q['id'], 'src/data/questions.ts',
+                         q['question'], q['choices'], q['answer'], subject=q['subject'], year=q['year'],
+                         term='提供元の過去問表記（公式原本未照合）', explanation=q['explanation'])
+            elif repo == 'kazuyan1004-a11y/fire-quiz-app':
+                for q in js('index.html', 'initialQuestions'):
+                    assert q['license'] == '乙4'
+                    emit('fire-b4', q['id'], 'index.html', q['q'], q['choices'], q['answer'],
+                         subject=q['cat'], term='非公式練習問題', explanation=q['ex'])
+            elif repo == 'kids-jobai28/shoubou-quiz':
+                read('index.html')
+                reject('FREE_Q/PAID_Q', '有料区画を含む。無料区画にも法令問題の条件不足があり今回は非収録')
+            elif repo == 'akiina999/otsu2-training':
+                sys.path.insert(0, str(ROOT/'build/python-deps'))
+                import pymupdf
+                read('app.js')  # Answer indices and referenced diagrams belong to this pinned version.
+                for file in sorted(folder.glob('questions-*.js')):
+                    relative = file.relative_to(folder); text = read(relative)
+                    start = re.search(r'(?:push\(\.\.\.|concat\()\s*', text).end()
+                    for q in literal.Literal(text, start).value():
+                        assets = {}
+                        for key, target in [('image','images'), ('detailImage','solutionImages')]:
+                            if not q.get(key): continue
+                            svg = path_file(q[key]).read_bytes()
+                            doc = pymupdf.open(stream=svg, filetype='svg')
+                            pdf = pymupdf.open('pdf', doc.convert_to_pdf())
+                            png = pdf[0].get_pixmap(matrix=pymupdf.Matrix(1.5,1.5), alpha=False).tobytes('png')
+                            name = sha(png)+'.png'; (OUT/'assets').mkdir(exist_ok=True)
+                            (OUT/'assets'/name).write_bytes(png)
+                            assets[target] = [{'src':'assets/github-candidates/'+name,'alt':q.get(key+'Alt','提供元の図')}]
+                        emit('hazmat-b2', q['id'], relative, q['question'], q['choices'], q['answer'],
+                             subject=q['section'], category=q['category'], topic=q.get('tag',''),
+                             term='非公式練習問題', explanation=q['explanation']+'\n\n'+q.get('detail',''), **assets)
+            elif repo == 'M-HMMY/kikenbutsu_otsu4_exam_app':
+                read('src/lib/answer.ts')
+                for file in sorted(folder.glob('src/data/questions/*.ts')):
+                    if file.stem == 'index': continue
+                    relative = file.relative_to(folder); text = read(relative)
+                    name = re.search(r'export const (\w+)', text)[1]
+                    subject = {'law':'法令','sci':'基礎物理・化学','prop':'性質・消火'}[file.stem.split('-')[0]]
+                    for q in literal.assignment(text, name):
+                        emit('hazmat-b4', q['id'], relative, q['question'], q['choices'], q['answer'],
+                             subject=subject, category=q['categoryId'], topic=q['sectionId'],
+                             term='非公式練習問題', explanation=q['explanation'])
+            elif repo in ('tetsu0950120/otsu3','tetsu0950120/otsu5'):
+                text = read('index.html')
+                assert 'checkAnswer(btn, text, data.a[0])' in text, 'Source answer convention changed'
+                for i, q in enumerate(literal.assignment(text,'rawData'),1):
+                    emit('hazmat-b'+repo[-1], i, 'index.html', q['q'], q['a'], 0,
+                         subject='性質・消火', term='非公式練習問題', explanation='提供元の正答を採用。理由解説は未収録です。')
+            elif repo == 'hutatumekozou/kikenbutu-otsu1syu':
+                read('Sources/Models/Question.swift')
+                # The basic_questions files in this repository concern buses/taxis, not hazmat.
+                for file in sorted(folder.glob('Resources/questions/class1_*.json')):
+                    relative = file.relative_to(folder)
+                    generic('hazmat-b1', relative, data(relative), subject='性質・消火', term='非公式練習問題')
+            elif repo == 'iamirtasam/AWS-AI-Practitioner-Exam-Mock':
                 license_text = read('LICENSE')
                 assert 'MIT License' in license_text
                 assert 'covering both the code and the question content' in read('README.md')
@@ -123,8 +310,15 @@ def main():
                     parser = literal.Literal(text, start)
                     while True:
                         q = parser.value()
-                        if q['type'] not in ('single', 'multi'):
-                            reject(q['id'], '並べ替え形式は未対応');
+                        if q['type'] == 'ordering':
+                            assert sorted(q['answer']) == list(range(len(q['options'])))
+                            emit('aws-aif', q['id'], relative, q['stem'],
+                                 passage='\n'.join(f'{i+1}. {v}' for i,v in enumerate(q['options'])),
+                                 model=' → '.join(str(i+1) for i in q['answer']) + '\n' + '\n'.join(q['options'][i] for i in q['answer']),
+                                 subject='AIF-C01', category='Domain ' + str(q['domain']), topic=q['task'],
+                                 term='非公式模擬問題・並べ替え（自己採点）', explanation=q['explanation'] + '\n\n' + license_text)
+                        elif q['type'] not in ('single', 'multi'):
+                            reject(q['id'], '未対応の問題形式');
                         else:
                             explanation = q['explanation']
                             for i, rationale in enumerate(q.get('rationales', [])):
@@ -135,8 +329,129 @@ def main():
                         if not parser.take(','): break
                         parser.skip()
                         if parser.text[parser.i] == ')': break
-            elif repo in ('ikuma-hiroyuki/python_engineer_basic_demo', 'ThREE100/chosashi-app'):
-                reasons['本文データあり。教材の収録許諾を確認できず保留'] += 1
+            elif repo == 'ikuma-hiroyuki/python_engineer_basic_demo':
+                read('readme.md')
+                for file in sorted(folder.glob('jsons/*.json')):
+                    relative = file.relative_to(folder)
+                    for q in data(relative):
+                        choices = q['choices'][0]; keys = list(choices)
+                        emit('python-basic', str(relative)+'#'+str(q['id']), relative, q['question'],
+                             list(choices.values()), keys.index(q['answer']), explanation=q['explanation'],
+                             term='非公式模擬問題（提供元がAI生成と明記）')
+            elif repo == 'ThREE100/chosashi-app':
+                file = 'src/data/takuitsu.json'; notes = data('src/data/kaisetsu_plus.json')['entries']
+                for q in data(file)['questions']:
+                    if not 1 <= q['correctAnswer'] <= 5 or re.search('没問|取得不可|取得でき|アクセスでき|Unable to retrieve', q['stem']):
+                        reject(q['id'], '提供元の取得失敗・削除問題または正答不明'); continue
+                    if re.search('下図|次の図|図に示|別紙|別図', q['stem']):
+                        reject(q['id'], '必要図版の対応未確定'); continue
+                    detail = notes.get(q['id'], {})
+                    explanation = '\n\n'.join(str(v) for k,v in detail.items() if k in ('approach','pitfalls','keyPoints','checkNote'))
+                    choices = q['combos']; passage = '\n'.join(a['label']+'：'+a['text'] for a in q['alts'])
+                    if not choices and [a['label'] for a in q['alts']] == ['1','2','3','4','5']:
+                        choices = [{'no':int(a['label']),'text':a['text']} for a in q['alts']]; passage = ''
+                    if not choices and '1 1個 2 2個 3 3個 4 4個 5 5個' in unicodedata.normalize('NFKC',passage):
+                        choices = [{'no':i,'text':str(i)+'個'} for i in range(1,6)]
+                    emit('land-surveyor', q['id'], file, q['stem'], [c['text'] for c in choices],
+                         next((i for i,c in enumerate(choices) if c['no']==q['correctAnswer']), None), passage=passage,
+                         year=q['year'], subject=q['subject'], category=q['genre'],
+                         explanation=q['explanation']+'\n\n'+explanation, term='提供元の過去問表記・公式一致未検証')
+                file = 'src/data/ankicards.json'; cards = data(file)
+                for q in cards['ox']:
+                    if q['id'] in ('q00001','q00069'):
+                        reject(q['id'], '提供元の正答と解説内の説明が矛盾'); continue
+                    emit('land-surveyor', q['id'], file, q['stem'], ['正しい','誤り'], 0 if q['correct'] else 1,
+                         explanation=q['explanation'], category=q['chapter'], term='非公式対策問題')
+                for q in cards['terms']:
+                    emit('land-surveyor', q['id'], file, q['term']+'の意味を説明してください。', model=q['definition'],
+                         explanation=q['cautions'], category=q['chapter'], term='非公式用語カード')
+                file = 'src/data/kijutsu.json'
+                for q in data(file)['problems']:
+                    if not q['problemImages'] or not q['modelAnswerText']:
+                        reject(q['id'], '記述問題の必要図版または模範解答なし'); continue
+                    emit('land-surveyor', q['id'], file, q['problemText'], model=q['modelAnswerText'],
+                         images=[image_asset('public/'+p) for p in q['problemImages']],
+                         solutionImages=[image_asset('public/'+p) for p in q['answerImages']],
+                         year=q['yearLabel'], subject='記述', category=q['category'], term='提供元の模範解答・自己採点')
+            elif repo == 'ronodera662/fp-study-app':
+                for file in sorted(folder.glob('public/data/*.json')):
+                    relative = file.relative_to(folder)
+                    for q in data(relative):
+                        emit('fp2', q['id'], relative, q['questionText'], q['options'], q['correctAnswer'],
+                             explanation=q['explanation'], year=q.get('year',''), category=q['category'],
+                             subject=q.get('subcategory',''), term='非公式対策問題（提供元による再構成を含む）')
+            elif repo == 'furumix2000/fp3-quiz-app':
+                for file in sorted(folder.glob('quiz_data_fp3_*.js')):
+                    relative = file.relative_to(folder); text = read(relative)
+                    generic('fp3', relative, literal.assignment(text, re.search(r'const (\w+)',text)[1]), term='非公式対策問題')
+                read('script.js')
+                for file in sorted(folder.glob('quiz_data_20*.js')):
+                    relative = file.relative_to(folder); text = read(relative)
+                    for q in literal.assignment(text, re.search(r'const (\w+)',text)[1]):
+                        images = [image_asset(q['questionImage'])] if q.get('questionImage') else []
+                        images += [{**image_asset(p),'alt':'選択肢 '+q['choices'][i]} for i,p in enumerate(q.get('imageChoices',[]))]
+                        emit('github-food-safety', str(relative)+'#'+q['id'], relative, q['question'], q['choices'], q['answer'],
+                             images=images, passage='選択肢の図は上から①、②、③、④です。' if q.get('imageChoices') else '',
+                             explanation=q['explanation'], term='非公式対策問題・資格対応未確定')
+            elif repo == 'xinyue119-code/boki1-cards':
+                file = 'cards.js'; text = read(file)
+                for m in re.finditer(r'^K\(', text, re.M):
+                    parser = literal.Literal(text, m.end()); values = [parser.value()]
+                    while parser.take(','): values.append(parser.value())
+                    assert parser.take(')') and 7 <= len(values) <= 9
+                    identity, subject, category, kind, prompt, answer, explanation = values[:7]
+                    explanation += '\n' + '\n'.join(values[7:])
+                    opts = None; correct = None; model = None
+                    if kind == 'cloze':
+                        model = '\n'.join(re.findall(r'\{\{(.*?)\}\}', prompt)); prompt = re.sub(r'\{\{.*?\}\}', '（　）', prompt)
+                    elif kind == 'qa': model = answer
+                    elif kind == 'tf': opts, correct = ['○','×'], ['○','×'].index(answer)
+                    elif kind == 'mc':
+                        prompt, *opts = prompt.split('|'); correct = int(answer)-1
+                    else: reject(identity, '未対応カード形式'); continue
+                    emit('boki1', identity, file, prompt, opts, correct, model, subject=subject, category=category,
+                         explanation=explanation, term='非公式対策カード')
+            elif repo == 'renatusauctor/cpa-tantou-kakomon-drill':
+                reject('index.html', '対応する公式原本は別経路で収録済み。第三者教材の抜粋カードは追加しない')
+            elif repo == 'nktkt/bookkeeping-practice':
+                import openpyxl
+                file = '簿記-1.xlsx'; book = openpyxl.load_workbook(path_file(file), data_only=True)
+                # Keep a chapter together: splitting its shared tables would lose the exercise context.
+                for sheet in book:
+                    if not re.match(r'\d+_',sheet.title): continue
+                    chapter = int(sheet.title.split('_')[0]); values = list(sheet.values)
+                    if chapter == 23: continue  # Study advice, not questions.
+                    exam = 'boki3' if chapter in (1,2,3,13,14,21) else 'boki1' if chapter in (10,11,12,18,19,24) else 'boki2'
+                    if chapter == 24:
+                        for row in values:
+                            if type(row[0]) != int: continue
+                            level = re.search('[123]',str(row[2]))
+                            emit('boki'+level[0] if level else exam, sheet.title+'#'+str(row[0]), file,
+                                 str(row[1])+'の意味を説明してください。', model=str(row[3] or ''),
+                                 explanation=str(row[4] or ''), term='非公式用語カード', category=sheet.title)
+                        continue
+                    prompts, answers = [], []
+                    split = None
+                    for n,row in enumerate(values,1):
+                        if re.search(r'模\s*範\s*解\s*答',str(row[0])): split = n; break
+                    for n,row in enumerate(values,1):
+                        row = list(row)
+                        if chapter == 2 and type(row[0]) == int and row[0] > 40000:
+                            row[0] = openpyxl.utils.datetime.from_excel(row[0]).strftime('%Y-%m-%d')
+                        col = {2:5,8:5,9:5,12:3,17:4,20:4}.get(chapter)
+                        if chapter == 7 and n < 19: col = 4
+                        if col is not None:
+                            left,right = row[:col],row[col:]
+                        elif chapter == 19:
+                            left,right = ([],row) if 20 <= n <= 33 or n >= 44 else (row,[])
+                        elif split and n >= split: left,right = [],row
+                        else: left,right = row,[]
+                        for target,cells in ((prompts,left),(answers,right)):
+                            if any(v is not None for v in cells):
+                                target.append(' | '.join('' if v is None else str(v) for v in cells).rstrip(' |'))
+                    emit(exam, sheet.title, file, '\n'.join(prompts), model='\n'.join(answers),
+                         category=sheet.title, term='非公式練習問題・章単位（小問一式を自己採点）')
+                book.close()
             elif repo == 'tossh23/architect-study-app':
                 for file in sorted(folder.glob('csv/utf8_*.csv')):
                     relative = file.relative_to(folder)
@@ -349,10 +664,14 @@ def main():
             raise RuntimeError(repo + ': ' + str(error)) from error
 
         pack_sources = [{'repo': repo, **s} for s in sources.values()]
-        for start in range(0, len(rows), 500):
-            chunk = rows[start:start+500]; name = 'candidate-' + sha(repo.encode())[:12] + '-' + str(start // 500 + 1)
-            raw = encode(chunk); (OUT / (name + '.json')).write_bytes(raw)
-            packs.append({'id': name, 'repo': repo, 'examId': chunk[0]['examId'], 'file': name + '.json', 'sha256': sha(raw), 'count': len(chunk), 'sources': pack_sources})
+        pack_number = 0
+        for exam in dict.fromkeys(q['examId'] for q in rows):
+            exam_rows = [q for q in rows if q['examId'] == exam]
+            for start in range(0, len(exam_rows), 500):
+                pack_number += 1
+                chunk = exam_rows[start:start+500]; name = 'candidate-' + sha(repo.encode())[:12] + '-' + str(pack_number)
+                raw = encode(chunk); (OUT / (name + '.json')).write_bytes(raw)
+                packs.append({'id': name, 'repo': repo, 'examId': exam, 'file': name + '.json', 'sha256': sha(raw), 'count': len(chunk), 'sources': pack_sources, **({'localOnly': True} if repo_row.get('localOnly') or repo in LOCAL_ONLY_REPOS else {})})
         results.append({'repo': repo, 'commit': repo_row['commit'], 'imported': len(rows), 'excluded': dict(reasons), 'consumedFiles': len(sources)})
         print(repo, 'prepared', len(rows), 'excluded', dict(reasons), flush=True)
 
@@ -363,7 +682,7 @@ def main():
             report[key] = [r for r in old[key] if r['repo'] not in selected] + report[key]
         report['repositoryCount'] = len(report['repositories'])
         report['addedBeforeBuildDedup'] = sum(p['count'] for p in report['packs'])
-        report['exams'] = old['exams']
+        report['exams'] = list({e['id']: e for e in old['exams'] + custom_exams}.values())
     (OUT / 'report.json').write_bytes(encode(report))
 
 if __name__ == '__main__':

@@ -21,7 +21,12 @@ class Literal:
             quote = c; self.i += 1; result = ''
             while self.i < len(self.text):
                 c = self.text[self.i]; self.i += 1
-                if c == quote: return result
+                if c == quote:
+                    if self.take('+'):
+                        self.skip()
+                        if self.text[self.i:self.i+1] not in ('"', "'", '`'): raise ValueError('Only string literal concatenation is allowed')
+                        result += self.value()
+                    return result
                 if quote == '`' and c == '$' and self.text[self.i:self.i+1] == '{': raise ValueError('Template expression')
                 if c == '\\':
                     c = self.text[self.i]; self.i += 1

@@ -16,7 +16,7 @@ if(material) {
     const bytes=readFileSync(new URL('build/private/web/'+pack.url,root));
     assert.equal(createHash('sha256').update(bytes).digest('hex'),pack.sha256,'Changed pack '+pack.id);
     const rows=JSON.parse(bytes);assert.equal(rows.length,pack.count);
-    const origin=pack.repo?'GitHub候補教材':pack.id.startsWith('medical-jmed-')?'外部公開過去問（JMed48k・正答未独立照合）':pack.id.startsWith('archive-')?'公式原本追加教材':'既存・自作・復帰教材';
+    const origin=pack.id.startsWith('school-extra-') && pack.origin!=='original'?'学校向け外部教材（正答未独立照合）':pack.repo?'GitHub候補教材':pack.id.startsWith('medical-jmed-')?'外部公開過去問（JMed48k・正答未独立照合）':pack.id.startsWith('archive-')?'公式原本追加教材':'既存・自作・復帰教材';
     origins.set(origin,(origins.get(origin)||0)+rows.length);
     if(pack.repo) imported.set(pack.repo.toLowerCase(),(imported.get(pack.repo.toLowerCase())||0)+rows.length);
     for(const q of rows) {
