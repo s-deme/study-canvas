@@ -1,3 +1,4 @@
+import {writeLibraryCatalog} from './library-catalog.mjs';
 import assert from 'node:assert/strict';
 import {closeSync,cpSync,existsSync,mkdirSync,openSync,readFileSync,readdirSync,unlinkSync,writeFileSync,statSync} from 'node:fs';
 import {resolve,join} from 'node:path';
@@ -112,6 +113,7 @@ for(const {rows,...pack} of github.packs) add(pack.id,rows,pack);
 for(const {rows,...pack} of candidates.packs) add(pack.id,rows,pack);
 for(const exam of exams) assert.ok(index.some(q=>q.examId===exam.id),exam.id);
 writeFileSync(join(out,'web/catalog.mjs'),`// Generated private index. Question bodies are loaded separately.\nexport const BUILTIN_QUESTIONS=[];\nexport const MATERIAL_INDEX=${JSON.stringify(index)};\nexport const MATERIAL_PACKS=${JSON.stringify(packs)};\nexport const MATERIAL_EXAMS=${JSON.stringify(exams)};\n`);
+writeLibraryCatalog(join(out,'web'),index,packs,exams);
 cpSync(join(material,'audit.json'),join(out,'web/material/audit.json'));
 if(existsSync(join(material,'verification.json'))) cpSync(join(material,'verification.json'),join(out,'web/material/verification.json'));
 writeFileSync(join(out,'web/material/expansion-report.json'),JSON.stringify(additions.report,null,2));

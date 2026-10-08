@@ -106,3 +106,11 @@ main:focus-visible { outline:none; }
 #exam-inventory th {min-width:160px}
 #exam-inventory caption {text-align:left}
 .exam-id {display:block;color:var(--muted);font-weight:400;overflow-wrap:anywhere}
+#image-dialog {width:min(1200px,96vw);max-height:94dvh;padding:16px}
+.image-toolbar {display:flex;align-items:center;flex-wrap:wrap;gap:12px}
+.image-toolbar h2 {margin:0;flex-basis:100%}
+.image-toolbar label {white-space:nowrap}
+.image-scroll {overflow:auto;max-height:72dvh;background:white}
+#image-view {display:block;width:100%;max-width:none;height:auto}
+.actions {flex-wrap:wrap}
+body[data-route="quiz"] #add-exam {display:none}

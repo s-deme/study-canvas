@@ -1,3 +1,4 @@
+import {writeLibraryCatalog} from './library-catalog.mjs';
 // Append verified food packs to the last successful local build while other imports are pending.
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,cpSync,mkdirSync,readdirSync,statSync,openSync,closeSync,unlinkSync} from 'node:fs';
@@ -75,9 +76,11 @@ for(const {rows,...pack} of loaded.packs) {
 }
 let files=0;
 function walk(dir){for(const n of readdirSync(dir)){const p=join(dir,n);statSync(p).isDirectory()?walk(p):files++;}}
-walk(web);
+
 cpSync(join(root,'web/exams.mjs'),join(web,'exams.mjs'));
 writeFileSync(join(web,'catalog.mjs'),`// Generated private index.\nexport const BUILTIN_QUESTIONS=[];\nexport const MATERIAL_INDEX=${JSON.stringify(index)};\nexport const MATERIAL_PACKS=${JSON.stringify(packs)};\nexport const MATERIAL_EXAMS=${JSON.stringify(exams)};\n`);
+writeLibraryCatalog(web,index,packs,exams);
+walk(web);
 writeFileSync(join(stage,'manifest.json'),JSON.stringify({...manifest,questions:index.length,files,packs,exams:[...DEFAULT_EXAMS,...exams].map(e=>({id:e.id,name:e.name,count:index.filter(q=>q.examId===e.id).length}))},null,2));
 });
 console.log(`Local ${kind} import: ${loaded.report.added} format-validated questions; ${index.length} total`);

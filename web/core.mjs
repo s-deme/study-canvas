@@ -1,4 +1,4 @@
-import {MATERIAL_EXAMS} from './catalog.mjs';
+import {MATERIAL_EXAMS} from './library-catalog.mjs';
 import {EXAM_CATALOG} from './exams.mjs';
 export const CATEGORIES=['人工知能とは','人工知能をめぐる動向','機械学習の概要','ディープラーニングの概要','ディープラーニングの要素技術','ディープラーニングの応用例','AIの社会実装に向けて','数理・統計','法律と契約','倫理・AIガバナンス'];
 // study-canvas keeps the old storage key and G検 IDs to preserve existing records.
@@ -59,6 +59,10 @@ export function validateQuestions(input,existing=[],custom=false,examId) {
 }
 export function emptyState() {return {version:2,exams:structuredClone(AVAILABLE_EXAMS),selectedExam:'gken',custom:[],stats:{},daily:{},history:[],session:null};}
 export function allQuestions(base,state) {return [...new Map([...base,...state.custom].map(q=>[questionKey(q),q])).values()];}
+const questionIndexes=new WeakMap();
+// Only owners of stable arrays opt in; rebuild after adding or replacing material.
+export function indexQuestions(rows) {const map=new Map(rows.map(q=>[questionKey(q),q]));questionIndexes.set(rows,map);return map;}
+export const questionIndex=rows=>questionIndexes.get(rows) || new Map(rows.map(q=>[questionKey(q),q]));
 export function dayKey(now=new Date()) {return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;}
 export function shuffle(items,random=Math.random) {const out=[...items];for(let i=out.length-1;i>0;i--) {const j=Math.floor(random()*(i+1));[out[i],out[j]]=[out[j],out[i]];}return out;}
 export function makeDeck(pool,count,mock=false,random=Math.random) {
@@ -78,25 +82,25 @@ export function record(state,q,answer,now) {
   state.stats[key]={...old,attempts:old.attempts+1,correct:old.correct+(choice && correct?1:0),gradedAttempts:(old.gradedAttempts ?? old.attempts)+(choice?1:0),self,lastCorrect:correct,lastAt:now};
   const day=dayKey(new Date(now)),dailyKey=q.examId && q.examId!=='gken'?`${q.examId}::${day}`:day;state.daily[dailyKey]=(state.daily[dailyKey] || 0)+1;
 }
-export function score(session,questions) {const map=new Map(questions.map(q=>[questionKey(q),q]));return session.ids.reduce((n,id,i)=>n+(map.has(id) && isChoice(map.get(id)) && correctAnswer(map.get(id),session.answers[i])?1:0),0);}
+export function score(session,questions) {const map=questionIndex(questions);return session.ids.reduce((n,id,i)=>n+(map.has(id) && isChoice(map.get(id)) && correctAnswer(map.get(id),session.answers[i])?1:0),0);}
 export function sessionSummary(session,questions) {
-  const map=new Map(questions.map(q=>[questionKey(q),q])),self={done:0,partial:0,review:0,pending:0};let gradedTotal=0;
+  const map=questionIndex(questions),self={done:0,partial:0,review:0,pending:0};let gradedTotal=0;
   session.ids.forEach((id,i)=>{if(isChoice(map.get(id))) gradedTotal++;else {const a=session.answers[i];self[object(a)?a.review || 'pending':a===-1?'pending':'review']++;}});return {correct:score(session,questions),gradedTotal,self};
 }
 export function finish(state,questions,now=Date.now()) {
-  const s=state.session;if(!s || s.ended) return;const map=new Map(questions.map(q=>[questionKey(q),q]));
+  const s=state.session;if(!s || s.ended) return;const map=questionIndex(questions);
   valid(s.answers.every(a=>!object(a) || a.review!==null),'記述・論述の自己評価を選んでから終了してください');
   if(s.mock) s.ids.forEach((id,i)=>record(state,map.get(id),s.answers[i],now));
   s.ended=true;s.pending=-1;state.history.push({examId:s.examId ?? 'gken',title:s.title,...sessionSummary(s,questions),total:s.ids.length,at:now});const counts={};state.history=state.history.slice().reverse().filter(h=>{const id=h.examId ?? 'gken';counts[id]=(counts[id] || 0)+1;return counts[id]<=30;}).reverse();
 }
 export function submit(state,questions,skip=false,now=Date.now()) {
   const s=state.session;valid(s && !s.ended,'進行中の演習がありません');if(expired(s,now)) {finish(state,questions,now);return;}if(s.answers[s.index]!==-1) return;
-  const q=questions.find(q=>questionKey(q)===s.ids[s.index]);valid(q,'問題が見つかりません');let answer=skip?-2:s.pending;
+  const q=questionIndex(questions).get(s.ids[s.index]);valid(q,'問題が見つかりません');let answer=skip?-2:s.pending;
   if(!skip) {if(isChoice(q)) valid(q.type==='multiple'?Array.isArray(answer) && answer.length>0 && answer.every(a=>integer(a,0,q.options.length-1)) && new Set(answer).size===answer.length:integer(answer,0,q.options.length-1),'選択肢を選んでください');else answer={text:text(answer,'回答',50000),review:null};}
   s.answers[s.index]=answer;s.pending=-1;if(!s.mock && (isChoice(q) || skip)) record(state,q,answer,now);else if(s.mock) next(state,questions,now);
 }
 export function selfEvaluate(state,questions,review,now=Date.now()) {
-  const s=state.session;valid(s && !s.ended && ['done','partial','review'].includes(review),'自己評価が不正です');const q=questions.find(q=>questionKey(q)===s.ids[s.index]),answer=s.answers[s.index];valid(q && !isChoice(q) && object(answer) && answer.review===null,'自己評価できる回答がありません');answer.review=review;record(state,q,answer,now);
+  const s=state.session;valid(s && !s.ended && ['done','partial','review'].includes(review),'自己評価が不正です');const q=questionIndex(questions).get(s.ids[s.index]),answer=s.answers[s.index];valid(q && !isChoice(q) && object(answer) && answer.review===null,'自己評価できる回答がありません');answer.review=review;record(state,q,answer,now);
 }
 export function next(state,questions,now=Date.now()) {
   const s=state.session;valid(s && !s.ended && s.answers[s.index]!==-1,'先に回答してください');valid(!object(s.answers[s.index]) || s.answers[s.index].review!==null,'模範解答を確認して自己評価してください');if(expired(s,now) || s.index+1===s.ids.length) finish(state,questions,now);else {s.index++;s.pending=-1;}
@@ -106,7 +110,9 @@ export function validateState(input,base=[]) {
   const exams=legacy?structuredClone(DEFAULT_EXAMS):(valid(Array.isArray(input.exams) && input.exams.length>0,'試験一覧が不正です'),input.exams.map(validateExam));const examIds=new Set(exams.map(e=>e.id));valid(examIds.size===exams.length && DEFAULT_EXAMS.every(e=>examIds.has(e.id)),'試験IDが重複または初期試験が不足しています');
   for(const e of AVAILABLE_EXAMS) if(!examIds.has(e.id)) {exams.push(validateExam(e));examIds.add(e.id);}
   const selectedExam=legacy?'gken':input.selectedExam;valid(examIds.has(selectedExam),'選択した試験がありません');const custom=input.custom.length?validateQuestions(input.custom):[];valid(custom.every(q=>examIds.has(q.examId)),'問題の試験がありません');
-  const questions=allQuestions(base,{custom}),map=new Map(questions.map(q=>[questionKey(q),q]));const knownId=id=>typeof id==='string' && !dangerous(id) && (map.has(id) || examIds.has(retiredExamId(id)) || id.startsWith('original:') && id.length>9 && id.length<=120);
+  const built=questionIndex(base),edits=new Map(custom.map(q=>[questionKey(q),q]));
+  const map={get:id=>edits.get(id) || built.get(id),has:id=>edits.has(id) || built.has(id)};
+  const questions={length:built.size+custom.filter(q=>!built.has(questionKey(q))).length};const knownId=id=>typeof id==='string' && !dangerous(id) && (map.has(id) || examIds.has(retiredExamId(id)) || id.startsWith('original:') && id.length>9 && id.length<=120);
   valid(object(input.stats) && object(input.daily) && Array.isArray(input.history) && input.history.length<=exams.length*30,'学習記録の形式が不正です');
   for(const [id,s] of Object.entries(input.stats)) {
     valid(knownId(id) && object(s) && integer(s.attempts,0,1e9) && integer(s.correct,0,s.attempts) && typeof s.bookmark==='boolean','回答記録が不正です');valid(s.attempts===0 || typeof s.lastCorrect==='boolean' && integer(s.lastAt,0,Number.MAX_SAFE_INTEGER),'回答日時が不正です');valid(s.gradedAttempts===undefined || integer(s.gradedAttempts,s.correct,s.attempts),'自動採点の記録が不正です');

@@ -11,8 +11,8 @@ const hash=x=>createHash('sha256').update(x).digest('hex');
 const save=(p,data)=>writeFileSync(join(root,p),typeof data==='string'?data:JSON.stringify(data));
 try {
   for(const dir of ['scripts','web','build/private/web/material','private-data/github-candidates/prepared','private-data/github-candidates/fixture/repo']) mkdirSync(join(root,dir),{recursive:true});
-  for(const file of ['append-food-material.mjs','github-material.mjs','github-candidates.mjs','school-material.mjs','private-build-update.mjs']) cpSync(new URL('../scripts/'+file,import.meta.url),join(root,'scripts',file));
-  for(const file of ['core.mjs','catalog.mjs','exams.mjs']) cpSync(new URL('../web/'+file,import.meta.url),join(root,'web',file));
+  for(const file of ['append-food-material.mjs','library-catalog.mjs','github-material.mjs','github-candidates.mjs','school-material.mjs','private-build-update.mjs']) cpSync(new URL('../scripts/'+file,import.meta.url),join(root,'scripts',file));
+  for(const file of ['core.mjs','catalog.mjs','library-catalog.mjs','exams.mjs']) cpSync(new URL('../web/'+file,import.meta.url),join(root,'web',file));
   for(const [kind,examId] of [['github-hazmat','hazmat-b2'],['github-denken','denken2'],['github-candidates','hazmat-b2']]) {
     const notice='fixture',url='https://raw.githubusercontent.com/fixture/repo/'+'a'.repeat(40)+'/questions.json';
     const rows=validateQuestions(['old','new'].map(id=>({id,examId,type:'single',prompt:id+' prompt',options:['a','b'],answer:0,source:notice,sourceUrl:url})));

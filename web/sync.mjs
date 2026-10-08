@@ -16,14 +16,15 @@ export async function cloudRequest(path,options={}) {
 }
 
 export class CloudSync {
-  constructor({storage,base,owner,request=cloudRequest,onState=()=>{},onStatus=()=>{},lock=task=>task()}) {
-    Object.assign(this,{storage,base,owner,request,onState,onStatus,lock});
+  constructor({storage,base,owner,request=cloudRequest,onState=()=>{},onStatus=()=>{},lock=task=>task(),prepare=async()=>{}}) {
+    Object.assign(this,{storage,base,owner,request,onState,onStatus,lock,prepare});
     this.busy=false; this.conflict=false; this.timer=null;
     this.reload();
     if (!this.meta) this.write(this.state,{owner,revision:0,dirty:this.raw!==null,flightId:null});
   }
   reload() {
-    const raw=this.storage.getItem(KEY), input=raw ? JSON.parse(raw) : null;
+    const raw=this.storage.getItem(KEY);if(this.raw!==undefined && this.raw===raw) return;
+    const input=raw ? JSON.parse(raw) : null;
     const state=validateState(input || {version:1,custom:[],stats:{},daily:{},history:[],session:null},this.base);
     const meta=input?.cloud || null;
     if (meta && (meta.owner!==this.owner || !Number.isSafeInteger(meta.revision) || meta.revision<0 || typeof meta.dirty!=='boolean' || !(meta.flightId===null || typeof meta.flightId==='string'))) {
@@ -67,8 +68,11 @@ export class CloudSync {
     this.busy=true; clearTimeout(this.timer); this.status('syncing');
     try {
       await this.lock(async () => {
+        await this.prepare(JSON.parse(this.storage.getItem(KEY) || 'null'));
         this.reload();
-        const remote=this.remote(await this.request('/api/state'));
+        const value=await this.request('/api/state');await this.prepare(value.state);
+        const remote=this.remote(value);
+        await this.prepare(JSON.parse(this.storage.getItem(KEY) || 'null'));
         this.reload();
         // Recover a successful upload whose response was lost, including after reload.
         if (this.meta.flightId && remote.mutationId===this.meta.flightId) {
@@ -86,6 +90,7 @@ export class CloudSync {
         this.write(this.state,{...this.meta,flightId:mutationId});
         const result=await this.request('/api/state',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({revision,mutationId,state:this.state})});
         if (result.revision!==revision+1 || result.mutationId!==mutationId) throw new Error('クラウドの保存結果を確認できません。端末の記録は保持しています');
+        await this.prepare(JSON.parse(this.storage.getItem(KEY) || 'null'));
         this.reload();
         if (this.meta.revision!==revision || this.meta.flightId!==mutationId) throw new Error('別のタブの同期が進行しています。再試行してください');
         const dirty=JSON.stringify(this.state)!==sent;
@@ -103,8 +108,10 @@ export class CloudSync {
     this.busy=true;
     try {
       await this.lock(async () => {
-        const remote=this.remote(await this.request('/api/state'));
+        const value=await this.request('/api/state');await this.prepare(value.state);
+        const remote=this.remote(value);
         if (remote.state===null) throw new Error('クラウドにはまだ記録がありません');
+        await this.prepare(JSON.parse(this.storage.getItem(KEY) || 'null'));
         this.reload();
         // Preserve a recoverable copy before explicit conflict resolution.
         await backup(this.state);
