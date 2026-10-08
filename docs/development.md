@@ -13,6 +13,8 @@
 
 全体の自動チェックとクラウドのローカル検証にはNode.js 24以上を使います。
 
+<!-- ponytail: miniflareがsharp 0.35.4を固定しているため、CVE-2026-96889修正版0.35.5へoverride。上流が修正版に更新されたら解除する。 -->
+
 ```powershell
 npm ci
 npm run check
