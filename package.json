@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "node checks/web-check.mjs && node checks/multiexam-check.mjs && node checks/cloud-check.mjs && node checks/multiexam-cloud-check.mjs && node checks/cloud-config-check.mjs && node checks/publication-guard-check.mjs && node checks/publication-check.mjs && node checks/material-check.mjs",
+    "check": "node checks/web-check.mjs && node checks/multiexam-check.mjs && node checks/cloud-check.mjs && node checks/multiexam-cloud-check.mjs && node checks/cloud-config-check.mjs && node checks/publication-guard-check.mjs && node checks/publication-check.mjs && node checks/material-check.mjs && node checks/staged-material-check.mjs",
     "dev:cloud": "wrangler pages dev web --ip 127.0.0.1 --port 8766",
     "build:cloud": "wrangler pages functions build --outdir build/cloud",
     "check:runtime": "node checks/cloud-runtime-check.mjs",
@@ -11,12 +11,13 @@
     "predev:cloud": "node checks/publication-check.mjs && node scripts/prepare-cloud-config.mjs",
     "predeploy:cloud": "node checks/publication-check.mjs && node scripts/prepare-cloud-config.mjs",
     "prebuild:cloud": "node checks/publication-check.mjs",
+    "check:library-browser": "node checks/library-browser-check.mjs",
     "check:browser": "node checks/multiexam-browser-check.mjs",
     "check:large-material": "node checks/large-material-check.mjs && node checks/additional-material-check.mjs",
     "check:expansion": "node checks/expansion-completion-check.mjs",
     "build:private": "node scripts/build-private.mjs",
     "inventory:exams": "node scripts/update-exam-inventory.mjs",
-    "build:private-cloud": "python scripts/verify-material.py && npm run check && npm run build:private && node scripts/private-cloud-config.mjs && cd build/private && wrangler pages functions build --outdir ../private-worker",
+    "build:private-cloud": "python scripts/verify-material.py && npm run check && npm run build:private -- --cloud && node scripts/private-cloud-config.mjs && cd build/private && wrangler pages functions build --outdir ../private-worker",
     "deploy:private": "npm run build:private-cloud && cd build/private && wrangler pages deploy web --branch main"
   },
   "dependencies": {
@@ -25,5 +26,10 @@
   "devDependencies": {
     "wrangler": "^4.147.0"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "overrides": {
+    "miniflare": {
+      "sharp": "0.35.5"
+    }
+  }
 }

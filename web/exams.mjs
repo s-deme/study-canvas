@@ -94,7 +94,7 @@ abacus3|珠算能力検定3級`],
 retail1|リテールマーケティング（販売士）検定1級
 retail2|リテールマーケティング（販売士）検定2級
 retail3|リテールマーケティング（販売士）検定3級`],
-['経営・事務・販売','https://kentei.tokyo-cci.or.jp/management/',`business-manager|ビジネスマネジャー検定`],
+['経営・事務・販売','https://kentei.tokyo-cci.or.jp/bijimane/',`business-manager|ビジネスマネジャー検定`],
 ['経営・事務・販売','https://jitsumu-ginou-kentei.jp/',`
 secretary1|秘書検定1級
 secretary-pre1|秘書検定準1級
@@ -254,6 +254,9 @@ landscape-management1|1級造園施工管理技士
 landscape-management2|2級造園施工管理技士
 telecom-management1|1級電気通信工事施工管理技士
 telecom-management2|2級電気通信工事施工管理技士`],
+['建築・土木','https://www.gsi.go.jp/LAW/SHIKEN/past.html',`
+surveyor|測量士
+surveyor-assistant|測量士補`],
 ['不動産','https://www.retio.or.jp/exam/',`takken|宅地建物取引士`],
 ['不動産','https://www.mankan.org/',`mankan|マンション管理士`],
 ['不動産','https://www.kanrikyo.or.jp/',`management-chief|管理業務主任者`],
@@ -280,7 +283,9 @@ fire-b3|消防設備士 乙種第3類
 fire-b4|消防設備士 乙種第4類
 fire-b5|消防設備士 乙種第5類
 fire-b6|消防設備士 乙種第6類
-fire-b7|消防設備士 乙種第7類`],
+fire-b7|消防設備士 乙種第7類
+fire-a-public|消防設備士 甲種 筆記公開問題（各類の抜粋）
+fire-b-public|消防設備士 乙種 筆記公開問題（各類の抜粋）`],
 ['安全・消防・設備','https://www.exam.or.jp/',`
 health1|第一種衛生管理者
 health2|第二種衛生管理者
@@ -365,7 +370,23 @@ civil-regular-univ|国家公務員一般職（大卒程度試験）
 civil-regular-high|国家公務員一般職（高卒者試験）
 tax-specialist|国税専門官採用試験
 finance-specialist|財務専門官採用試験
-labor-inspector|労働基準監督官採用試験`]
+labor-inspector|労働基準監督官採用試験
+imperial-guard-univ|皇宮護衛官採用試験（大卒程度試験）
+prison-officer-univ|刑務官採用試験（大卒程度試験）
+justice-human-science|法務省専門職員（人間科学）採用試験
+food-sanitation-inspector|食品衛生監視員採用試験
+air-traffic-controller|航空管制官採用試験
+coast-guard-officer|海上保安官採用試験
+civil-regular-career|国家公務員一般職（社会人試験）
+imperial-guard-high|皇宮護衛官採用試験（高卒程度試験）
+prison-officer-high|刑務官採用試験（高卒程度試験）
+immigration-guard|入国警備官採用試験
+tax-officer|税務職員採用試験
+aviation-security-student|航空保安大学校学生採用試験
+coast-guard-academy|海上保安大学校学生採用試験
+coast-guard-school|海上保安学校学生採用試験
+meteorological-college|気象大学校学生採用試験
+civil-experienced|国家公務員経験者採用試験`]
 ];
 
 export const EXAM_CATALOG=groups.flatMap(([field,source,rows])=>rows.trim().split('\n').map(row=>{

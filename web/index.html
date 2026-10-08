@@ -18,7 +18,7 @@
       <span id="storage-label" class="local-label">記録はこのブラウザに保存</span>
     </header>
     <nav aria-label="メインナビゲーション">
-      <a href="#home">ホーム</a><a href="#subjects">分野</a><a href="#review">復習</a><a href="#search">検索</a><a href="#records">記録</a><a href="#exams">試験管理表</a>
+      <a href="#home">ホーム</a><a href="#subjects">演習</a><a href="#review">復習</a><a href="#search">検索</a><a href="#records">記録</a><a href="#exams">教材を選ぶ</a>
     </nav>
     <section id="sync-panel" class="sync-panel" aria-label="記録の同期" hidden>
       <p id="sync-status" role="status" aria-live="polite"></p>
@@ -29,7 +29,7 @@
         <button id="sync-remote" hidden>クラウドの記録を読み込む</button>
       </div>
     </section>
-    <div class="exam-bar"><label for="exam-select">学習する試験</label><select id="exam-select" aria-label="学習する試験"></select><button id="add-exam">試験を追加</button></div>
+    <div class="exam-bar"><label for="exam-select">学習する試験</label><select id="exam-select" aria-label="学習する試験"></select><a class="button" href="#exams">教材を検索</a><button id="add-exam">試験を追加</button></div>
     <main id="main" tabindex="-1"><p class="card">学習記録を読み込んでいます…</p></main>
     <footer>個人学習向け・非公式アプリ <span>自分で問題登録 / 広告なし</span></footer>
   </div>
@@ -40,6 +40,10 @@
     <div class="actions"><button id="keep-studying" class="primary">続ける</button><button id="pause">保存してホームへ</button><button id="finish">終了して採点</button></div>
   </dialog>
   <input id="import-questions" type="file" accept=".json,.csv,application/json,text/csv" hidden>
+  <dialog id="image-dialog" aria-labelledby="image-title">
+    <div class="image-toolbar"><h2 id="image-title">問題の画像</h2><button id="image-close" autofocus>閉じて問題に戻る</button><label><input id="image-zoom" type="checkbox">原寸で表示</label></div>
+    <div class="image-scroll" tabindex="0" role="region" aria-label="拡大画像。原寸表示時はスクロールできます"><img id="image-view" alt=""></div>
+  </dialog>
   <input id="import-backup" type="file" accept=".json,application/json" hidden>
   <noscript><p class="card">学習機能にはJavaScriptが必要です。ブラウザの設定で有効にしてください。</p></noscript>
 </body>

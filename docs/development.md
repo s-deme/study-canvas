@@ -13,6 +13,8 @@
 
 全体の自動チェックとクラウドのローカル検証にはNode.js 24以上を使います。
 
+<!-- ponytail: miniflareがsharp 0.35.4を固定しているため、CVE-2026-96889修正版0.35.5へoverride。上流が修正版に更新されたら解除する。 -->
+
 ```powershell
 npm ci
 npm run check
@@ -53,6 +55,8 @@ node checks/web-check.mjs
 `npm run check` は旧機能に加え、試験間の記録分離、4種類の解答形式、旧保存データの移行、JSON・CSV、問題未登録の初期状態、以前の同梱問題の記録保持、複数試験の同期を検証します。
 
 実ブラウザの検証は隔離したヘッドレスChromeをポート9238で起動してから `npm run check:browser` を実行します。使い捨ての認証付きローカルサーバーとSQLite DBを8769で起動し、利用者の実クラウドには接続しません。検証画像は `dist/screenshots/` に保存します。別ポートの隔離Chromeを使う場合は、環境変数 `STUDY_CANVAS_BROWSER_URL` に `http://127.0.0.1:ポート` を指定できます。
+
+大量教材の分割読み込みは `checks/staged-material-check.mjs`（`npm run check` に含む）で検証します。本人用ビルドがある環境では `npm run check:library-browser` がポート8770の使い捨てサーバーで実教材を検査します。公開版の空カタログと本人用の大量教材は別々に確認してください。
 
 公開するサンプルは `web/sample-questions.json`、`web/sample-questions-v2.json`、`web/sample-questions.csv` のみです。`web/catalog.mjs` の初期問題一覧は空で、登録した問題は `state.custom` に保存します。公開チェックは静的ファイルの許可リスト、サンプルの件数・出典、空の初期問題一覧、Git公開候補を検査します。
 

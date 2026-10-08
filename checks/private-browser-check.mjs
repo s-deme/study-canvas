@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
 import {onRequestGet,onRequestPut} from '../build/private/functions/api/state.js';
 import {servePreview} from './cloud-preview.mjs';
-import {MATERIAL_EXAMS,MATERIAL_PACKS} from '../build/private/web/catalog.mjs';
+import {MATERIAL_EXAMS,MATERIAL_PACKS,MATERIAL_INDEX} from '../build/private/web/catalog.mjs';
 import {AVAILABLE_EXAMS} from '../build/private/web/core.mjs';
 const browser=await(await fetch((process.env.STUDY_CANVAS_BROWSER_URL || 'http://127.0.0.1:9238')+'/json/version')).json(),ws=new WebSocket(browser.webSocketDebuggerUrl);
 await new Promise((ok,fail)=>{ws.addEventListener('open',ok,{once:true});ws.addEventListener('error',fail,{once:true});});
@@ -16,32 +16,54 @@ const preview=await servePreview(8770,{webRoot:new URL('../build/private/web/',i
 ws.addEventListener('message',e=>{const r=JSON.parse(e.data);if(r.method==='Runtime.exceptionThrown') errors.push(r.params.exceptionDetails);});
 async function page(width=390,seed=null) {const context=await send('Target.createBrowserContext');contexts.push(context.browserContextId);const t=await send('Target.createTarget',{url:'about:blank',browserContextId:context.browserContextId}),{sessionId:s}=await send('Target.attachToTarget',{targetId:t.targetId,flatten:true});await send('Page.enable',{},s);await send('Runtime.enable',{},s);if(seed) await send('Page.addScriptToEvaluateOnNewDocument',{source:`if(!localStorage.getItem('gstudy.web.v1')) localStorage.setItem('gstudy.web.v1',${JSON.stringify(JSON.stringify(seed))});`},s);await send('Emulation.setDeviceMetricsOverride',{width,height:844,deviceScaleFactor:1,mobile:width<500},s);await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-color-scheme',value:'light'}]},s);await send('Page.navigate',{url:'http://127.0.0.1:8770/'},s);await until(s,"document.querySelector('#sync-panel')?.dataset.kind==='synced'");await evaluate(s,'window.confirm=()=>true');return s;}
 const click=(s,selector)=>evaluate(s,`document.querySelector(${JSON.stringify(selector)}).click()`);
-async function route(s,hash) {await evaluate(s,`location.hash=${JSON.stringify('#'+hash)}`);await until(s,`location.hash===${JSON.stringify('#'+hash)} && !!document.querySelector('#main h1')`);await pause(150);}
+async function route(s,hash) {
+ await evaluate(s,`location.hash=${JSON.stringify('#'+hash)}`);
+ const ready=hash==='search'?"!!document.querySelector('#search-input')":hash==='sources'?"document.querySelector('#main h1')?.textContent==='教材と出典'":`!!document.querySelector('nav a[aria-current="page"][href="#${hash}"]') && !!document.querySelector('#main h1')`;
+ await until(s,`location.hash===${JSON.stringify('#'+hash)} && (${ready})`);
+}
 async function select(s,value) {await evaluate(s,`(()=>{const i=document.querySelector('#exam-select');i.value=${JSON.stringify(value)};i.dispatchEvent(new Event('change'));})()`);await until(s,`JSON.parse(localStorage.getItem('gstudy.web.v1')).selectedExam===${JSON.stringify(value)}`);await pause(150);}
 async function setForm(s,selector,values) {await evaluate(s,`(()=>{const f=document.querySelector(${JSON.stringify(selector)});for(const [k,v] of Object.entries(${JSON.stringify(values)})) {f.elements.namedItem(k).value=v;f.elements.namedItem(k).dispatchEvent(new Event('change',{bubbles:true}));}f.requestSubmit();})()`);}
 async function importFile(s,name,content) {await evaluate(s,`(()=>{const input=document.querySelector('#import-questions'),d=new DataTransfer();d.items.add(new File([${JSON.stringify(content)}],${JSON.stringify(name)}));input.files=d.files;input.dispatchEvent(new Event('change'));})()`);await until(s,"location.hash==='#manage' && document.querySelector('#main').innerText.includes('取り込み前の確認')");}
 mkdirSync(new URL('../private-data/additions/screenshots',import.meta.url),{recursive:true});
 async function screenshot(s,name) {await evaluate(s,"document.querySelector('#notice').hidden=true");await evaluate(s,'new Promise(ok=>requestAnimationFrame(()=>requestAnimationFrame(ok)))');const size=await evaluate(s,'({width:innerWidth,height:Math.max(innerHeight,document.documentElement.scrollHeight)})');const r=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:true,clip:{x:0,y:0,...size,scale:1}},s);writeFileSync(new URL('../private-data/additions/screenshots/'+name+'.png',import.meta.url),Buffer.from(r.data,'base64'));}
 const raw=s=>evaluate(s,"JSON.parse(localStorage.getItem('gstudy.web.v1'))");
+const registeredCount=id=>MATERIAL_INDEX.filter(q=>q.examId===id).length;
 
 try {
  const phone=await page(390);await until(phone,"!!document.querySelector('[data-action=daily]')");
  assert.equal(await evaluate(phone,"document.querySelector('#exam-select').options.length"),AVAILABLE_EXAMS.length);
  await route(phone,'exams');assert.equal(await evaluate(phone,"document.querySelectorAll('#exam-inventory tbody tr').length"),AVAILABLE_EXAMS.length);
- for(const [examId,count] of [['ap',730],['sg',15],['fe',26],['boki3',20],['eiken3',0]]) assert.equal(await evaluate(phone,`document.querySelector('[data-select-exam="${examId}"]').closest('tr').children[1].textContent`),count+'問');
+ for(const examId of ['ap','sg','fe','boki3','ip','surveyor','surveyor-assistant','eiken3','electrician1','electrician2','denken3','doctor','dentist','pharmacist','nurse','public-health-nurse','midwife','clinical-lab']) assert.equal(await evaluate(phone,`document.querySelector('[data-select-exam="${examId}"]').closest('tr').children[1].textContent`),registeredCount(examId)+'問');
  assert.equal(await evaluate(phone,'document.documentElement.scrollWidth<=innerWidth'),true);await screenshot(phone,'exam-inventory-private-phone');
  await select(phone,'gken');await route(phone,'home');
- const loaded=await evaluate(phone,"performance.getEntriesByType('resource').filter(r=>r.name.includes('/material/')&&r.name.endsWith('.json')).map(r=>r.name)");assert.equal(loaded.length,1);assert.ok(loaded[0].includes('gken-restored'));
+ const loaded=await evaluate(phone,"performance.getEntriesByType('resource').filter(r=>r.name.includes('/material/')&&r.name.endsWith('.json')).map(r=>r.name)");assert.equal(loaded.length,1);assert.ok(loaded[0].includes('index-gken'));
  for(const examId of ['fp2','fp3'].filter(id=>MATERIAL_EXAMS.some(e=>e.id===id))) {
   await select(phone,examId);await until(phone,"!!document.querySelector('[data-material-filter=year]')");await route(phone,'search');
   await click(phone,'[data-question]');await until(phone,"!!document.querySelector('input[name=answer]')");
   await until(phone,"[...document.querySelectorAll('#main img')].every(i=>i.complete && i.naturalWidth>0)");
   assert.equal(await evaluate(phone,"document.querySelector('#main').innerText.includes('施行の法令')"),true);
-  assert.equal(await evaluate(phone,"document.querySelector('#main').innerText.includes('公式解答：')"),false);
+  assert.equal(await evaluate(phone,"/公式(?:解答|正答)：/.test(document.querySelector('#main').innerText)"),false);
   await until(phone,"document.querySelector('#sync-panel').dataset.kind==='synced'");
   await screenshot(phone,'private-'+examId+'-phone');await click(phone,'input[name=answer]');await click(phone,'[data-action=answer]');
   assert.equal(await evaluate(phone,"document.querySelector('#main').innerText.includes('公式解答：')"),true);
   await click(phone,'[data-action=next]');
+ }
+ for(const examId of ['fe','sg','ip','surveyor','surveyor-assistant','electrician1','electrician2','denken3','doctor','dentist','pharmacist','nurse','public-health-nurse','midwife','clinical-lab']) {
+  const pack=MATERIAL_PACKS.find(p=>p.id.startsWith('archive-') && p.examId===examId && (examId!=='pharmacist' || p.id.endsWith('mhlw-pharmacist-111-5')));assert.ok(pack,examId+' archive missing');
+  const rows=JSON.parse(readFileSync(new URL('../build/private/web/'+pack.url,import.meta.url),'utf8'));
+  const q=(examId==='pharmacist'?rows.find(q=>q.options.length===6 && q.answer===5):examId==='dentist'?rows.find(q=>q.type==='multiple'):rows[0]);assert.ok(q);
+  await select(phone,examId);await until(phone,"!!document.querySelector('[data-material-filter=year]')");
+  await evaluate(phone,`(()=>{const s=document.querySelector('[data-material-filter=year]');s.value=${JSON.stringify(pack.year)};s.dispatchEvent(new Event('change',{bubbles:true}));})()`);await route(phone,'search');
+  await evaluate(phone,`(()=>{const s=document.querySelector('#search-input');s.value=${JSON.stringify(q.topic)};s.dispatchEvent(new Event('input',{bubbles:true}));})()`);
+  const selector=`[data-question="${examId}::${q.id}"]`;await until(phone,`!!document.querySelector(${JSON.stringify(selector)})`);await click(phone,selector);
+  await until(phone,"!!document.querySelector('input[name=answer]')");await until(phone,"[...document.querySelectorAll('#main img')].every(i=>i.complete && i.naturalWidth>0)");
+  assert.equal(await evaluate(phone,"/公式(?:解答|正答)：/.test(document.querySelector('#main').innerText)"),false);
+  assert.equal(await evaluate(phone,'document.documentElement.scrollWidth<=innerWidth'),true);await screenshot(phone,'archive-'+examId+'-phone');
+  for(const answer of Array.isArray(q.answer)?q.answer:[q.answer]) await click(phone,`input[name=answer][value="${answer}"]`);
+  await click(phone,'[data-action=answer]');
+  assert.ok(await evaluate(phone,"/公式(?:解答|正答)：/.test(document.querySelector('#main').innerText) && document.querySelector('#main').innerText.includes('理由解説は未収録')"),examId);
+  assert.equal((await raw(phone)).stats[examId+'::'+q.id].correct,1);
+  await click(phone,'[data-action=next]');await until(phone,"document.querySelector('#sync-panel').dataset.kind==='synced'");
  }
  for(const pack of MATERIAL_PACKS.filter(p=>p.kind==='official' && p.examId==='ap')) {
   const rows=JSON.parse(readFileSync(new URL('../build/private/web/'+pack.url,import.meta.url),'utf8'));
@@ -88,10 +110,42 @@ try {
  await click(phone,'[data-question]');await until(phone,"!!document.querySelector('input[name=answer]')");await until(phone,"[...document.querySelectorAll('#main img')].every(i=>i.complete && i.naturalWidth>0)");await screenshot(phone,'private-choice-phone');await click(phone,'input[name=answer]');await click(phone,'[data-action=answer]');await click(phone,'[data-action=next]');
  await select(phone,'es');await until(phone,"!!document.querySelector('[data-material-filter=year]')");await evaluate(phone,"(()=>{const s=document.querySelector('[data-material-filter=subject]');s.value='午後Ⅱ';s.dispatchEvent(new Event('change',{bubbles:true}));})()");await route(phone,'search');await click(phone,'[data-question]');await until(phone,"!!document.querySelector('#written-answer')");
  await evaluate(phone,"(()=>{const a=document.querySelector('#written-answer');a.value='途中の論述';a.dispatchEvent(new Event('input',{bubbles:true}));})()");await until(phone,"document.querySelector('#sync-panel').dataset.kind==='synced'");await send('Page.reload',{},phone);await until(phone,"document.querySelector('#written-answer')?.value==='途中の論述'");await click(phone,'[data-action=answer]');await until(phone,"!!document.querySelector('[data-action=self-partial]')");assert.equal(await evaluate(phone,"document.querySelector('#main').innerText.includes('評価資料')"),true);await screenshot(phone,'private-essay-phone');await click(phone,'[data-action=self-partial]');await click(phone,'[data-action=next]');await until(phone,"document.querySelector('#sync-panel').dataset.kind==='synced'");
+ for(const examId of ['jlpt-n1','jlpt-n2','jlpt-n3','jlpt-n4','jlpt-n5']) {
+  const pack=MATERIAL_PACKS.find(p=>p.examId===examId && p.year==='2018' && p.subject==='聴解');
+  const q=JSON.parse(readFileSync(new URL('../build/private/web/'+pack.url,import.meta.url)))[0];
+  await select(phone,examId);await until(phone,"!!document.querySelector('[data-material-filter=year]')");await route(phone,'search');
+  await evaluate(phone,`(()=>{const s=document.querySelector('#search-input');s.value=${JSON.stringify(q.topic)};s.dispatchEvent(new Event('input',{bubbles:true}));})()`);
+  const selector=`[data-question="${examId}::${q.id}"]`;await until(phone,`!!document.querySelector(${JSON.stringify(selector)})`);await click(phone,selector);
+  await until(phone,"!!document.querySelector('audio')");assert.equal(await evaluate(phone,"document.querySelector('audio').autoplay"),false);
+  await send('Emulation.setDeviceMetricsOverride',{width:320,height:844,deviceScaleFactor:1,mobile:true},phone);
+  assert.equal(await evaluate(phone,'document.documentElement.scrollWidth<=innerWidth'),true);
+  await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true},phone);
+  await evaluate(phone,"document.querySelector('audio').load()");await until(phone,"document.querySelector('audio').duration>0");
+  assert.equal(await evaluate(phone,"document.querySelectorAll('#main img').length"),q.images.length);
+  await click(phone,`input[name=answer][value="${q.answer}"]`);await click(phone,'[data-action=answer]');
+  assert.ok(await evaluate(phone,"document.querySelector('#main').innerText.includes('公式正答：')"));await click(phone,'[data-action=next]');
+ }
+ for(const [examId,type] of [['childcare','multiple'],['boki3','written'],['sme-consultant','image'],['github-fire-common','single']]) {
+  const rows=MATERIAL_PACKS.filter(p=>p.id.startsWith('candidate-') && p.examId===examId).flatMap(p=>JSON.parse(readFileSync(new URL('../build/private/web/'+p.url,import.meta.url))));
+  if(!rows.length) continue;
+  const q=rows.find(q=>type==='image'?q.images.length:q.type===type),key=examId+'::'+q.id;
+  await select(phone,examId);await route(phone,'search');
+  await evaluate(phone,`(()=>{const input=document.querySelector('#search-input');input.value=${JSON.stringify(q.prompt.slice(0,35))};input.dispatchEvent(new Event('input',{bubbles:true}));})()`);
+  const selector=`[data-question="${key}"]`;await until(phone,`!!document.querySelector(${JSON.stringify(selector)})`);await click(phone,selector);
+  await until(phone,`JSON.parse(localStorage.getItem('gstudy.web.v1')).session.ids[0]===${JSON.stringify(key)}`);
+  assert.ok(await evaluate(phone,"document.querySelector('#main').innerText.includes('正答・解説は未検証')"));
+  await until(phone,"[...document.querySelectorAll('#main img')].every(i=>i.complete && i.naturalWidth>0)");
+  if(q.type==='written') await evaluate(phone,`(()=>{const input=document.querySelector('#written-answer');input.value=${JSON.stringify(q.modelAnswer)};input.dispatchEvent(new Event('input',{bubbles:true}));})()`);
+  else for(const answer of Array.isArray(q.answer)?q.answer:[q.answer]) await click(phone,`input[name=answer][value="${answer}"]`);
+  await click(phone,'[data-action=answer]');if(q.type==='written') {await until(phone,"!!document.querySelector('[data-action=self-done]')");await click(phone,'[data-action=self-done]');}
+  await screenshot(phone,'candidate-'+examId);await click(phone,'[data-action=next]');await until(phone,"document.querySelector('#sync-panel').dataset.kind==='synced'");
+  const candidateStat=(await raw(phone)).stats[key];assert.equal(q.type==='written'?candidateStat.self.done:candidateStat.correct,1);
+  await route(phone,'sources');assert.equal(await evaluate(phone,"document.querySelector('#main h1').textContent"),'教材と出典');assert.equal(await evaluate(phone,"document.querySelector('#main').innerText.includes('undefined')"),false);
+ }
  const expected=await raw(phone),pc=await page(1100);assert.deepEqual((await raw(pc)).stats,expected.stats);assert.equal(expected.custom.length,0);assert.ok(Object.keys(expected.stats).some(k=>k.startsWith('ap::')));assert.ok(Object.keys(expected.stats).some(k=>k.startsWith('es::')));
- for(const [id,n] of [['sg',15],['fe',26],['boki3',20],['gken',240]]) {await select(pc,id);await until(pc,"!!document.querySelector('[data-material-filter=year]')");assert.ok(await evaluate(pc,`document.querySelector('.material-filters').innerText.includes('全${n}問')`));}
+ for(const id of ['sg','fe','boki3','gken']) {await select(pc,id);await until(pc,"!!document.querySelector('[data-material-filter=year]')");assert.ok(await evaluate(pc,`document.querySelector('.material-filters').innerText.includes('全${registeredCount(id)}問')`));}
 
- const before=await raw(pc);await send('Network.enable',{},pc);await send('Network.setBlockedURLs',{urls:['*gken-restored.json']},pc);await send('Page.reload',{},pc);await until(pc,"!!document.querySelector('[data-action=retry-material]')");assert.equal(await evaluate(pc,"document.querySelector('#main').innerText.includes('まだ問題がありません')"),false);assert.deepEqual((await raw(pc)).stats,before.stats);await send('Network.setBlockedURLs',{urls:[]},pc);await click(pc,'[data-action=retry-material]');await until(pc,"!!document.querySelector('[data-action=daily]')");
+ const before=await raw(pc);await send('Network.enable',{},pc);await send('Network.setBlockedURLs',{urls:['*gken-restored.json']},pc);await evaluate(pc,"window.__retryReload=true;history.replaceState(null,'','#search')");await send('Page.reload',{},pc);await until(pc,"!window.__retryReload && !!document.querySelector('[data-action=retry-material]')");assert.equal(await evaluate(pc,"document.querySelector('#main').innerText.includes('まだ問題がありません')"),false);assert.deepEqual((await raw(pc)).stats,before.stats);await send('Network.setBlockedURLs',{urls:[]},pc);await click(pc,'[data-action=retry-material]');await until(pc,"!!document.querySelector('#search-input')");
  await evaluate(pc,'window.confirm=()=>true');const backup=JSON.stringify(await raw(pc));await evaluate(pc,`(()=>{const input=document.querySelector('#import-backup'),d=new DataTransfer();d.items.add(new File([${JSON.stringify(backup)}],'backup.json'));input.files=d.files;input.dispatchEvent(new Event('change'));})()`);await until(pc,"location.hash==='#records' && document.querySelector('#sync-panel').dataset.kind==='synced'");assert.deepEqual((await raw(pc)).stats,before.stats);await route(pc,'home');
- await screenshot(pc,'private-restored-desktop');await send('Emulation.setDeviceMetricsOverride',{width:320,height:844,deviceScaleFactor:1,mobile:true},phone);await route(phone,'home');assert.equal(await evaluate(phone,'document.documentElement.scrollWidth<=innerWidth'),true);assert.equal(errors.length,0,JSON.stringify(errors));console.log('PASS private browser: lazy packs, filters, images, essay guidance, draft reload, two-device record isolation, restored counts, 320px');
+ await screenshot(pc,'private-restored-desktop');await send('Emulation.setDeviceMetricsOverride',{width:320,height:844,deviceScaleFactor:1,mobile:true},phone);await route(phone,'home');assert.equal(await evaluate(phone,'document.documentElement.scrollWidth<=innerWidth'),true);assert.equal(errors.length,0,JSON.stringify(errors));console.log('PASS private browser: lazy packs, filters, images, essay guidance, draft reload, two-device record isolation, restored counts, candidate multiple/written/image/common questions, 320px');
 } finally {for(const context of contexts) await send('Target.disposeBrowserContext',{browserContextId:context});await new Promise(ok=>preview.server.close(ok));preview.fixture.restore();ws.close();}

@@ -34,14 +34,14 @@ try {
   for(const subject of [...new Set(rows.map(q=>q.subject))]) {
    await route(s,'subjects');
    await evaluate(s, '(()=>{const x=document.querySelector("[data-material-filter=subject]");x.value='+JSON.stringify(subject)+';x.dispatchEvent(new Event("change",{bubbles:true}));})()');
-   await until(s,"!!document.querySelector('#subject-filter')");
+   await until(s,"!!document.querySelector('[data-action=subject]')");
    const expected=rows.filter(q=>q.subject===subject);
    assert.ok(await evaluate(s,'document.querySelector(".material-filters").innerText.includes('+JSON.stringify(expected.length+'問 / 全50問')+')'));
    for(const category of [...new Set(expected.map(q=>q.category))]) {
     await route(s,'subjects');
-    await evaluate(s,'document.querySelector("#subject-filter").value='+JSON.stringify(subject));
     const action=await evaluate(s,'[...document.querySelectorAll("[data-action^=category-]")].find(b=>b.closest(".card").querySelector("h2").innerText==='+JSON.stringify(category)+')?.dataset.action');
     assert.ok(action,category);await click(s,'[data-action="'+action+'"]');
+    await until(s,"!!document.querySelector('#practice-form')");await evaluate(s,"document.querySelector('#practice-count').value='all';document.querySelector('#practice-form').requestSubmit()");
     await until(s,"!!document.querySelector('input[name=answer]')");
     const before=await raw(s),keys=expected.filter(q=>q.category===category).map(q=>examId+'::'+q.id);
     assert.deepEqual([...before.session.ids].sort(),[...keys].sort(),subject+'/'+category);
@@ -71,6 +71,6 @@ try {
   result.push({examId,checked,correctAndIncorrect:'pass',explanation:'exact rendered text pass',reloadRecords:'pass',mobileOverflow:'pass'});
  }
  assert.equal(errors.length,0,JSON.stringify(errors));
- writeFileSync(new URL('../private-data/additions/new-genres-browser-verification.json',import.meta.url),JSON.stringify({browser:'actual headless Chrome, isolated profile, authenticated loopback fixture only',checkedOn:'2026-10-05',result,runtimeErrors:errors.length},null,2));
+ writeFileSync(new URL('../private-data/additions/new-genres-browser-verification.json',import.meta.url),JSON.stringify({browser:'actual headless Chrome, isolated profile, authenticated loopback fixture only',checkedOn:new Date().toLocaleDateString('sv-SE',{timeZone:'Asia/Tokyo'}),result,runtimeErrors:errors.length},null,2));
  console.log('PASS new genres browser: all subject/category combinations, correct/wrong grading, complete explanations, reload records and 390px');
 } finally {for(const context of contexts) await send('Target.disposeBrowserContext',{browserContextId:context});await new Promise(ok=>preview.server.close(ok));preview.fixture.restore();ws.close();}

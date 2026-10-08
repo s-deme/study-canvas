@@ -31,6 +31,8 @@ python -m http.server 8765 --bind 127.0.0.1 --directory web
 
 ## ガイド
 
+件数・取り込み状況の管理元と更新手順は [ドキュメント案内](docs/README.md) を参照してください。
+
 |目的|文書|
 |---|---|
 |起動・演習・記録|[利用ガイド](docs/usage.md)|
@@ -38,6 +40,10 @@ python -m http.server 8765 --bind 127.0.0.1 --directory web
 |本人限定ログイン・同期|[クラウド設定](docs/cloud.md)|
 |開発・チェック・公開対象|[開発ガイド](docs/development.md)|
 |カテゴリ別の試験一覧・問題登録数|[試験管理表](docs/exam-inventory.md)|
+|GitHubで見つけた過去問・本人用追加教材|[過去問の収録結果](docs/github-material.md)|
+|現在の取り込み状況・取得元別の収録数|[取り込み状況](docs/import-status.md)|
+|候補の取り込み方法・非収録理由・検証履歴|[取り込み記録](docs/github-import-results.md)|
+|取得済みリポジトリ・再取得の防止|[GitHub取得元の管理台帳](docs/github-sources.md)|
 |検証済み・未検証の範囲|[検証結果](docs/verification-web.md)|
 
 ## ライセンスと教材
@@ -48,3 +54,9 @@ python -m http.server 8765 --bind 127.0.0.1 --directory web
 
 
 本人用の教材復帰・年度別教材・公開版との分離については [本人用教材の管理](docs/private-material.md) を参照してください。
+
+日本語能力試験N1〜N5の公式教材と聴解音声の [収録内容と使い方](docs/jlpt-import.md)。現在の登録数は試験管理表で確認できます。
+
+漢検12級分の過去問追加と自己採点方式は [日本語・国語の取り込み記録](docs/japanese-import.md) を参照してください。
+
+経営・事務・販売の過去問・公式問題例の追加は [取り込み記録](docs/business-import.md) を参照してください。
