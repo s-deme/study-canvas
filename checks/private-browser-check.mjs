@@ -15,7 +15,7 @@ async function until(s,expression) {const deadline=Date.now()+20000;while(Date.n
 const preview=await servePreview(8770,{webRoot:new URL('../build/private/web/',import.meta.url),getState:onRequestGet,putState:onRequestPut}),contexts=[],errors=[];
 ws.addEventListener('message',e=>{const r=JSON.parse(e.data);if(r.method==='Runtime.exceptionThrown') errors.push(r.params.exceptionDetails);});
 async function page(width=390,seed=null) {const context=await send('Target.createBrowserContext');contexts.push(context.browserContextId);const t=await send('Target.createTarget',{url:'about:blank',browserContextId:context.browserContextId}),{sessionId:s}=await send('Target.attachToTarget',{targetId:t.targetId,flatten:true});await send('Page.enable',{},s);await send('Runtime.enable',{},s);if(seed) await send('Page.addScriptToEvaluateOnNewDocument',{source:`if(!localStorage.getItem('gstudy.web.v1')) localStorage.setItem('gstudy.web.v1',${JSON.stringify(JSON.stringify(seed))});`},s);await send('Emulation.setDeviceMetricsOverride',{width,height:844,deviceScaleFactor:1,mobile:width<500},s);await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-color-scheme',value:'light'}]},s);await send('Page.navigate',{url:'http://127.0.0.1:8770/'},s);await until(s,"document.querySelector('#sync-panel')?.dataset.kind==='synced'");await evaluate(s,'window.confirm=()=>true');return s;}
-const click=(s,selector)=>evaluate(s,`document.querySelector(${JSON.stringify(selector)}).click()`);
+const click=(s,selector)=>until(s,`(()=>{const el=document.querySelector(${JSON.stringify(selector)});if(!el) return false;el.click();return true;})()`);
 async function route(s,hash) {
  await evaluate(s,`location.hash=${JSON.stringify('#'+hash)}`);
  const ready=hash==='search'?"!!document.querySelector('#search-input')":hash==='sources'?"document.querySelector('#main h1')?.textContent==='教材と出典'":`!!document.querySelector('nav a[aria-current="page"][href="#${hash}"]') && !!document.querySelector('#main h1')`;
@@ -96,7 +96,8 @@ try {
   assert.equal((await raw(phone)).session.ids[0],examId+'::'+first.id);
   const renderedPrompt=first.prompt.replace(/^```[^\n]*$/gm,'').replace(/\s+/g,' ').trim();
   assert.ok(await evaluate(phone,`document.querySelector('#main').innerText.replace(/\\s+/g,' ').includes(${JSON.stringify(renderedPrompt)})`),pack.id+' prompt differs');
-  assert.ok(await evaluate(phone,"document.querySelector('#main').innerText.includes('自作問題')"));
+  await click(phone,'.question-source summary');
+  assert.ok(await evaluate(phone,"document.querySelector('.question-source').innerText.includes('自作問題')"));
   assert.equal(await evaluate(phone,"document.querySelector('#main').innerText.includes('公式解答')"),false);
   await until(phone,"document.querySelector('#sync-panel').dataset.kind==='synced'");
   await screenshot(phone,'private-'+examId+(pack.id.endsWith('-001')?'':'-'+pack.id.split('-').at(-1))+'-phone');await click(phone,'input[name=answer]');await click(phone,'[data-action=answer]');
@@ -143,7 +144,7 @@ try {
   await route(phone,'sources');assert.equal(await evaluate(phone,"document.querySelector('#main h1').textContent"),'教材と出典');assert.equal(await evaluate(phone,"document.querySelector('#main').innerText.includes('undefined')"),false);
  }
  const expected=await raw(phone),pc=await page(1100);assert.deepEqual((await raw(pc)).stats,expected.stats);assert.equal(expected.custom.length,0);assert.ok(Object.keys(expected.stats).some(k=>k.startsWith('ap::')));assert.ok(Object.keys(expected.stats).some(k=>k.startsWith('es::')));
- for(const id of ['sg','fe','boki3','gken']) {await select(pc,id);await until(pc,"!!document.querySelector('[data-material-filter=year]')");assert.ok(await evaluate(pc,`document.querySelector('.material-filters').innerText.includes('全${registeredCount(id)}問')`));}
+ for(const id of ['sg','fe','boki3','gken']) {await select(pc,id);await until(pc,"!!document.querySelector('[data-material-filter=year]')");await click(pc,'.filter-panel summary');assert.ok(await evaluate(pc,`document.querySelector('.material-filters').innerText.includes('全${registeredCount(id)}問')`));}
 
  const before=await raw(pc);await send('Network.enable',{},pc);await send('Network.setBlockedURLs',{urls:['*gken-restored.json']},pc);await evaluate(pc,"window.__retryReload=true;history.replaceState(null,'','#search')");await send('Page.reload',{},pc);await until(pc,"!window.__retryReload && !!document.querySelector('[data-action=retry-material]')");assert.equal(await evaluate(pc,"document.querySelector('#main').innerText.includes('まだ問題がありません')"),false);assert.deepEqual((await raw(pc)).stats,before.stats);await send('Network.setBlockedURLs',{urls:[]},pc);await click(pc,'[data-action=retry-material]');await until(pc,"!!document.querySelector('#search-input')");
  await evaluate(pc,'window.confirm=()=>true');const backup=JSON.stringify(await raw(pc));await evaluate(pc,`(()=>{const input=document.querySelector('#import-backup'),d=new DataTransfer();d.items.add(new File([${JSON.stringify(backup)}],'backup.json'));input.files=d.files;input.dispatchEvent(new Event('change'));})()`);await until(pc,"location.hash==='#records' && document.querySelector('#sync-panel').dataset.kind==='synced'");assert.deepEqual((await raw(pc)).stats,before.stats);await route(pc,'home');

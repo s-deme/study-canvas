@@ -86,9 +86,14 @@ try {
   assert.equal(await evaluate(phone,'document.documentElement.scrollWidth<=innerWidth'),true);
 
   // Leave edits pending on the PC, then commit a different edit from the phone.
+  await until(pc,"document.querySelector('#sync-panel').dataset.kind==='synced'");
+  const baselineRevision=await evaluate(pc,"JSON.parse(localStorage.getItem('gstudy.web.v1')).cloud.revision");
+  await evaluate(phone,"window.dispatchEvent(new Event('online'))");
+  await until(phone,`document.querySelector('#sync-panel').dataset.kind==='synced' && JSON.parse(localStorage.getItem('gstudy.web.v1')).cloud.revision===${baselineRevision}`);
   await send('Network.emulateNetworkConditions',{offline:true,latency:0,downloadThroughput:-1,uploadThroughput:-1},pc);
   await evaluate(pc,"document.querySelector('[data-action=bookmark]').click()");
   await until(pc,"document.querySelector('#sync-panel').dataset.kind==='error'");
+  assert.equal(await evaluate(pc,"document.querySelector('#sync-panel').hidden || document.querySelector('#sync-actions').hidden"),false);
   await screenshot(pc,'cloud-offline');
   await evaluate(phone,"document.querySelector('[data-action=next]').click()");
   await until(phone,"document.querySelector('#sync-panel').dataset.kind==='synced'");
@@ -96,6 +101,7 @@ try {
   await send('Network.emulateNetworkConditions',{offline:false,latency:0,downloadThroughput:-1,uploadThroughput:-1},pc);
   await evaluate(pc,"window.dispatchEvent(new Event('online'))");
   await until(pc,"document.querySelector('#sync-panel').dataset.kind==='conflict'");
+  assert.equal(await evaluate(pc,"document.querySelector('#sync-panel').hidden || document.querySelector('#sync-actions').hidden"),false);
   assert.equal(await evaluate(pc,"document.querySelector('#sync-remote').hidden"),false);
   assert.equal(await evaluate(pc,"JSON.parse(localStorage.getItem('gstudy.web.v1')).cloud.dirty"),true);
   const remote=await (await fetch('http://127.0.0.1:8767/api/state')).json();
@@ -105,12 +111,12 @@ try {
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true},pc);
   assert.equal(await evaluate(pc,'document.documentElement.scrollWidth<=innerWidth'),true);
   await screenshot(pc,'cloud-conflict-phone');
-  await evaluate(pc,"location.hash='#records'");
+  await evaluate(pc,"location.hash='#exams'");
   await until(pc,"!!document.querySelector('[data-action=export]')");
   assert.equal(await evaluate(pc,"document.querySelector('#main').innerText.includes('端末間の自動同期はありません')"),false);
   await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Tab',code:'Tab',windowsVirtualKeyCode:9},pc);
   await send('Input.dispatchKeyEvent',{type:'keyUp',key:'Tab',code:'Tab',windowsVirtualKeyCode:9},pc);
-  assert.equal(await evaluate(pc,"['BUTTON','A','INPUT'].includes(document.activeElement.tagName)"),true);
+  assert.equal(await evaluate(pc,"['BUTTON','A','INPUT','SELECT','SUMMARY'].includes(document.activeElement.tagName)"),true);
 
   // An old session without bundled text must survive startup and private reimport.
   const oldQuestion={...fixtures[0],id:'original:legacy-browser-check'};
