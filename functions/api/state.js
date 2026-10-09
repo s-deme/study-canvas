@@ -1,8 +1,8 @@
 import {validateState,indexQuestions} from '../../web/core.mjs';
 
-import {BUILTIN_QUESTIONS,MATERIAL_INDEX} from '../../web/catalog.mjs';
-const base = [...BUILTIN_QUESTIONS,...MATERIAL_INDEX];
-indexQuestions(base);
+import {BUILTIN_QUESTIONS,MATERIAL_INDEX} from '../../web/state-catalog.mjs';
+const base = MATERIAL_INDEX instanceof Map ? MATERIAL_INDEX : [...BUILTIN_QUESTIONS,...MATERIAL_INDEX];
+if (Array.isArray(base)) indexQuestions(base);
 const MAX_BYTES = 10 * 1024 * 1024;
 const json = (value,status=200) => Response.json(value,{status});
 

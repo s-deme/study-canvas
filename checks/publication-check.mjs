@@ -8,7 +8,7 @@ import {previewImport} from '../web/core.mjs';
 import {MATERIAL_MANIFESTS,MATERIAL_EXAMS as overviewExams} from '../web/library-catalog.mjs';
 assert.deepEqual([MATERIAL_MANIFESTS,overviewExams],[[],[]],'公開版の教材概要は空です');
 const root=fileURLToPath(new URL('../',import.meta.url)),web=new URL('../web/',import.meta.url);
-const allowed=['_routes.json','app.mjs','core.mjs','catalog.mjs','library-catalog.mjs','exams.mjs','render.mjs','material.mjs','index.html','sample-questions.json','sample-questions-v2.json','sample-questions.csv','styles.css','sync.mjs'];
+const allowed=['_routes.json','app.mjs','core.mjs','catalog.mjs','state-catalog.mjs','library-catalog.mjs','exams.mjs','render.mjs','material.mjs','index.html','sample-questions.json','sample-questions-v2.json','sample-questions.csv','styles.css','sync.mjs'];
 assert.deepEqual(readdirSync(web).sort(),allowed.sort(),'web/に未承認のファイルがあります');
 for(const name of allowed) assert.ok(lstatSync(new URL(name,web)).isFile());
 assert.deepEqual(BUILTIN_QUESTIONS,[],'試験問題集は同梱しません');

@@ -2,8 +2,12 @@
 import assert from 'node:assert/strict';
 import {mkdirSync,writeFileSync,statSync} from 'node:fs';
 import {servePreview} from './cloud-preview.mjs';
-import {onRequestGet,onRequestPut} from '../build/private/functions/api/state.js';
-import {MATERIAL_MANIFESTS} from '../build/private/web/library-catalog.mjs';
+import {pathToFileURL} from 'node:url';
+import {resolve,sep} from 'node:path';
+import {bundledAsset} from '../scripts/cloud-runtime.mjs';
+const privateRoot=process.env.STUDY_CANVAS_PRIVATE_ROOT?pathToFileURL(resolve(process.env.STUDY_CANVAS_PRIVATE_ROOT)+sep):new URL('../build/private/',import.meta.url);
+const {onRequestGet,onRequestPut}=await import(new URL('functions/api/state.js',privateRoot));
+const {MATERIAL_MANIFESTS}=await import(new URL('web/library-catalog.mjs',privateRoot));
 const browser=await(await fetch((process.env.STUDY_CANVAS_BROWSER_URL || 'http://127.0.0.1:9238')+'/json/version')).json();
 const ws=new WebSocket(browser.webSocketDebuggerUrl);await new Promise((ok,fail)=>{ws.onopen=ok;ws.onerror=fail;});
 let id=0;const pending=new Map(),contexts=[],errors=[],requests=[],metrics={};
@@ -20,7 +24,7 @@ async function field(s,selector,value,event='change') {await evaluate(s,`(()=>{c
 async function page() {const c=await send('Target.createBrowserContext');contexts.push(c.browserContextId);const t=await send('Target.createTarget',{url:'about:blank',browserContextId:c.browserContextId}),{sessionId:s}=await send('Target.attachToTarget',{targetId:t.targetId,flatten:true});await send('Page.enable',{},s);await send('Runtime.enable',{},s);await send('Network.enable',{},s);await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true},s);await send('Page.navigate',{url:'http://127.0.0.1:8770/#exams'},s);await until(s,"document.querySelector('#exam-inventory') && document.querySelector('#sync-panel')?.dataset.kind==='synced'");await evaluate(s,'window.confirm=()=>true');return s;}
 mkdirSync(new URL('../dist/screenshots/',import.meta.url),{recursive:true});
 async function screenshot(s,name) {const r=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false},s);writeFileSync(new URL('../dist/screenshots/'+name+'.png',import.meta.url),Buffer.from(r.data,'base64'));}
-const preview=await servePreview(8770,{webRoot:new URL('../build/private/web/',import.meta.url),getState:onRequestGet,putState:onRequestPut});
+const preview=await servePreview(8770,{webRoot:new URL('web/',privateRoot),getState:onRequestGet,putState:onRequestPut,assetHandler:process.env.STUDY_CANVAS_PRIVATE_ROOT?bundledAsset:null});
 try {
   const begin=performance.now(),s=await page();metrics.overviewMs=Math.round(performance.now()-begin);
   metrics.questions=MATERIAL_MANIFESTS.reduce((n,p)=>n+p.count,0);metrics.overviewBytes=statSync(new URL('../build/private/web/library-catalog.mjs',import.meta.url)).size;

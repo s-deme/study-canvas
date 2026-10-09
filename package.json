@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "node checks/web-check.mjs && node checks/multiexam-check.mjs && node checks/cloud-check.mjs && node checks/multiexam-cloud-check.mjs && node checks/cloud-config-check.mjs && node checks/publication-guard-check.mjs && node checks/publication-check.mjs && node checks/material-check.mjs && node checks/staged-material-check.mjs",
+    "check": "node checks/web-check.mjs && node checks/multiexam-check.mjs && node checks/cloud-check.mjs && node checks/multiexam-cloud-check.mjs && node checks/cloud-config-check.mjs && node checks/publication-guard-check.mjs && node checks/publication-check.mjs && node checks/material-check.mjs && node checks/staged-material-check.mjs && node checks/private-cloud-package-check.mjs",
     "dev:cloud": "wrangler pages dev web --ip 127.0.0.1 --port 8766",
     "build:cloud": "wrangler pages functions build --outdir build/cloud",
     "check:runtime": "node checks/cloud-runtime-check.mjs",
@@ -17,8 +17,10 @@
     "check:expansion": "node checks/expansion-completion-check.mjs",
     "build:private": "node scripts/build-private.mjs",
     "inventory:exams": "node scripts/update-exam-inventory.mjs",
-    "build:private-cloud": "python scripts/verify-material.py && npm run check && npm run build:private -- --cloud && node scripts/private-cloud-config.mjs && cd build/private && wrangler pages functions build --outdir ../private-worker",
-    "deploy:private": "npm run build:private-cloud && cd build/private && wrangler pages deploy web --branch main"
+    "check:private-cloud": "node checks/private-cloud-package-check.mjs && node checks/packed-cloud-runtime-check.mjs",
+    "build:private-compact": "python checks/compact-material-check.py && node scripts/compact-private-material.mjs && python checks/native-evidence-check.py && node checks/compact-library-check.mjs",
+    "build:private-cloud": "npm run check && node checks/private-cloud-package-check.mjs && npm run build:private-compact && node scripts/package-private-cloud.mjs --compact && node scripts/run-private-cloud.mjs build",
+    "deploy:private": "npm run build:private-cloud && npm run check:private-cloud && node scripts/run-private-cloud.mjs deploy"
   },
   "dependencies": {
     "@cloudflare/pages-plugin-cloudflare-access": "^1.0.5"

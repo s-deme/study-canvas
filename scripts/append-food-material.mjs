@@ -78,6 +78,7 @@ let files=0;
 function walk(dir){for(const n of readdirSync(dir)){const p=join(dir,n);statSync(p).isDirectory()?walk(p):files++;}}
 
 cpSync(join(root,'web/exams.mjs'),join(web,'exams.mjs'));
+for(const name of ['core.mjs','material.mjs']) cpSync(join(root,'web',name),join(web,name));
 writeFileSync(join(web,'catalog.mjs'),`// Generated private index.\nexport const BUILTIN_QUESTIONS=[];\nexport const MATERIAL_INDEX=${JSON.stringify(index)};\nexport const MATERIAL_PACKS=${JSON.stringify(packs)};\nexport const MATERIAL_EXAMS=${JSON.stringify(exams)};\n`);
 writeLibraryCatalog(web,index,packs,exams);
 walk(web);

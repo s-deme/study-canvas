@@ -29,6 +29,8 @@ export class MaterialLibrary {
     await this.once('index:'+examId,async()=>{
       const data=await this.json(manifest),keys=new Set();
       if(!Array.isArray(data.index) || data.index.length!==manifest.count || !Array.isArray(data.packs)) throw new Error('教材索引の件数が不正です');
+      if(data.defaults!==undefined && (!data.defaults || typeof data.defaults!=='object' || Array.isArray(data.defaults))) throw new Error('教材索引の共通項目が不正です');
+      data.index=data.index.map(q=>({...data.defaults,...q}));
       for(const p of data.packs) if(p.examId!==examId || !/^material\/[a-zA-Z0-9_.-]+\.json$/.test(p.url) || !Number.isSafeInteger(p.count) || p.count<1 || p.count>2000) throw new Error('教材索引の参照が不正です');
       const urls=new Set(data.packs.map(p=>p.url));
       for(const q of data.index) {
