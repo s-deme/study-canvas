@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
-  <meta name="description" content="自分で試験と問題を登録し、演習・復習・模試で学ぶ個人学習用Webアプリ。画面入力とJSON・CSV取り込みに対応。">
+  <meta name="description" content="自分で試験と問題を登録し、演習・復習で学ぶ個人学習用Webアプリ。画面入力とJSON・CSV取り込みに対応。">
   <title>study-canvas</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%2300695c'/%3E%3Cpath d='M16 17h22a10 10 0 0 1 10 10v20H26a10 10 0 0 1-10-10z' fill='none' stroke='white' stroke-width='4'/%3E%3Cpath d='M25 28h14M25 36h10' stroke='white' stroke-width='4'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="styles.css">
@@ -14,11 +14,10 @@
   <a class="skip-link" href="#main">本文へ移動</a>
   <div class="shell">
     <header class="site-header">
-      <a class="brand" href="#home"><span class="brand-mark" aria-hidden="true">学</span><span><strong>study-canvas</strong><small>毎日の「わかった」を、少しずつ。</small></span></a>
-      <span id="storage-label" class="local-label">記録はこのブラウザに保存</span>
+      <a class="brand" href="#home"><span class="brand-mark" aria-hidden="true">学</span><strong>study-canvas</strong></a>
     </header>
     <nav aria-label="メインナビゲーション">
-      <a href="#home">ホーム</a><a href="#subjects">演習</a><a href="#review">復習</a><a href="#search">検索</a><a href="#records">記録</a><a href="#exams">教材を選ぶ</a>
+      <a href="#home">ホーム</a><a href="#subjects">演習</a><a href="#review">復習</a><a href="#exams">教材／設定</a>
     </nav>
     <section id="sync-panel" class="sync-panel" aria-label="記録の同期" hidden>
       <p id="sync-status" role="status" aria-live="polite"></p>
@@ -29,14 +28,14 @@
         <button id="sync-remote" hidden>クラウドの記録を読み込む</button>
       </div>
     </section>
-    <div class="exam-bar"><label for="exam-select">学習する試験</label><select id="exam-select" aria-label="学習する試験"></select><a class="button" href="#exams">教材を検索</a><button id="add-exam">試験を追加</button></div>
+    <div class="exam-bar"><label for="exam-select">学習する試験</label><select id="exam-select" aria-label="学習する試験"></select></div>
     <main id="main" tabindex="-1"><p class="card">学習記録を読み込んでいます…</p></main>
-    <footer>個人学習向け・非公式アプリ <span>自分で問題登録 / 広告なし</span></footer>
+    <footer>個人学習向け・非公式アプリ</footer>
   </div>
   <p id="notice" role="status" aria-live="polite" hidden></p>
   <dialog id="pause-dialog" aria-labelledby="pause-title">
     <h2 id="pause-title">演習を中断しますか？</h2>
-    <p id="pause-help">回答と選択中の内容は保存しています。模試は中断中も時間が進みます。</p>
+    <p id="pause-help">回答と選択中の内容は保存しています。</p>
     <div class="actions"><button id="keep-studying" class="primary">続ける</button><button id="pause">保存してホームへ</button><button id="finish">終了して採点</button></div>
   </dialog>
   <input id="import-questions" type="file" accept=".json,.csv,application/json,text/csv" hidden>

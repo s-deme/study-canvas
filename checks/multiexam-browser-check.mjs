@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
 import {servePreview} from './cloud-preview.mjs';
-import {AVAILABLE_EXAMS} from '../web/core.mjs';
+import {AVAILABLE_EXAMS,newSession} from '../web/core.mjs';
 const browser=await(await fetch((process.env.STUDY_CANVAS_BROWSER_URL || 'http://127.0.0.1:9238')+'/json/version')).json(),ws=new WebSocket(browser.webSocketDebuggerUrl);
 await new Promise((ok,fail)=>{ws.addEventListener('open',ok,{once:true});ws.addEventListener('error',fail,{once:true});});
 let id=0;const waiting=new Map();ws.addEventListener('message',e=>{const r=JSON.parse(e.data),p=waiting.get(r.id);if(p) {waiting.delete(r.id);r.error?p.reject(new Error(r.error.message)):p.resolve(r.result);}});
@@ -41,10 +41,10 @@ try {
   await click(phone,'[data-select-exam=boki3]');await until(phone,"location.hash==='#home'");assert.equal((await raw(phone)).selectedExam,'boki3');
   await route(phone,'exams');await evaluate(phone,"document.querySelector('#exam-name-filter').value='存在しない試験xyz';document.querySelector('#exam-name-filter').dispatchEvent(new Event('input',{bubbles:true}));");
   assert.equal(await evaluate(phone,"document.querySelectorAll('#exam-inventory tbody tr').length"),0);await screenshot(phone,'exam-inventory-empty');
-  for(const examId of ['gken','sg','fe','boki3']) {await select(phone,examId);await route(phone,'home');assert.equal(await evaluate(phone,"!!document.querySelector('[data-action=new-question]') && !document.querySelector('[data-action=daily]')"),true);}
+  for(const examId of ['gken','sg','fe','boki3']) {await select(phone,examId);await route(phone,'home');assert.equal(await evaluate(phone,"!!document.querySelector('#main a[href=\"#exams\"]') && !document.querySelector('[data-action=daily]')"),true);}
   for(const path of ['ipa-material.mjs','ipa-manifest.json','assets/ipa-2026/2026r08_sg-q01-1.png','private-data/retired-material/questions-v2.json']) assert.equal(await evaluate(phone,`fetch(${JSON.stringify(path)}).then(r=>r.status)`),404);
   await select(phone,'fe');await route(phone,'records');assert.equal(await evaluate(phone,"document.querySelector('.stats .stat').childNodes[0].textContent"),'0');
-  await click(phone,'#add-exam');await until(phone,"!!document.querySelector('#exam-form')");await setForm(phone,'#exam-form',{name:'語学の検証試験',field:'語学',subjects:'読解\n作文',categories:'基礎\n文章'});await until(phone,"location.hash==='#manage'");const customId=(await raw(phone)).selectedExam;
+  await route(phone,'exams');await click(phone,'[data-action=new-exam]');await until(phone,"!!document.querySelector('#exam-form')");await setForm(phone,'#exam-form',{name:'語学の検証試験',field:'語学',subjects:'読解\n作文',categories:'基礎\n文章'});await until(phone,"location.hash==='#manage'");const customId=(await raw(phone)).selectedExam;
   await click(phone,'[data-action=new-question]');await until(phone,"!!document.querySelector('#question-form')");await setForm(phone,'#question-form',{id:'test-written',type:'written',topic:'表とコードの記述',prompt:'合計を説明してください。',passage:'|値|数|\n|---|---|\n|A|10|\n|B|20|\n\n```text\n10 + 20\n```',modelAnswer:'30です。',explanation:'表の数値を足します。',source:'検証用自作問題'});await until(phone,"location.hash==='#manage'");
   await route(phone,'search');await click(phone,'[data-question]');await until(phone,"!!document.querySelector('#written-answer')");assert.equal(await evaluate(phone,"!!document.querySelector('table') && !!document.querySelector('pre')"),true);
   await evaluate(phone,"(()=>{const a=document.querySelector('#written-answer');a.value='途中の回答です。';a.dispatchEvent(new Event('input',{bubbles:true}));})()");await until(phone,"document.querySelector('#sync-panel').dataset.kind==='synced'");await send('Page.reload',{},phone);await until(phone,"document.querySelector('#written-answer')?.value==='途中の回答です。'");
@@ -60,18 +60,18 @@ try {
   await select(pc,'boki3');await screenshot(pc,'multiexam-boki-desktop');await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-color-scheme',value:'dark'}]},phone);await select(phone,'boki3');await screenshot(phone,'multiexam-home-dark');assert.equal(await evaluate(phone,'document.documentElement.scrollWidth<=innerWidth'),true);
   await send('Emulation.setDeviceMetricsOverride',{width:320,height:844,deviceScaleFactor:1,mobile:true},phone);assert.equal(await evaluate(phone,'document.documentElement.scrollWidth<=innerWidth'),true);await screenshot(phone,'multiexam-home-320');
   await select(phone,customId);await route(phone,'search');await click(phone,`[data-question="${customId}::test-written"]`);await until(phone,"!!document.querySelector('#written-answer')");assert.equal(await evaluate(phone,"!!document.querySelector('table') && !!document.querySelector('pre')"),true);await screenshot(phone,'multiexam-user-material-320');
-  await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Tab',code:'Tab',windowsVirtualKeyCode:9},phone);await send('Input.dispatchKeyEvent',{type:'keyUp',key:'Tab',code:'Tab',windowsVirtualKeyCode:9},phone);assert.equal(await evaluate(phone,"['BUTTON','A','INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName)"),true);
+  await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Tab',code:'Tab',windowsVirtualKeyCode:9},phone);await send('Input.dispatchKeyEvent',{type:'keyUp',key:'Tab',code:'Tab',windowsVirtualKeyCode:9},phone);assert.equal(await evaluate(phone,"['BUTTON','A','INPUT','SELECT','TEXTAREA','SUMMARY'].includes(document.activeElement.tagName)"),true);
   await select(phone,'boki3');await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true},phone);await evaluate(phone,"document.documentElement.style.fontSize='24px'");assert.equal(await evaluate(phone,'document.documentElement.scrollWidth<=innerWidth'),true);await screenshot(phone,'multiexam-large-text');
   const previewRows=Array.from({length:51},(_,i)=>({id:'preview-page-'+i,type:'single',prompt:'Synthetic paging fixture '+i,options:['a','b'],answer:0,source:'検証用'}));
-  await importFile(phone,'paging.json',JSON.stringify(previewRows));assert.equal(await evaluate(phone,"document.querySelectorAll('#main details').length"),50);
-  await click(phone,'[data-action=import-next]');assert.equal(await evaluate(phone,"document.querySelectorAll('#main details').length"),1);
-  await click(phone,'[data-action=import-prev]');assert.equal(await evaluate(phone,"document.querySelectorAll('#main details').length"),50);
+  await importFile(phone,'paging.json',JSON.stringify(previewRows));assert.equal(await evaluate(phone,"document.querySelectorAll('#main .card details').length"),50);
+  await click(phone,'[data-action=import-next]');assert.equal(await evaluate(phone,"document.querySelectorAll('#main .card details').length"),1);
+  await click(phone,'[data-action=import-prev]');assert.equal(await evaluate(phone,"document.querySelectorAll('#main .card details').length"),50);
   await click(phone,'[data-action=cancel-import]');assert.equal((await raw(phone)).custom.length,5);
   await importFile(phone,'search-paging.json',JSON.stringify(previewRows.map((q,i)=>({...q,year:i===50?'2025':'2026',subject:i===50?'B':'A'}))));await click(phone,'[data-action=commit-import]');
   await route(phone,'search');
   await evaluate(phone,"document.querySelector('#search-input').value='Synthetic paging';document.querySelector('#search-input').dispatchEvent(new Event('input'));");
   await click(phone,'[data-action=more]');assert.equal(await evaluate(phone,"document.querySelectorAll('#search-results [data-question]').length"),1);
-  await route(phone,'home');await click(phone,'nav a[href="#search"]');await until(phone,"!!document.querySelector('#search-input')");
+  await route(phone,'home');await click(phone,'.quick-links a[href="#search"]');await until(phone,"!!document.querySelector('#search-input')");
   assert.equal(await evaluate(phone,"document.querySelector('#search-input').value"),'Synthetic paging');assert.equal(await evaluate(phone,"document.querySelectorAll('#search-results [data-question]').length"),1);
   await evaluate(phone,"{const f=document.querySelector('[data-material-filter=year]');f.value='2026';f.dispatchEvent(new Event('change',{bubbles:true}));}");
   assert.equal(await evaluate(phone,"document.querySelector('#search-input').value"),'Synthetic paging');assert.equal(await evaluate(phone,"document.querySelectorAll('#search-results [data-question]').length"),50);
@@ -84,6 +84,53 @@ try {
   await click(phone,'[data-action=clear-search]');assert.equal(await evaluate(phone,"document.activeElement.id"),'search-input');assert.equal(await evaluate(phone,"document.querySelector('#search-input').value"),'');
   await evaluate(phone,"document.querySelector('#search-input').value='Synthetic';document.querySelector('#search-input').dispatchEvent(new Event('input'));");
   await select(phone,customId);await route(phone,'search');assert.equal(await evaluate(phone,"document.querySelector('#search-input').value"),'');
+  async function restoreStudy(seed) {
+    await evaluate(phone,`(()=>{const input=document.querySelector('#import-backup'),d=new DataTransfer();d.items.add(new File([${JSON.stringify(JSON.stringify(seed))}],'ui-check.json'));input.files=d.files;input.dispatchEvent(new Event('change'));})()`);
+    await until(phone,"location.hash==='#records' && document.querySelector('#sync-panel').dataset.kind==='synced'");
+    await route(phone,'home');
+  }
+  await evaluate(phone,"document.documentElement.style.fontSize=''");
+  const clean=structuredClone(expected);clean.stats={};clean.daily={};clean.history=[];clean.session=null;clean.selectedExam=customId;
+  await restoreStudy(clean);
+  assert.equal(await evaluate(phone,"document.querySelectorAll('nav a').length"),4);
+  assert.equal(await evaluate(phone,"document.querySelector('#main .primary').dataset.action"),'daily');
+  assert.equal(await evaluate(phone,"document.querySelector('.filter-panel').open"),false);
+  await click(phone,'.filter-panel summary');assert.equal(await evaluate(phone,"document.querySelector('.filter-panel').open"),true);await click(phone,'.filter-panel summary');
+  assert.equal(await evaluate(phone,"document.querySelector('#sync-panel').hidden"),true);
+  await route(phone,'review');assert.ok(await evaluate(phone,"document.querySelector('#main').innerText.includes('復習対象はまだありません')"));
+  await restoreStudy(expected);assert.equal(await evaluate(phone,"document.querySelector('#main .primary').dataset.action"),'weak');
+  await click(phone,'[data-action=weak]');await until(phone,"!!document.querySelector('#practice-form')");
+  assert.equal(await evaluate(phone,"document.querySelector('#practice-mode').value"),'weak');
+  const legacyMock=structuredClone(clean),choice=clean.custom.find(q=>q.examId===customId && q.type==='single');
+  legacyMock.session=newSession([choice],1,'以前の模試',true,15);legacyMock.selectedExam='boki3';
+  await restoreStudy(legacyMock);
+  assert.equal(await evaluate(phone,"document.querySelector('#main .primary').dataset.action"),'resume');
+  assert.ok(await evaluate(phone,"document.querySelector('[data-action=resume]').textContent.includes('語学の検証試験')"));
+  await select(phone,customId);
+  assert.equal(await evaluate(phone,"document.querySelector('#main .primary').dataset.action"),'resume');
+  assert.ok(await evaluate(phone,"!!document.querySelector('[data-action=daily]:not(.primary)')"));
+  for(const width of [320,390,1100]) {
+    await send('Emulation.setDeviceMetricsOverride',{width,height:844,deviceScaleFactor:1,mobile:width<500},phone);
+    for(const theme of ['light','dark']) {
+      await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-color-scheme',value:theme}]},phone);
+      assert.equal(await evaluate(phone,'document.documentElement.scrollWidth<=innerWidth'),true);
+      assert.ok(await evaluate(phone,"[...document.querySelectorAll('nav a,.brand,#main button,.quick-links a,.filter-panel summary')].filter(el=>el.getBoundingClientRect().height>0).every(el=>el.getBoundingClientRect().height>=48)"));
+      await screenshot(phone,'study-home-'+width+'-'+theme);
+    }
+  }
+  await click(phone,'[data-action=resume]');await until(phone,"!!document.querySelector('#timer')");
+  assert.equal(await evaluate(phone,"document.querySelector('nav').hidden && document.querySelector('.exam-bar').hidden && document.querySelector('footer').hidden"),true);
+  assert.equal(await evaluate(phone,"document.querySelector('.question-source').open"),false);
+  await click(phone,'[data-action=pause-dialog]');assert.ok(await evaluate(phone,"document.querySelector('#pause-help').textContent.includes('中断中も時間が進みます')"));await click(phone,'#keep-studying');
+  await evaluate(phone,"document.documentElement.style.fontSize='24px'");
+  assert.equal(await evaluate(phone,'document.documentElement.scrollWidth<=innerWidth'),true);await screenshot(phone,'study-quiz-dark-large');
+  await evaluate(phone,"document.documentElement.style.fontSize=''");
+  await click(phone,'input[name=answer]');await click(phone,'[data-action=answer]');await until(phone,"location.hash==='#results'");
+  assert.equal((await raw(phone)).session.ended,true);assert.equal((await raw(phone)).history.at(-1).title,'以前の模試');
+  await evaluate(phone,"location.hash='#mock'");await until(phone,"location.hash==='#home'");
+  assert.equal(await evaluate(phone,"!!document.querySelector('#mock-form') || [...document.querySelectorAll('a')].some(a=>a.hash==='#mock')"),false);
+  await route(phone,'search');assert.equal(await evaluate(phone,"document.querySelectorAll('#search-results [data-edit-question]').length"),0);
+  await route(phone,'exams');await click(phone,'.settings-panel summary');assert.ok(await evaluate(phone,"!!document.querySelector('[data-action=export]') && !!document.querySelector('[data-action=new-exam]') && !!document.querySelector('#settings-storage')"));
   assert.equal(errors.length,0,JSON.stringify(errors));
-  console.log('PASS: real browser arbitrary non-IT exam registration/edit, written answer reload/self review, JSON preview/atomic rejection/CSV, multi-select grading, two-device synchronization, v1 migration/reload/backup restore, single-choice editor, all exams start empty and retired/private material returns 404, 320/390/1100px layouts, light/dark/large text and keyboard focus');
+  console.log('PASS: study action priority, legacy mock resume/grading, removed mock entry, focused quiz, collapsed filters/settings, search editing removed; real browser arbitrary non-IT exam registration/edit, written answer reload/self review, JSON preview/atomic rejection/CSV, multi-select grading, two-device synchronization, v1 migration/reload/backup restore, single-choice editor, all exams start empty and retired/private material returns 404, 320/390/1100px layouts, light/dark/large text and keyboard focus');
 } finally {for(const context of contexts) await send('Target.disposeBrowserContext',{browserContextId:context});await new Promise(ok=>preview.server.close(ok));preview.fixture.restore();ws.close();}
