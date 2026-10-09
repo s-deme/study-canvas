@@ -29,14 +29,29 @@ node checks/private-material-check.mjs
 
 ## PCとクラウド
 
+### 全教材の本人限定配備（2026-10-09）
+
+`npm run deploy:private` は、最後に成功した `build/private/` の全教材を保持し、現在の `web/`・`functions/` と合わせて配備します。増分追加を失わないため、このコマンド内では通常の教材再生成を行いません。原本・問題パックのSHA-256と問題形式、全問題ID、全画像・音声の一致を検査してから配備します。
+
+画像は4MiB以下の配信用ファイルへまとめ、元の画像URLで必要部分を返します。大きい音声等は単体で保持します。ブラウザ向けの試験別索引はそのまま、同期検証用の索引は全問題ID・解答形式・選択肢数だけに縮小します。問題・画像の削除や画質低下は行いません。`build/private-cloud/current.json` が最後に完成した配備候補を指し、そのフォルダの `manifest.json`・`verification.json` に件数・ハッシュ・検査結果を保存します。
+
+全教材は本人限定の既存Pages・Access・D1へ配置します。`localOnly` は過去のローカル限定運用の記録として保持し、通常の `build:private -- --cloud` にある停止条件も残します。今回ユーザーが指定した全教材の本人限定クラウド利用には専用のパッケージ処理を使用します。一般公開用の `deploy:cloud` と混同しないでください。公開Gitには教材・個人設定・生成物を含めません。
+
+```powershell
+npm run deploy:private
+```
+
+この処理はPagesの20,000ファイル・単体25MiB制限、全画像音声の一致、実Workerでの認証・同期・競合を検査します。本番の最新状態と本人ログイン後の操作確認は配備記録と区別します。
+
+大量データの転送は128MiB以下に分割し、単位ごとに新しいアップロード用認証を取得して、転送済みハッシュの登録と再利用可能な状態を確認します。通常の一括転送では長時間の処理中に認証期限が切れ、完了前の転送が再利用できないためです。配備候補フォルダの `upload-progress.json` に確定済みの単位を保存します。全ファイルが揃うまでは本番を切り替えません。Windowsの既存Wranglerログイン、または標準の `CLOUDFLARE_API_TOKEN` を使用します。
+
 `Start-Web.ps1` は準備済み教材がある場合に本人用ビルドを生成して配信します。通常の公開用チェックは本人用生成物を配信しません。
 
-GitHub候補の追加教材を含む全33,485問は本人用ローカル版に登録しています。クラウドのファイル数上限を超えるため、通常の `build:private` はローカル用として生成し、`build:private-cloud` は `--cloud` を付けて上限を検査します。公式原本教材の内訳は [収録結果](github-material.md)、未登録試験の追加と保留理由は [候補の取り込み結果](github-import-results.md) を参照してください。
+以前の33,485問時点ではファイル数上限によりクラウド配備を止めていました。現在は上記の本人限定パッケージ処理を使います。公式原本教材の内訳は [収録結果](github-material.md)、未登録試験の追加と保留理由は [候補の取り込み結果](github-import-results.md) を参照してください。
 
 ```powershell
 npm run build:private-cloud
-node checks/private-runtime-check.mjs
-node checks/private-browser-check.mjs
+npm run check:private-cloud
 npm run deploy:private
 ```
 

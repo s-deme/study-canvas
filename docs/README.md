@@ -41,6 +41,7 @@
 | 試験ごとの検索済み管理・再調査防止 | [GitHub調査台帳](github-exam-search.md) / [調査データ](github-exam-search.json) | JSONへ履歴追記後、`npm run inventory:exams` で生成 |
 | 取り込み方法・非収録理由・検証範囲 | [公式原本追加](github-material.md) / [候補取り込み](github-import-results.md) / [JLPT](jlpt-import.md) / [デザイン・生活](design-life-import.md) / [農業・食品](food-import.md) / [観光・運輸](tourism-import.md) | 実施記録。現在の総数を追記しない |
 | 本人用教材の保存・互換性・再生成 | [本人用教材管理](private-material.md) | 手順を更新。過去の件数・配備は履歴 |
+| 文字化・可逆圧縮・公開対象容量 | [教材の軽量化](material-compaction.md) | 派生ビルドの生成・照合・容量実測 |
 | 操作・取り込み形式 | [利用ガイド](usage.md) / [問題形式](question-format.md) | 仕様変更時 |
 | 開発・クラウド・検証 | [開発](development.md) / [クラウド](cloud.md) / [検証結果](verification-web.md) | 対応する変更・検証時 |
 | 過去の検証結果 | [archive](archive/verification-web-2026-10-03.md) | 履歴として保持 |

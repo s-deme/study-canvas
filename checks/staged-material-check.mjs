@@ -4,11 +4,21 @@ import {join,resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
 import {MaterialLibrary} from '../web/material.mjs';
-import {writeLibraryCatalog} from '../scripts/library-catalog.mjs';
-import {emptyState,newSession,validateState,questionKey,indexQuestions,questionIndex} from '../web/core.mjs';
+import {writeLibraryCatalog,compactQuestionPack} from '../scripts/library-catalog.mjs';
+import {emptyState,newSession,validateState,validateQuestions,questionKey,indexQuestions,questionIndex} from '../web/core.mjs';
 import {CloudSync} from '../web/sync.mjs';
 
 const root=resolve('build');mkdirSync(root,{recursive:true});const dir=mkdtempSync(join(root,'staged-check-'));
+const shared='Shared case: '+ 'Keep all numbers, units and negations unchanged. '.repeat(10);
+const full=validateQuestions(Array.from({length:3},(_,i)=>({id:'compact-'+i,examId:'sg',prompt:'Question '+i,options:['a','b'],answer:i%2,passage:i<2?shared:'Different case'})));
+const packed=compactQuestionPack(full);
+assert.deepEqual(validateQuestions(packed),full);assert.ok(JSON.stringify(packed).length<JSON.stringify(full).length);
+assert.equal(packed.passages.length,1);
+assert.throws(()=>validateQuestions({...packed,defaults:[]}));
+assert.throws(()=>validateQuestions({...packed,questions:[{id:'missing-passage',passageId:'absent'}]}));
+assert.throws(()=>validateQuestions({...packed,defaults:{...packed.defaults,answer:26},questions:packed.questions.map(({answer,...q})=>q)}));
+const compactLibrary=new MaterialLibrary(full.map(q=>({id:q.id,examId:q.examId,type:q.type,options:q.options.map((_,i)=>String(i)),catalogOnly:true})),[{examId:'sg',url:'packed.json',count:full.length}],async()=>Response.json(packed));
+await compactLibrary.load('sg');assert.deepEqual(compactLibrary.base.map(({packUrl,...q})=>q),full);
 assert.ok(dir.startsWith(root));
 try {
   mkdirSync(join(dir,'material'));

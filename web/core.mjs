@@ -28,10 +28,11 @@ export function validateExam(row) {
 function safeUrl(url) {valid(typeof url==='string' && /^https:\/\/[^\s<>"']+$/.test(url),'出典URLが不正です');return url;}
 export function validateQuestions(input,existing=[],custom=false,examId) {
   if(object(input)) {
-    valid(Array.isArray(input.questions),'questions配列が必要です');const passages=input.passages ?? [];
+    valid(Array.isArray(input.questions),'questions配列が必要です');const passages=input.passages ?? [],defaults=input.defaults ?? {};
+    valid(object(defaults),'共通項目の形式が不正です');
     valid(Array.isArray(passages) && passages.length<=2000,'共通本文の形式が不正です');const byId=new Map();
     for(const p of passages) {valid(object(p),'共通本文の形式が不正です');const id=text(p.id,'共通本文ID',120);valid(!byId.has(id),'共通本文IDが重複しています');byId.set(id,text(p.text,'共通本文',50000));}
-    input=input.questions.map(q=>{valid(object(q),'問題の形式が不正です');if(!q.passageId) return q;valid(byId.has(q.passageId),`共通本文がありません：${q.passageId}`);return {...q,passage:byId.get(q.passageId)};});
+    input=input.questions.map(q=>{valid(object(q),'問題の形式が不正です');q={...defaults,...q};if(!q.passageId) return q;valid(byId.has(q.passageId),`共通本文がありません：${q.passageId}`);return {...q,passage:byId.get(q.passageId)};});
   }
   valid(Array.isArray(input) && input.length>0 && input.length<=2000,'問題は1〜2000問で指定してください');const ids=new Set(existing.map(questionKey));
   return input.map((row,index)=>{
@@ -62,7 +63,7 @@ export function allQuestions(base,state) {return [...new Map([...base,...state.c
 const questionIndexes=new WeakMap();
 // Only owners of stable arrays opt in; rebuild after adding or replacing material.
 export function indexQuestions(rows) {const map=new Map(rows.map(q=>[questionKey(q),q]));questionIndexes.set(rows,map);return map;}
-export const questionIndex=rows=>questionIndexes.get(rows) || new Map(rows.map(q=>[questionKey(q),q]));
+export const questionIndex=rows=>rows instanceof Map?rows:questionIndexes.get(rows) || new Map(rows.map(q=>[questionKey(q),q]));
 export function dayKey(now=new Date()) {return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;}
 export function shuffle(items,random=Math.random) {const out=[...items];for(let i=out.length-1;i>0;i--) {const j=Math.floor(random()*(i+1));[out[i],out[j]]=[out[j],out[i]];}return out;}
 export function makeDeck(pool,count,mock=false,random=Math.random) {

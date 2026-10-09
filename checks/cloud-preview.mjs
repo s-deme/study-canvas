@@ -39,8 +39,13 @@ export async function authFixture() {
     return data+'.'+Buffer.from(signature).toString('base64url');
   }};
 }
-export async function servePreview(port=8767,{webRoot=new URL('../web/',import.meta.url),getState=onRequestGet,putState=onRequestPut}={}) {
+export async function servePreview(port=8767,{webRoot=new URL('../web/',import.meta.url),getState=onRequestGet,putState=onRequestPut,assetHandler=null}={}) {
   const fixture=await authFixture(), token=await fixture.token();
+  fixture.env.ASSETS={fetch:async request=>{
+    const path=new URL(request.url || request).pathname.slice(1);
+    if(path.includes('..') || !/^(?:[a-zA-Z0-9_-]+\/)*[a-zA-Z0-9_.-]+$/.test(path)) return new Response('',{status:404});
+    try {return new Response(readFileSync(new URL(path,webRoot)));} catch {return new Response('',{status:404});}
+  }};
   const server=createServer(async (req,res)=>{
     try {
       const origin=`http://127.0.0.1:${server.address().port}`, url=new URL(req.url,origin);
@@ -50,11 +55,12 @@ export async function servePreview(port=8767,{webRoot=new URL('../web/',import.m
       const context={env:fixture.env,data:{},request,functionPath:'',waitUntil:()=>{},passThroughOnException:()=>{},next:async () => {
         if (url.pathname==='/api/config') return config(context);
         if (url.pathname==='/api/state') return req.method==='PUT'?putState(context):getState(context);
+        if (assetHandler && url.pathname.startsWith('/assets/')) return assetHandler(context);
         const path=url.pathname==='/'?'index.html':url.pathname.slice(1);
         // Serve only flat, known web assets. Nothing outside web/ is reachable.
         if (path.includes('..') || !/^(?:[a-zA-Z0-9_-]+\/)*[a-zA-Z0-9_.-]+\.(html|css|mjs|json|csv|png|webp|mp3)$/.test(path)) return new Response('Not found',{status:404});
         try {
-          const types={html:'text/html; charset=utf-8',css:'text/css; charset=utf-8',mjs:'text/javascript; charset=utf-8',json:'application/json',csv:'text/csv; charset=utf-8',png:'image/png',mp3:'audio/mpeg'};
+          const types={html:'text/html; charset=utf-8',css:'text/css; charset=utf-8',mjs:'text/javascript; charset=utf-8',json:'application/json',csv:'text/csv; charset=utf-8',png:'image/png',webp:'image/webp',mp3:'audio/mpeg'};
           return new Response(readFileSync(new URL(path,webRoot)),{headers:{'Content-Type':types[path.split('.').at(-1)]}});
         } catch { return new Response('Not found',{status:404}); }
       }};

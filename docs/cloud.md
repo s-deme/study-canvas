@@ -6,6 +6,12 @@ Cloudflare PagesでWeb版を配信し、Accessで許可した本人のメール�
 
 ## 設定ファイルと検証範囲
 
+収録済みの本人用教材をすべて使う更新は `npm run deploy:private` で行います。`deploy:cloud` は教材を同梱しない公開用アプリです。全教材の配信方式と検証手順は [本人用教材の管理](private-material.md#全教材の本人限定配備2026-10-09) を参照してください。
+
+作業を再開するときは、まずGit管理外の `private-data/cloud-status.json`（最新配備・件数・確認結果）と `wrangler.local.jsonc`（既存環境）を確認します。以前の記録は `private-data/cloud-verification.json` と `private-data/expansion-cloud-verification.json` に残っています。現在の本番状態はWranglerの配備一覧と照合し、ローカルビルドの完了を配備済みと扱わないでください。
+
+配備作業の途中経過は `private-data/cloud-update-progress.json`、小分け転送の確定済み単位は、同ファイルが示す配備候補内の `upload-progress.json` で確認します。
+
 リポジトリの `wrangler.jsonc` は設定例で、DB IDはゼロの仮値です。自身のアカウント用の設定は `wrangler.local.jsonc` に保存します。このファイルと `.dev.vars` はGitの公開対象から除外します。設定例には実際のDB ID・メールアドレス・認証情報を記入しないでください。
 
 ローカルの自動チェックとビルドは [Web版の検証結果](verification-web.md) を参照してください。本人の本番ログインと実端末間の同期は未検証です。配備後に下記の完了確認を行ってください。
