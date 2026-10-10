@@ -88,6 +88,9 @@ form label { display:block; font-weight:600; }
 audio { display:block; width:100%; max-width:100%; margin:12px 0; }
 .passage { border-left:3px solid var(--primary); padding-left:16px; margin-bottom:20px; }
 .table-scroll { overflow-x:auto; max-width:100%; margin:16px 0; }
+.table-scroll table { width:max-content; min-width:100%; }
+.table-scroll th,.table-scroll td { overflow-wrap:normal; max-width:30rem; }
+.table-scroll th { white-space:nowrap; }
 table { border-collapse:collapse; width:100%; }
 th,td { border:1px solid var(--outline); padding:10px; text-align:left; }
 pre { overflow-x:auto; padding:16px; background:var(--surface); border-radius:8px; font-size:.9rem; }

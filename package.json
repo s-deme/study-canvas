@@ -16,9 +16,12 @@
     "check:large-material": "node checks/large-material-check.mjs && node checks/additional-material-check.mjs",
     "check:expansion": "node checks/expansion-completion-check.mjs",
     "build:private": "node scripts/build-private.mjs",
+    "build:material-text": "node scripts/build-material-transcription.mjs",
+    "check:material-text": "node checks/transcription-check.mjs && python checks/transcription-region-check.py",
+    "check:material-text-browser": "node checks/transcription-browser-check.mjs",
     "inventory:exams": "node scripts/update-exam-inventory.mjs",
     "check:private-cloud": "node checks/private-cloud-package-check.mjs && node checks/packed-cloud-runtime-check.mjs",
-    "build:private-compact": "python checks/compact-material-check.py && node scripts/compact-private-material.mjs && python checks/native-evidence-check.py && node checks/compact-library-check.mjs",
+    "build:private-compact": "python checks/compact-material-check.py && node scripts/compact-private-material.mjs && python checks/native-evidence-check.py && node checks/compact-library-check.mjs && npm run build:material-text",
     "build:private-cloud": "npm run check && node checks/private-cloud-package-check.mjs && npm run build:private-compact && node scripts/package-private-cloud.mjs --compact && node scripts/run-private-cloud.mjs build",
     "deploy:private": "npm run build:private-cloud && npm run check:private-cloud && node scripts/run-private-cloud.mjs deploy"
   },

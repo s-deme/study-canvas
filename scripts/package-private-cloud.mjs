@@ -7,7 +7,7 @@ import {createHash} from 'node:crypto';
 import {assetShard} from './cloud-runtime.mjs';
 import {validateQuestions,questionKey} from '../web/core.mjs';
 
-const root=resolve('.'),source=process.argv.includes('--compact')?JSON.parse(readFileSync(join(root,'build/private-compact/current.json'))).directory:join(root,'build/private'),out=join(root,'build/private-cloud');
+const root=resolve('.'),source=process.argv.includes('--compact')?JSON.parse(readFileSync(join(root,'build/material-transcription/current.json'))).directory:join(root,'build/private'),out=join(root,'build/private-cloud');
 const sourcePath=relative(join(root,'build'),source);
 assert.ok(!sourcePath.startsWith('..') && !isAbsolute(sourcePath),'Source must stay under build');
 const lock=join(root,'build/private-build.lock'),fd=openSync(lock,'wx');
@@ -17,6 +17,12 @@ const manifest=JSON.parse(readFileSync(join(source,'manifest.json')));
 const {MATERIAL_INDEX,MATERIAL_PACKS,MATERIAL_EXAMS}=await import(pathToFileURL(join(source,'web/catalog.mjs')));
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 if(process.argv.includes('--compact')) assert.equal(hash(readFileSync(join(root,'build/private/manifest.json'))),manifest.compaction.sourceManifestSha256,'Compact build is stale; regenerate it');
+if(process.argv.includes('--compact')) {
+  assert.equal(manifest.transcription.allImagesAttempted,true,'Image extraction is incomplete');
+  assert.equal(manifest.transcription.cropMethod,4,'Image crop validation is stale; regenerate it');
+  const compact=JSON.parse(readFileSync(join(root,'build/private-compact/current.json'))).directory;
+  assert.equal(hash(readFileSync(join(compact,'manifest.json'))),manifest.transcription.sourceManifestSha256,'Transcription build is stale; regenerate it');
+}
 assert.equal(MATERIAL_INDEX.length,manifest.questions);
 assert.deepEqual(MATERIAL_PACKS,manifest.packs);
 const keys=new Set(),assets=new Set();
@@ -31,20 +37,16 @@ for(const pack of MATERIAL_PACKS) {
 }
 assert.equal(keys.size,manifest.questions);
 assert.ok(MATERIAL_INDEX.every(q=>keys.has(questionKey(q))));
-// Saved user edits/backups can still reference the original PNG URLs.
-const aliases={},legacyBytes=new Map();
+// Keep retained compact images and old URLs for previously edited questions.
+const aliases={};
 if(manifest.compaction) {
   for(const [old,entry] of Object.entries(JSON.parse(readFileSync(join(source,'asset-evidence.json'))))) {
     if(old!==entry.src) {aliases[old]=entry.src;assets.add(entry.src);}
   }
-  for(const patch of Object.values(JSON.parse(readFileSync(join(source,'text-evidence.json'))))) for(const [i,image] of patch.original.images.entries()) {
-    const bytes=readFileSync(join(root,'build/private/web',image.src));
-    assert.equal(hash(bytes),patch.regions[i].sha256,image.src);
-    if(!aliases[image.src]) {legacyBytes.set(image.src,bytes);assets.add(image.src);}
-  }
 }
 // Each run has a new directory, so interrupted packaging cannot be deployed as a complete build.
 const target=join(out,Date.now().toString());mkdirSync(join(target,'web/bundles'),{recursive:true});
+writeFileSync(join(target,'package.json'),JSON.stringify({private:true,type:'module'}));
 cpSync(join(root,'web'),join(target,'web'),{recursive:true});
 cpSync(join(root,'functions'),join(target,'functions'),{recursive:true});
 cpSync(join(source,'web/material'),join(target,'web/material'),{recursive:true});
@@ -62,7 +64,7 @@ let chunks=[],size=0,number=0;
 // ponytail: insertions can shift later bundles; use stable shard groups if future uploads become costly.
 const flush=()=>{if(chunks.length) {writeFileSync(join(target,`web/bundles/${number}.bin`),Buffer.concat(chunks));number++;chunks=[];size=0;}};
 for(const path of [...assets].sort()) {
-  const bytes=legacyBytes.get(path) || readFileSync(join(source,'web',path));assert.ok(bytes.length<25*1024*1024,path);
+  const bytes=readFileSync(join(source,'web',path));assert.ok(bytes.length<25*1024*1024,path);
   assetHashes[path]=hash(bytes);
   if(bytes.length>4*1024*1024) {mkdirSync(resolve(target,'web',path,'..'),{recursive:true});writeFileSync(join(target,'web',path),bytes);continue;}
   if(size+bytes.length>4*1024*1024) flush();
@@ -84,6 +86,7 @@ config.pages_build_output_dir='./web';writeFileSync(join(target,'wrangler.jsonc'
 mkdirSync(join(target,'.wrangler/deploy'),{recursive:true});
 writeFileSync(join(target,'.wrangler/deploy/config.json'),JSON.stringify({configPath:'../../wrangler.jsonc'}));
 if(manifest.compaction) cpSync(join(source,'compaction-report.json'),join(target,'compaction-report.json'));
+if(manifest.transcription) for(const file of ['transcription-report.json','image-text-evidence.json']) cpSync(join(source,file),join(target,file));
 writeFileSync(join(target,'manifest.json'),JSON.stringify({...manifest,files:files.length,sourceAssets:Object.keys(assetHashes).length,physicalAssets:assets.size,assetAliases:aliases,assetHashes,packagedAt:new Date().toISOString()},null,2));
 writeFileSync(join(out,'current.json'),JSON.stringify({directory:target}));
 console.log(JSON.stringify({directory:target,questions:manifest.questions,packs:MATERIAL_PACKS.length,assets:assets.size,files:files.length,bundles:number}));

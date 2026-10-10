@@ -13,6 +13,19 @@ doc = m.fitz.open()
 page = doc.new_page()
 page.insert_text((50, 50), 'Question: choose the correct statement.')
 assert 'correct statement' in m.native_text(page, page.rect)
+arithmetic = doc.new_page()
+arithmetic.insert_text((50, 50), 'Calculate 1 + 2 = 3; 0.02 / 2 = 0.01.')
+assert '0.02 / 2 = 0.01' in m.native_text(arithmetic, arithmetic.rect)
+styled = doc.new_page();styled.insert_text((50, 50), 'Bold condition', fontname='hebo')
+assert '［太字：Bold condition］' in m.native_text(styled, styled.rect)
+indented = doc.new_page();indented.insert_text((50, 50), 'if ready:', fontname='cour');indented.insert_text((70, 70), 'execute()', fontname='cour')
+try:
+    m.native_text(indented, indented.rect)
+    raise AssertionError('Code indentation must not be flattened')
+except ValueError:
+    pass
+indented_prose = doc.new_page();indented_prose.insert_text((50,50),'Question 1. Choose one.',fontname='cour');indented_prose.insert_text((70,70),'Answer option.',fontname='cour')
+assert 'Answer option.' in m.native_text(indented_prose,indented_prose.rect)
 underline = doc.new_page()
 underline.insert_text((50, 50), 'Do not omit the emphasis.')
 underline.draw_line((50, 52), (150, 52))
@@ -34,6 +47,46 @@ try:
     raise AssertionError('Borderless columns must retain the image')
 except ValueError:
     pass
+choices_page = doc.new_page()
+choices_page.insert_text((50, 50), 'Question: choose one.')
+for x, label, value in [(50, 'ア', '0.12'), (170, 'イ', '0.55'), (290, 'ウ', '0.75'), (410, 'エ', '0.84')]:
+    choices_page.insert_text((x, 90), label + ' ' + value, fontname='japan')
+choice_text = m.native_text(choices_page, choices_page.rect)
+assert m.split_choices(choice_text, list('アイウエ'))[1] == ['ア 0.12', 'イ 0.55', 'ウ 0.75', 'エ 0.84']
+table_page = doc.new_page();table_number = table_page.number
+table_page.insert_text((50, 50), 'Read the table, not a diagram.')
+for x in [50, 150, 250]:
+    table_page.draw_line((x, 80), (x, 160))
+for y in [80, 120, 160]:
+    table_page.draw_line((50, y), (250, y))
+for x, y, text in [(60, 100, 'Item'), (160, 100, 'Value'), (60, 140, 'Mass'), (160, 140, '0.02 kg')]:
+    table_page.insert_text((x, y), text)
+table_text = m.native_text(table_page, table_page.rect)
+assert '| Item | Value |\n| --- | --- |\n| Mass | 0.02 kg |' in table_text
+white_cells=doc.new_page()
+for y in [80,120]:
+    for x in [50,150]:white_cells.draw_rect(m.fitz.Rect(x,y,x+100,y+40),color=(0,0,0),fill=(1,1,1))
+for x,y,t in [(60,100,'Item'),(160,100,'Value'),(60,140,'Mass'),(160,140,'0.02 kg')]:white_cells.insert_text((x,y),t)
+assert '| Mass | 0.02 kg |' in m.native_text(white_cells,white_cells.rect)
+hidden=doc.new_page();hidden.insert_text((60,100),'Hidden answer')
+hidden.draw_rect(m.fitz.Rect(50,80,250,120),color=(0,0,0),fill=(1,1,1));hidden.insert_text((60,100),'Visible answer')
+try:m.native_text(hidden,hidden.rect);raise AssertionError('Hidden text in white cells accepted')
+except ValueError:pass
+table_question = {'topic':'Table', 'prompt':'Read the table.', 'options':['1','2'], 'passage':'Read the table, not a diagram. Item Value Mass 0.02 kg'}
+assert m.text_patch(table_question, table_text)['passage'] == table_text
+merged = doc.new_page()
+merged.draw_rect(m.fitz.Rect(50,80,250,160));merged.draw_line((50,120),(250,120));merged.draw_line((150,120),(150,160))
+merged.draw_rect(m.fitz.Rect(50,80,250,120),color=None,fill=(0.8,0.8,0.8))
+merged.insert_text((60,100),'Merged title',fontname='hebo');merged.insert_text((60,140),'First');merged.insert_text((160,140),'Second')
+merged_text=m.native_text(merged,merged.rect)
+assert '行1〜1・列1〜2' in merged_text and '［網掛け：［太字：Merged title］］' in merged_text
+table_page = doc[table_number]
+table_page.draw_line((70, 180), (200, 210))
+try:
+    m.native_text(table_page, table_page.rect)
+    raise AssertionError('A detected table must not hide another drawing')
+except ValueError:
+    pass
 scan = doc.new_page();scan_number = scan.number
 with tempfile.TemporaryDirectory(dir=root / 'build') as folder:
     source = Path(folder) / 'source'
@@ -47,6 +100,35 @@ with tempfile.TemporaryDirectory(dir=root / 'build') as folder:
     assert '0.02 kg' in m.verified_region(plain,region,crop,'source-sha',checked)
     assert m.verified_region(plain,region,crop,'source-sha',checked) == next(iter(checked.values()))
     assert len(checked) == 1
+    archive = Path(folder) / 'private-data/ipa';archive.mkdir(parents=True)
+    material = Path(folder) / 'private-data/material/assets';material.mkdir(parents=True)
+    pdf = archive / 'question.pdf';plain.parent.save(pdf)
+    original_crop = material / 'region.png';original_crop.write_bytes(crop.read_bytes())
+    original_crop.with_suffix('.geometry.json').write_text(json.dumps([plain.number,list(plain.rect)]))
+    answer_crop = material / 'solution.png';answer_crop.write_bytes(crop.read_bytes())
+    answer_crop.with_suffix('.geometry.json').write_text(json.dumps([plain.number,list(plain.rect)]))
+    unsafe_crop = material / 'diagram.png';plain.parent[0].get_pixmap(matrix=m.fitz.Matrix(1.5,1.5),alpha=False).save(unsafe_crop)
+    unsafe_crop.with_suffix('.geometry.json').write_text(json.dumps([0,list(plain.parent[0].rect)]))
+    question = {'id':'q1','examId':'fixture','topic':'Question','prompt':'Read the source.',
+                'options':list('アイウエ'),'passage':'','images':[{'src':'assets/region.png'}],
+                'type':'written','modelAnswer':'Existing answer.','solutionImages':[{'src':'assets/solution.png'},{'src':'assets/diagram.png'}]}
+    mixed = {**question, 'id':'q2', 'images':[{'src':'assets/region.png'},{'src':'assets/diagram.png'}], 'solutionImages':[]}
+    (source / 'web/questions.json').write_text(json.dumps([question,mixed]))
+    (source / 'manifest.json').write_text(json.dumps({'packs':[{'url':'questions.json','sources':[{'kind':kind,'file':'question.pdf','sha256':m.sha(pdf.read_bytes())} for kind in ['qs','ans']]}]}))
+    saved_root = m.ROOT
+    try:
+        m.ROOT = Path(folder);m.extract(source,cache)
+    finally:
+        m.ROOT = saved_root
+    patch = json.loads((cache / 'text.json').read_bytes())['fixture::q1']
+    partial = json.loads((cache / 'text.json').read_bytes())['fixture::q2']['question']
+    assert partial['retained'] == [{'src':'assets/diagram.png'}] and len(partial['removed']) == 1
+    assert '0.02 kg' in partial['text'] and '0.02 kg' in partial['sourceText']
+    assert patch['original']['solutionImages'] == question['solutionImages']
+    assert patch['solution']['retained'] == [{'src':'assets/diagram.png'}]
+    assert patch['solution']['field'] == 'modelAnswer' and 'Existing answer.' in patch['solution']['value']
+    assert len(patch['solution']['removed']) == 1 and '0.02 kg' in patch['solution']['text']
+    assert json.loads((cache / 'review.json').read_bytes())[0]['reason'] == 'solution layout needs review'
     wrong = dict(region,sha256='wrong-hash')
     try:
         m.verified_region(plain,wrong,crop,'source-sha',checked)
@@ -66,6 +148,10 @@ with tempfile.TemporaryDirectory(dir=root / 'build') as folder:
     file = source / 'web/assets/test.png'
     image.save(file)
     scan.insert_image(scan.rect, filename=file)
+    m.fitz.TOOLS.store_shrink(100)
+    scan_crop = source / 'scan-crop.png';scan.get_pixmap(matrix=m.fitz.Matrix(1.5,1.5),alpha=False).save(scan_crop)
+    scan.get_pixmap(matrix=m.fitz.Matrix(0.5,0.5),alpha=False)
+    m.verified_pixels(scan,{'rect':list(scan.rect),'sha256':m.sha(scan_crop.read_bytes())},scan_crop)
     try:
         m.native_text(scan, scan.rect)
         raise AssertionError('Scan must keep the image')
