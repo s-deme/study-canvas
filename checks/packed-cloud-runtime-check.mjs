@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {readFileSync,writeFileSync} from 'node:fs';
+import {readFileSync,writeFileSync,existsSync} from 'node:fs';
 import {resolve,join,relative} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
@@ -27,10 +27,25 @@ for(const q of original.MATERIAL_INDEX) {
   const compact=MATERIAL_INDEX.get(questionKey(q));
   assert.equal(compact.type,q.type);assert.equal(compact.options.length,q.options.length);assert.equal(compact.examId,q.examId);
 }
-// All original image URLs must survive, including images saved in edited questions.
+// Retained assets keep aliases; retired assets require verified replacement evidence.
 const before=JSON.parse(readFileSync('build/private/manifest.json'));
+const retired=new Set(),removedByQuestion=new Map();
+if(manifest.compaction) {
+  const compact=JSON.parse(readFileSync(join(directory,'compaction-report.json'))).target;
+  assert.ok(!relative(resolve('build/private-compact'),compact).startsWith('..'));
+  for(const [key,p] of Object.entries(JSON.parse(readFileSync(join(compact,'text-evidence.json'))))) removedByQuestion.set(key,new Set([
+    ...(p.textSha256?p.original.images:[]),...(p.question?.removed || []).map(r=>r.image),...(p.solution?.removed || []).map(r=>r.image)
+  ].map(i=>i.src)));
+  for(const correction of existsSync(join(compact,'text-corrections.json'))?JSON.parse(readFileSync(join(compact,'text-corrections.json'))):[]) {
+    const removed=removedByQuestion.get(correction.key) || new Set();
+    for(const images of Object.values(correction.imageReplacement || {})) if(Array.isArray(images)) for(const image of images) removed.add(image.src);
+    removedByQuestion.set(correction.key,removed);
+  }
+}
 for(const pack of before.packs) for(const q of JSON.parse(readFileSync(resolve('build/private/web',pack.url)))) {
-  for(const a of [...q.images,...(q.solutionImages || []),...(q.audio || [])]) if(a.src.startsWith('assets/')) assert.ok(manifest.assetHashes[a.src],'Legacy image/audio URL missing: '+a.src);
+  for(const a of [...q.images,...(q.solutionImages || []),...(q.audio || [])]) if(a.src.startsWith('assets/') && !manifest.assetHashes[a.src]) {
+    assert.ok(removedByQuestion.get(questionKey(q))?.has(a.src),'Unverified image/audio removal: '+a.src);retired.add(a.src);
+  }
 }
 const grouped=new Map(),checked=new Set();
 for(let i=0;i<64;i++) for(const [path,entry] of Object.entries(JSON.parse(readFileSync(join(web,`bundles/index-${i}.json`))))) {
@@ -72,6 +87,7 @@ try {
     const r=await call('/'+alias);assert.equal(r.status,200);assert.equal(r.headers.get('Content-Type'),'image/webp');
     assert.equal(createHash('sha256').update(new Uint8Array(await r.arrayBuffer())).digest('hex'),manifest.assetHashes[manifest.assetAliases[alias]]);
   }
+  if(retired.size) assert.equal((await call('/'+retired.values().next().value)).status,404);
   const state=emptyState(),seen=new Set();
   for(const q of original.MATERIAL_INDEX) if(!seen.has(q.examId)) {seen.add(q.examId);state.stats[questionKey(q)]={attempts:0,correct:0,bookmark:true};}
   const q=original.MATERIAL_INDEX.find(q=>q.examId==='sg'&&q.type==='single');state.selectedExam='sg';state.session=newSession([q],1,'途中再開');state.session.pending=0;
@@ -81,6 +97,6 @@ try {
   const invalid=structuredClone(state);invalid.stats['sg::missing']={attempts:0,correct:0,bookmark:true};assert.equal((await put(1,'c',invalid)).status,400);
   assert.equal((await call('/api/state',{method:'PUT',headers:{Origin:'https://evil.example','Content-Type':'application/json'},body:'{}'})).status,403);
   assert.equal((await call('/'+image,{headers:{'Cf-Access-Jwt-Assertion':await fixture.token({email:'other@example.com'})}})).status,403);
-  writeFileSync(join(directory,'verification.json'),JSON.stringify({passed:true,packagedAt:manifest.packagedAt,at:new Date().toISOString(),questions:manifest.questions,assets:checked.size,exams:seen.size},null,2));
+  writeFileSync(join(directory,'verification.json'),JSON.stringify({passed:true,packagedAt:manifest.packagedAt,at:new Date().toISOString(),questions:manifest.questions,assets:checked.size,retiredAssets:retired.size,exams:seen.size},null,2));
   console.log(`PASS: compiled packed Worker, owner-only assets, Range/audio, ${seen.size}-exam sync, resume, conflicts, invalid IDs and CSRF`);
 } finally {await runtime.dispose();fixture.restore();DB.sqlite.close();}

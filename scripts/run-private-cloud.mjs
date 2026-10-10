@@ -15,6 +15,6 @@ if(mode==='deploy') {
   if(upload.status!==0) process.exit(upload.status ?? 1);
 }
 const args=mode==='build'?['pages','functions','build','--outdir','worker']:['pages','deploy','web','--branch','main','--commit-dirty=true'];
-const result=spawnSync(process.execPath,[join(root,'node_modules/wrangler/bin/wrangler.js'),...args],{cwd:directory,stdio:'inherit'});
+const result=spawnSync(process.execPath,[join(root,'node_modules/wrangler/bin/wrangler.js'),...args],{cwd:directory,stdio:'inherit',env:{...process.env,WRANGLER_LOG_PATH:process.env.WRANGLER_LOG_PATH || join(directory,'.wrangler/logs')}});
 if(mode==='build' && result.status===0) assert.ok(gzipSync(readFileSync(join(directory,'worker/index.js'))).length<=3*1024*1024,'Worker exceeds the Free plan compressed size limit');
 process.exit(result.status ?? 1);

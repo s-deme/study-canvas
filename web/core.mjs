@@ -54,7 +54,14 @@ export function validateQuestions(input,existing=[],custom=false,examId) {
       const solutionImages=(row.solutionImages ?? []).map(image=>{valid(object(image) && typeof image.src==='string' && /^assets\/[a-zA-Z0-9_./-]+\.(png|webp|jpg)$/.test(image.src) && !image.src.includes('..'),'解答画像が不正です');return {src:image.src,alt:text(image.alt,'図の説明',1000)};});valid(solutionImages.length<=30,'解答画像が多すぎます');
       const audio=row.audio ?? [];valid(Array.isArray(audio) && audio.length<=5,'音声は5件以内にしてください');
       const checkedAudio=audio.map(item=>{valid(object(item) && typeof item.src==='string' && /^assets\/[a-zA-Z0-9_./-]+\.mp3$/.test(item.src) && !item.src.includes('..'),'音声のURLが不正です');return {src:item.src,label:text(item.label,'音声の説明',1000)};});
-      return {id,examId:target,type,...(checkedAudio.length?{audio:checkedAudio}:{}),term:text(row.term ?? '','期',40,true),evaluationGuide:text(row.evaluationGuide ?? '','評価資料',50000,true),solutionImages,category,subject:text(row.subject ?? '','科目',200,true),topic:text(row.topic ?? '','topic',200,true),prompt:text(row.prompt,'問題文',50000),options,answer,modelAnswer,explanation:text(row.explanation ?? '','解説',50000,true),source:text(row.source ?? '持込問題','出典',1000),year:text(String(row.year ?? ''),'年度',40,true),passage:text(row.passage ?? '','共通本文',50000,true),images:checkedImages,sourceUrl:row.sourceUrl?safeUrl(row.sourceUrl):'',explanationSource:text(row.explanationSource ?? '登録者による解説','解説の出典',200)};
+      const review={};
+      if(row.textReview!==undefined) {
+        valid(object(row.textReview),'文字照合記録が不正です');
+        for(const [field,status] of Object.entries(row.textReview)) {valid(['prompt','options','passage','answer','modelAnswer','evaluationGuide','explanation'].includes(field) && ['source-verified','unreviewed'].includes(status),'文字照合記録が不正です');review[field]=status;}
+      }
+      const kinds={};
+      for(const [field,values] of [['answerKind',['official-answer','answer-example','evaluation-guide']],['explanationKind',['official-explanation','grading-commentary','absent-in-source','unknown']]]) if(row[field]!==undefined) {valid(values.includes(row[field]),'解答資料の種別が不正です');kinds[field]=row[field];}
+      return {id,examId:target,type,...(Object.keys(review).length?{textReview:review}:{}),...kinds,...(checkedAudio.length?{audio:checkedAudio}:{}),term:text(row.term ?? '','期',40,true),evaluationGuide:text(row.evaluationGuide ?? '','評価資料',50000,true),solutionImages,category,subject:text(row.subject ?? '','科目',200,true),topic:text(row.topic ?? '','topic',200,true),prompt:text(row.prompt,'問題文',50000),options,answer,modelAnswer,explanation:text(row.explanation ?? '','解説',50000,true),source:text(row.source ?? '持込問題','出典',1000),year:text(String(row.year ?? ''),'年度',40,true),passage:text(row.passage ?? '','共通本文',50000,true),images:checkedImages,sourceUrl:row.sourceUrl?safeUrl(row.sourceUrl):'',explanationSource:text(row.explanationSource ?? '登録者による解説','解説の出典',200)};
     }catch(error) {throw new Error(`${index+1}問目：${error.message}`);}
   });
 }
