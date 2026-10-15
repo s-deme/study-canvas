@@ -3,7 +3,8 @@ export class CompactQuestionIndex extends Map {
     const code=super.get(key);
     if(code===undefined) return undefined;
     const split=key.indexOf('::');
-    return {id:split<0?key:key.slice(split+2),examId:split<0?'gken':key.slice(0,split),type:['single','multiple','written','essay'][code>>5],options:Array(code&31),catalogOnly:true};
+    const type=['single','multiple','written','essay'][(code>>5)&3];
+    return {id:split<0?key:key.slice(split+2),examId:split<0?'gken':key.slice(0,split),type,...(code&128?{previousType:type==='single'?'multiple':'single'}:{}),options:Array(code&31),catalogOnly:true};
   }
 }
 

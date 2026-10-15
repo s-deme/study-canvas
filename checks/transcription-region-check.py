@@ -7,11 +7,17 @@ root=Path(__file__).resolve().parents[1]
 spec=importlib.util.spec_from_file_location('region',root/'scripts/transcription-region.py')
 m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
 records=json.loads((root/'private-data/material-transcription/corrections.json').read_bytes())
+page_bounds={}
 for record in records:
     for evidence in record['evidence']:
-        with m.fitz.open(root/evidence['file']) as doc:
-            assert 0<evidence['page']<=len(doc)
-            assert doc[evidence['page']-1].rect.contains(m.fitz.Rect(evidence['rect'])),evidence
+        source=root/evidence['file'];stamp=(source.stat().st_size,source.stat().st_mtime_ns)
+        key=(evidence['file'],evidence['sha256'],evidence['page'],stamp)
+        if key not in page_bounds:
+            with m.fitz.open(source) as doc:
+                assert 0<evidence['page']<=len(doc)
+                page_bounds[key]=doc[evidence['page']-1].rect
+            assert stamp==(source.stat().st_size,source.stat().st_mtime_ns),evidence
+        assert page_bounds[key].contains(m.fitz.Rect(evidence['rect'])),evidence
 with tempfile.TemporaryDirectory(dir=root/'tmp') as folder:
     path=Path(folder);doc=m.fitz.open();page=doc.new_page()
     page.insert_text((50,50),'0.02 kg, not 002 kg.');page.draw_rect(m.fitz.Rect(45,65,200,110))
@@ -34,6 +40,31 @@ print('PASS: region bounds, rotated raster, native text with drawings, extractio
 
 spec=importlib.util.spec_from_file_location('image_text',root/'scripts/extract-material-image-text.py')
 batch=importlib.util.module_from_spec(spec);spec.loader.exec_module(batch)
+assert batch.unmapped('4\x08層') and not batch.unmapped('4層\n選択肢\t1')
+with tempfile.TemporaryDirectory(dir=root/'tmp') as folder:
+    path=Path(folder);doc=batch.fitz.open();page=doc.new_page()
+    page.insert_text((50,50),'Text only: 0.02 kg, not 002 kg.')
+    source=path/'source.pdf';doc.save(source)
+    image=path/'source.png';page.get_pixmap(matrix=batch.fitz.Matrix(1.5,1.5),alpha=False).save(image)
+    region=dict(page=0,rect=list(page.rect),sourceFile=str(source.relative_to(root)),sourceSha256=batch.sha(source.read_bytes()))
+    candidate=dict(method='native',text='Text only',textSha256=batch.sha(b'Text only'))
+    checked=batch.verify_native(dict(candidate),region,image)
+    assert checked['nativeVerified'] and '0.02' in checked['text']
+    with batch.Image.open(image) as original:
+        altered=original.convert('RGB');altered.putpixel((0,0),(0,0,0));altered.save(image)
+    rejected=batch.verify_native(dict(candidate),region,image)
+    assert not rejected.get('nativeVerified') and 'pixels differ' in rejected['retainedReason']
+    ink=batch.fitz.open();ink_page=ink.new_page()
+    ink_page.insert_text((50,50),'Head',color=(0.14,0.12,0.12))
+    ink_page.insert_text((85,50),'ache',color=(0.14,0.12,0.12))
+    assert 'Head ache' in batch.compact.native_text(ink_page,ink_page.rect,uniform_ink=True)
+    hidden=batch.fitz.open();hidden_page=hidden.new_page()
+    hidden_page.insert_text((50,50),'Invisible OCR layer',render_mode=3)
+    try:batch.compact.native_text(hidden_page,hidden_page.rect);raise AssertionError('Invisible text accepted')
+    except ValueError:pass
+    ink_page.insert_text((50,80),'Highlight',color=(1,0,0))
+    try:batch.compact.native_text(ink_page,ink_page.rect,uniform_ink=True);raise AssertionError('Mixed ink accepted')
+    except ValueError:pass
 with tempfile.TemporaryDirectory(dir=root/'tmp') as folder:
     path=Path(folder);(path/'web/assets').mkdir(parents=True);cache=path/'cache';cache.mkdir()
     doc=batch.fitz.open();page=doc.new_page(width=400,height=400)
@@ -56,8 +87,15 @@ with tempfile.TemporaryDirectory(dir=root/'tmp') as folder:
         assert cropped.tobytes()==original.convert('RGB').crop(crop['pixelRect']).tobytes()
         assert cropped.height<original.height/2 and cropped.width<original.width
     assert batch.extract(task)[1]==result,'Resume changed the extraction'
+    cache_file=next(cache.glob('*.json'))
+    unresolved=dict(result,method='native',nativeSafetyVersion=10,nativeVerified=False,crops=[],text='Known text \uFFFD',textSha256=batch.sha('Known text \uFFFD'.encode()))
+    cache_file.write_text(json.dumps(unresolved),encoding='utf-8')
+    assert batch.extract(task)[1]==unresolved,'Unreviewed unknown-character cache was repeatedly regenerated'
+    cache_file.write_text(json.dumps(result),encoding='utf-8')
     (root/crop['file']).write_bytes(b'broken')
     assert batch.extract(task)[1]==result,'Corrupt crop was not rebuilt'
+    for cache_file in cache.glob('*.json'):cache_file.write_bytes(b'{broken')
+    assert batch.extract(task)[1]==result,'Interrupted JSON cache was not rebuilt'
     try:batch.extract((path,cache,src,'changed',region));raise AssertionError('Changed image accepted')
     except ValueError:pass
     page.set_rotation(90)

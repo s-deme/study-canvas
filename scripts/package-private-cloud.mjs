@@ -1,9 +1,10 @@
 // Package the verified personal library without rebuilding or dropping incremental imports.
 import assert from 'node:assert/strict';
-import {cpSync,mkdirSync,readFileSync,readdirSync,writeFileSync,statSync,openSync,closeSync,unlinkSync} from 'node:fs';
+import {cpSync,mkdirSync,readFileSync,readdirSync,writeFileSync,statSync,openSync,closeSync,unlinkSync,existsSync} from 'node:fs';
 import {resolve,join,extname,relative,isAbsolute} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
+import {spawnSync} from 'node:child_process';
 import {assetShard} from './cloud-runtime.mjs';
 import {validateQuestions,questionKey} from '../web/core.mjs';
 
@@ -19,9 +20,13 @@ const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 if(process.argv.includes('--compact')) assert.equal(hash(readFileSync(join(root,'build/private/manifest.json'))),manifest.compaction.sourceManifestSha256,'Compact build is stale; regenerate it');
 if(process.argv.includes('--compact')) {
   assert.equal(manifest.transcription.allImagesAttempted,true,'Image extraction is incomplete');
-  assert.equal(manifest.transcription.cropMethod,4,'Image crop validation is stale; regenerate it');
+  assert.equal(manifest.transcription.cropMethod,9,'Image crop validation is stale; regenerate it');
   const compact=JSON.parse(readFileSync(join(root,'build/private-compact/current.json'))).directory;
   assert.equal(hash(readFileSync(join(compact,'manifest.json'))),manifest.transcription.sourceManifestSha256,'Transcription build is stale; regenerate it');
+  if(existsSync(join(source,'scoped-solution-evidence.json'))) for(const file of ['scoped-material-verification.json','scoped-boundary-verification.json']) {
+    const proof=JSON.parse(readFileSync(join(source,file)));assert.equal(proof.passed,true,'Scoped source verification is incomplete');
+    for(const [evidence,digest] of Object.entries(proof.evidenceHashes)) assert.equal(hash(readFileSync(join(source,evidence))),digest,'Scoped verification is stale');
+  }
 }
 assert.equal(MATERIAL_INDEX.length,manifest.questions);
 assert.deepEqual(MATERIAL_PACKS,manifest.packs);
@@ -44,6 +49,20 @@ if(manifest.compaction) {
     if(old!==entry.src) {aliases[old]=entry.src;assets.add(entry.src);}
   }
 }
+const deliveryFiles=new Map(),deliveryEvidence={};
+const pngs=[...assets].filter(path=>path.startsWith('assets/transcription/') && path.endsWith('.png'));
+if(pngs.length) {
+  const cache=join(root,'build/material-delivery-assets');mkdirSync(cache,{recursive:true});
+  const inventory=join(cache,'referenced-images.json');writeFileSync(inventory,JSON.stringify(pngs));
+  const result=spawnSync('python',[join(root,'scripts/compact-material.py'),'--compress-assets',source,cache,inventory],{stdio:'inherit'});
+  assert.equal(result.status,0,'Lossless delivery image compression failed');
+  for(const [path,entry] of Object.entries(JSON.parse(readFileSync(join(cache,'assets.json'))))) if(entry.file) {
+    assert.equal(hash(readFileSync(join(source,'web',path))),entry.sourceSha256,'Delivery source crop changed');
+    const file=join(cache,entry.file);assert.equal(hash(readFileSync(file)),entry.sha256,'Compressed delivery image changed');
+    const src='assets/transcription-compact/'+entry.sha256+'.webp';
+    assets.delete(path);assets.add(src);aliases[path]=src;deliveryFiles.set(src,file);deliveryEvidence[path]={...entry,src};
+  }
+}
 // Each run has a new directory, so interrupted packaging cannot be deployed as a complete build.
 const target=join(out,Date.now().toString());mkdirSync(join(target,'web/bundles'),{recursive:true});
 writeFileSync(join(target,'package.json'),JSON.stringify({private:true,type:'module'}));
@@ -52,7 +71,7 @@ cpSync(join(root,'functions'),join(target,'functions'),{recursive:true});
 cpSync(join(source,'web/material'),join(target,'web/material'),{recursive:true});
 cpSync(join(source,'web/library-catalog.mjs'),join(target,'web/library-catalog.mjs'));
 cpSync(join(root,'scripts/cloud-runtime.mjs'),join(target,'web/cloud-runtime.mjs'));
-const entries=MATERIAL_INDEX.map(q=>[questionKey(q),['single','multiple','written','essay'].indexOf(q.type)*32+q.options.length]);
+const entries=MATERIAL_INDEX.map(q=>[questionKey(q),['single','multiple','written','essay'].indexOf(q.type)*32+q.options.length+(q.previousType?128:0)]);
 writeFileSync(join(target,'web/state-catalog.mjs'),`import {CompactQuestionIndex} from './cloud-runtime.mjs';\nexport const BUILTIN_QUESTIONS=[];\nexport const MATERIAL_INDEX=new CompactQuestionIndex(${JSON.stringify(entries)});\n`);
 // The browser already uses per-exam manifests; never ship its obsolete 40 MB catalog.
 writeFileSync(join(target,'web/catalog.mjs'),`export const BUILTIN_QUESTIONS=[];export const MATERIAL_INDEX=[];export const MATERIAL_PACKS=[];export const MATERIAL_EXAMS=${JSON.stringify(MATERIAL_EXAMS)};\n`);
@@ -64,7 +83,7 @@ let chunks=[],size=0,number=0;
 // ponytail: insertions can shift later bundles; use stable shard groups if future uploads become costly.
 const flush=()=>{if(chunks.length) {writeFileSync(join(target,`web/bundles/${number}.bin`),Buffer.concat(chunks));number++;chunks=[];size=0;}};
 for(const path of [...assets].sort()) {
-  const bytes=readFileSync(join(source,'web',path));assert.ok(bytes.length<25*1024*1024,path);
+  const bytes=readFileSync(deliveryFiles.get(path) || join(source,'web',path));assert.ok(bytes.length<25*1024*1024,path);
   assetHashes[path]=hash(bytes);
   if(bytes.length>4*1024*1024) {mkdirSync(resolve(target,'web',path,'..'),{recursive:true});writeFileSync(join(target,'web',path),bytes);continue;}
   if(size+bytes.length>4*1024*1024) flush();
@@ -86,7 +105,11 @@ config.pages_build_output_dir='./web';writeFileSync(join(target,'wrangler.jsonc'
 mkdirSync(join(target,'.wrangler/deploy'),{recursive:true});
 writeFileSync(join(target,'.wrangler/deploy/config.json'),JSON.stringify({configPath:'../../wrangler.jsonc'}));
 if(manifest.compaction) cpSync(join(source,'compaction-report.json'),join(target,'compaction-report.json'));
-if(manifest.transcription) for(const file of ['transcription-report.json','image-text-evidence.json']) cpSync(join(source,file),join(target,file));
-writeFileSync(join(target,'manifest.json'),JSON.stringify({...manifest,files:files.length,sourceAssets:Object.keys(assetHashes).length,physicalAssets:assets.size,assetAliases:aliases,assetHashes,packagedAt:new Date().toISOString()},null,2));
+if(manifest.transcription) for(const file of ['transcription-report.json','image-text-evidence.json','numeric-text-evidence.json','text-corrections.json']) cpSync(join(source,file),join(target,file));
+for(const file of ['scoped-solution-evidence.json','scoped-solution-pending.json','scoped-case-evidence.json','scoped-case-pending.json','scoped-material-verification.json','scoped-boundary-verification.json','source-evidence-verification.json']) if(existsSync(join(source,file))) cpSync(join(source,file),join(target,file));
+if(existsSync(join(source,'unicode-repairs.json'))) cpSync(join(source,'unicode-repairs.json'),join(target,'unicode-repairs.json'));
+for(const file of ['answer-correspondence.json','answer-correspondence-changes.json','answer-correspondence-verification.json']) if(existsSync(join(source,file))) cpSync(join(source,file),join(target,file));
+writeFileSync(join(target,'delivery-asset-evidence.json'),JSON.stringify({source,images:deliveryEvidence}));
+writeFileSync(join(target,'manifest.json'),JSON.stringify({...manifest,files:files.length,sourceAssets:Object.keys(assetHashes).length,physicalAssets:assets.size,assetAliases:aliases,assetHashes,deliveryCompression:{converted:Object.keys(deliveryEvidence).length,report:'delivery-asset-evidence.json'},packagedAt:new Date().toISOString()},null,2));
 writeFileSync(join(out,'current.json'),JSON.stringify({directory:target}));
 console.log(JSON.stringify({directory:target,questions:manifest.questions,packs:MATERIAL_PACKS.length,assets:assets.size,files:files.length,bundles:number}));

@@ -38,13 +38,15 @@ def acquire():
         print('Index', kind, year, len(pdfs), flush=True)
         pairs = []
         for qurl in sorted(pdfs):
-            match = re.search(r'-(03|04|05|07)([ab])_01\.pdf$', qurl)
+            match = re.search(r'-(03|04|05|07)([ab])_(01|02)\.pdf$', qurl)
             if not match: continue
-            code, section = match.groups()
+            code, variant, paper = match.groups()
+            if code!='05' and paper!='01': continue
             exam = {'03':'public-health-nurse', '04':'midwife', '05':'nurse', '07':'clinical-lab'}[code]
-            answer = re.sub(r'[ab]_01\.pdf$', 'seitou.pdf', qurl)
+            answer = re.sub(r'[ab]_0[12]\.pdf$', 'seitou.pdf', qurl)
             if answer not in pdfs: continue
-            pairs.append((qurl,answer,exam,'AM' if section=='a' else 'PM'))
+            section=('AM' if paper=='01' else 'PM') if code=='05' else ('AM' if variant=='a' else 'PM')
+            pairs.append((qurl,answer,exam,section))
         if int(year)<2017:
             # Historical pages name files differently; their headings/anchor labels identify each paper.
             group=None; groups={}
@@ -160,7 +162,11 @@ def prepare(task):
     if task['status']!='downloaded': return result
     try:
         for source in task['sources']: assert sha((SRC/source['file']).read_bytes())==source['sha256']
-        doc = fitz.open(SRC/task['sourceFile']); keys = official_keys(fitz.open(SRC/task['answerFile']), task)
+        doc = fitz.open(SRC/task['sourceFile'])
+        sections={('AM' if value=='前' else 'PM') for value in re.findall(r'午(?:\s|ご)*([前後])',doc[0].get_text())}
+        assert len(sections)==1, 'Original cover section requires source review'
+        section=next(iter(sections));task={**task,'section':section,'subject':'午前' if section=='AM' else '午後'};result.update(task)
+        keys = official_keys(fitz.open(SRC/task['answerFile']), task)
         starts = question_starts(doc,task)
         assert [n for n,p,y in starts]==list(range(1,len(keys)+1)), ('Question sequence', [n for n,p,y in starts], len(keys))
         rows=[]; evidence=[]; excluded=[]; cache={}; stem=Path(task['file']).stem

@@ -32,26 +32,147 @@ class NativeText(str):
         return value
 
 
-def native_text(page, rect):
+def region_drawings(page, rect):
+    """Ignore compound stroke paths whose actual marks are outside the region."""
+    drawings = []
+    for drawing in page.get_drawings():
+        if drawing['type'] == 's':
+            items, boxes = [], []
+            primitives = list(drawing['items'])
+            if drawing.get('closePath'):
+                start = end = None
+                for item in drawing['items']:
+                    if item[0] not in ('l','c') or end != item[1]:
+                        if start is not None and end != start:
+                            primitives.append(('l',end,start))
+                        start = item[1] if item[0] in ('l','c') else None
+                    end = item[-1] if item[0] in ('l','c') else None
+                if start is not None and end != start:
+                    primitives.append(('l',end,start))
+            for item in primitives:
+                if item[0] == 'l':
+                    a, b = item[1:]
+                    # Printer registration strokes end at the sheet edge, not in the content.
+                    if (abs(a.y-b.y) < .01 and (max(a.x,b.x) <= .1 and min(a.x,b.x) < -5 or min(a.x,b.x) >= page.rect.width-.1 and max(a.x,b.x) > page.rect.width+5)
+                            or abs(a.x-b.x) < .01 and (max(a.y,b.y) <= .1 and min(a.y,b.y) < -5 or min(a.y,b.y) >= page.rect.height-.1 and max(a.y,b.y) > page.rect.height+5)):
+                        continue
+                if item[0] == 're':
+                    box = fitz.Rect(item[1])
+                else:
+                    points = item[1:] if item[0] in ('l', 'c') else tuple(item[1])
+                    box = fitz.Rect(min(p.x for p in points), min(p.y for p in points),
+                                    max(p.x for p in points), max(p.y for p in points))
+                margin = max(.5, drawing.get('width', 1) / 2)
+                if (box + (-margin, -margin, margin, margin)).intersects(rect):
+                    items.append(item); boxes.append(box)
+            if not items:
+                continue
+            box = boxes[0]
+            for other in boxes[1:]:
+                box |= other
+            drawing = {**drawing, 'items': items, 'rect': box}
+        elif not (fitz.Rect(drawing['rect']) + (-.5, -.5, .5, .5)).intersects(rect):
+            continue
+        drawings.append(drawing)
+    return drawings
+
+
+def choice_connectors(drawings, lines):
+    """Retain a printed pairing rule as a dash between the same numbered choice's terms."""
+    text = '\n'.join(''.join(s['text'] for s in line['spans']) for line in lines)
+    if not re.search(r'組合せ|組み合わせ|対応|\b(?:combination|pair)\b', text, re.I):
+        return drawings, lines
+    remaining = []
+    for drawing in drawings:
+        if not (drawing['type'] == 's' and len(drawing['items']) == 1 and drawing['items'][0][0] == 'l'
+                and drawing.get('width', 1) <= 1 and drawing.get('stroke_opacity', 1) == 1
+                and drawing.get('color') and max(drawing['color']) <= .32):
+            remaining.append(drawing); continue
+        a, b = sorted(drawing['items'][0][1:], key=lambda p: p.x)
+        if abs(a.y-b.y) > .1:
+            remaining.append(drawing); continue
+        owners = [line for line in lines if line['bbox'][1] < a.y < line['bbox'][3]
+                  and line['dir'] == (1.0, 0.0) and not line.get('wmode')]
+        chars = [(span, char) for line in owners for span in line['spans'] for char in span['chars'] if char['c'].strip()]
+        left = [(s,c) for s,c in chars if c['bbox'][2] <= a.x+1]
+        right = [(s,c) for s,c in chars if c['bbox'][0] >= b.x-1]
+        if (not left or not right or len(left)+len(right) != len(chars)
+                or not re.match(r'^\s*(?:\d+[．.]|[アイウエオ]\s)', ''.join(c['c'] for s,c in left))
+                or abs(left[-1][0]['origin'][1]-right[0][0]['origin'][1]) > .5
+                or not (0 <= a.x-left[-1][1]['bbox'][2] <= left[-1][0]['size']*1.5)
+                or not (0 <= right[0][1]['bbox'][0]-b.x <= right[0][0]['size']*1.5)
+                or b.x-a.x < left[-1][0]['size']):
+            remaining.append(drawing); continue
+        spans = []
+        for part in (left, right):
+            expanded = []
+            for original, char in part:
+                if any(s is original for s,c in expanded): continue
+                indices = [original['chars'].index(c) for s,c in part if s is original]
+                expanded.extend((original,c) for c in original['chars'][min(indices):max(indices)+1])
+            for original, char in expanded:
+                if spans and spans[-1].get('original') is original:
+                    spans[-1]['chars'].append(char); spans[-1]['text'] += char['c']
+                    spans[-1]['bbox'] = tuple(fitz.Rect(spans[-1]['bbox']) | fitz.Rect(char['bbox']))
+                else:
+                    spans.append({**original, 'original':original, 'chars':[char], 'text':char['c'], 'bbox':char['bbox']})
+            if part is left:
+                box = (a.x, owners[0]['bbox'][1], b.x, owners[0]['bbox'][3])
+                spans.append({**left[-1][0], 'text':' — ', 'chars':[{'c':'—','bbox':box}], 'bbox':box, 'flags':0})
+        combined = {**owners[0], 'spans':spans, 'bbox':tuple(fitz.Rect(owners[0]['bbox']))}
+        for line in owners[1:]: combined['bbox'] = tuple(fitz.Rect(combined['bbox']) | fitz.Rect(line['bbox']))
+        lines = [line for line in lines if not any(line is owner for owner in owners)] + [combined]
+    return remaining, lines
+
+
+def native_text(page, rect, uniform_ink=False):
     if page.rotation or any(a.rect.intersects(rect) for a in page.annots() or []):
         raise ValueError('rotation or annotations')
-    drawings = [d for d in page.get_drawings() if (fitz.Rect(d['rect']) + (-0.5, -0.5, 0.5, 0.5)).intersects(rect)]
+    drawings = region_drawings(page, rect)
     if any(fitz.Rect(d['bbox']).intersects(rect) for d in page.get_image_info()):
         raise ValueError('scan or embedded picture')
-    data = page.get_text('rawdict', clip=rect, flags=fitz.TEXTFLAGS_DICT & ~fitz.TEXT_PRESERVE_IMAGES)
+    traces = page.get_texttrace()
+    if any(fitz.Rect(s['bbox']).intersects(rect) and (s['type'] == 3 or s.get('opacity', 1) == 0) for s in traces):
+        raise ValueError('invisible text needs source review')
+    data = page.get_text('rawdict', clip=rect, flags=fitz.TEXTFLAGS_DICT & ~fitz.TEXT_PRESERVE_IMAGES & ~fitz.TEXT_USE_CID_FOR_UNKNOWN_UNICODE)
     lines = [line for block in data['blocks'] for line in block.get('lines', [])]
     for line in lines:
         for span in line['spans']:
             span['text'] = ''.join(c['c'] for c in span['chars'])
     source_text = '\n'.join(''.join(s['text'] for s in line['spans']) for line in lines).strip()
+    lines = [line for line in lines if any(s['text'].strip() for s in line['spans'])]
+    drawings, lines = choice_connectors(drawings, lines)
     if not lines:
         raise ValueError('no native text; OCR requires review')
+    colors = {s['color'] for line in lines for s in line['spans'] if s['text'].strip()}
+    dark_ink = uniform_ink and len(colors) == 1 and all(max((c >> 16) & 255, (c >> 8) & 255, c & 255) <= 80 for c in colors)
     for line in lines:
         if line['dir'] != (1.0, 0.0) or line.get('wmode'):
             raise ValueError('non-horizontal text')
+        if any('Greek' in s['font'] and re.search('[A-Za-z]',s['text']) for s in line['spans']):
+            raise ValueError('Greek symbol font decodes to Latin letters')
+        for left,right in zip(line['spans'],line['spans'][1:]):
+            if ('Greek' in left['font'] and right['text'].strip().isdigit() and right['size'] < left['size']*.85
+                    and abs(right['origin'][1]-left['origin'][1]) <= .8):
+                raise ValueError('small numeral next to Greek symbol needs source typography review')
+        ordinary = [s for s in line['spans'] if s['text'].strip() and not s['flags'] & 1]
+        base = max(ordinary, key=lambda s: s['size'], default=None)
         for span in line['spans']:
+            if not span['text'].strip():
+                continue
             footer = bool(re.fullmatch(r'(?:©|\d{4}|独立行政法人情報処理推進機構)\s*', span['text']))
-            if span['flags'] & 1 or span['color'] != 0 or span.get('alpha', 255) != 255 or not (rect.contains(fitz.Rect(span['bbox'])) or footer and (rect+(-1,-1,1,1)).contains(fitz.Rect(span['bbox']))):
+            if base:
+                delta = span['origin'][1] - base['origin'][1]
+                if span['size'] < base['size']*.85 and abs(delta) > .8:
+                    if not re.fullmatch(r'[0-9+−\-()]+', span['text']):
+                        raise ValueError('unsupported raised or lowered characters')
+                    mapping = str.maketrans('0123456789+−-()', '⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁻⁽⁾' if delta < 0 else '₀₁₂₃₄₅₆₇₈₉₊₋₋₍₎')
+                    span['text'] = span['text'].translate(mapping)
+                    span['chars'] = [{**c, 'c':c['c'].translate(mapping)} for c in span['chars']]
+                    span['flags'] &= ~1
+                elif abs(delta) < .5 and abs(span['size']-base['size']) < .1:
+                    span['flags'] &= ~1
+            if span['flags'] & 1 or span['color'] != 0 and not dark_ink or span.get('alpha', 255) != 255 or not (rect.contains(fitz.Rect(span['bbox'])) or footer and (rect+(-1,-1,1,1)).contains(fitz.Rect(span['bbox']))):
                 raise ValueError('styled, raised or clipped text')
             if span['text'].strip() and span['flags'] & 18:
                 style = '太字・斜体' if span['flags'] & 18 == 18 else '太字' if span['flags'] & 16 else '斜体'
@@ -61,7 +182,6 @@ def native_text(page, rect):
             if not drawings and right['bbox'][0] - left['bbox'][2] > max(left['size'], right['size']) * 1.5:
                 raise ValueError('spaced columns need layout review')
     normalized, shades = [], []
-    traces = page.get_texttrace() if drawings else []
     for drawing in drawings:
         if (drawing['type'] == 'fs' and drawing.get('fill') == (1.0, 1.0, 1.0)
                 and drawing.get('fill_opacity', 1) == 1 and len(drawing['items']) == 1
@@ -99,6 +219,19 @@ def native_text(page, rect):
 
 def prose_text(lines):
     lines = sorted(lines, key=lambda line: (round(line['bbox'][1] / 2), line['bbox'][0]))
+    merged = []
+    for line in lines:
+        if merged:
+            previous = merged[-1]
+            gap = line['bbox'][0] - previous['bbox'][2]
+            size = min(s['size'] for s in previous['spans'] + line['spans'])
+            baseline = line['spans'][0].get('origin', (0, line['bbox'][1]))[1]
+            previous_baseline = previous['spans'][0].get('origin', (0, previous['bbox'][1]))[1]
+            if abs(baseline - previous_baseline) < 0.5 and 0 <= gap <= size * 1.5:
+                merged[-1] = {**previous, 'bbox': tuple(fitz.Rect(previous['bbox']) | fitz.Rect(line['bbox'])), 'spans': previous['spans'] + [{**line['spans'][0], 'text': ' ' + line['spans'][0]['text']}] + line['spans'][1:]}
+                continue
+        merged.append(line)
+    lines = merged
     code = any(re.search(r'^\s*(?:if|else|while|for|return|def|class)\b|←', ''.join(s['text'] for s in line['spans'])) for line in lines)
     if code and len(lines) > 1 and len({round(line['bbox'][0]) for line in lines}) > 1:
         raise ValueError('code indentation needs source review')
@@ -112,7 +245,7 @@ def prose_text(lines):
     text = '\n'.join(''.join(s['text'] for s in line['spans']).rstrip() for line in lines).strip()
     if not text or len(text) > 50000:
         raise ValueError('empty or oversized native text')
-    if any(c == '\ufffd' or unicodedata.category(c) in ('Co', 'Cs') for c in text):
+    if any(c == '\ufffd' or unicodedata.category(c) in ('Co', 'Cs') or unicodedata.category(c) == 'Cc' and c not in '\n\r\t' for c in text):
         raise ValueError('unmapped characters')
     if re.search(r'[\^√∑∫{}|`]', text):
         raise ValueError('formula or code needs layout review')
@@ -667,6 +800,14 @@ def compress_assets(source, cache, assets):
 
 
 def main():
+    if sys.argv[1] == '--compress-assets':
+        source, cache, inventory = map(Path, sys.argv[2:5])
+        cache.mkdir(parents=True, exist_ok=True)
+        assets = json.loads(inventory.read_bytes())
+        assert isinstance(assets, list) and all(a.startswith('assets/') and a.endswith('.png') and '..' not in Path(a).parts for a in assets)
+        result = compress_assets(source, cache, assets)
+        (cache / 'assets.json').write_bytes(encode(result))
+        return
     source, cache = map(Path, sys.argv[1:3])
     cache.mkdir(parents=True, exist_ok=True)
     extract(source, cache)

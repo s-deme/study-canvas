@@ -7,6 +7,7 @@ import {questionKey} from '../web/core.mjs';
 export const textFields=['prompt','options','passage','modelAnswer','evaluationGuide','explanation'];
 export const auditFields=[...textFields,'answer'];
 export const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
+export const sourceMarkerText=text=>text.replace(/［図・文字化できない部分 (\d+)：画像参照］/g,'［図・原本照合待ちの部分 $1：画像参照］');
 export const correctionFile=resolve('private-data/material-transcription/corrections.json');
 export function loadCorrections(file=correctionFile) {
   const records=existsSync(file)?JSON.parse(readFileSync(file)):[],map=new Map(),checked=new Map();
@@ -14,7 +15,13 @@ export function loadCorrections(file=correctionFile) {
   for(const record of records) {
     assert.equal(record.status,'source-verified','Unreviewed OCR cannot be installed');
     assert.ok(record.method && record.reviewer && record.reviewedOn && record.reason);
-    assert.ok(!map.has(record.key),'Duplicate correction: '+record.key);
+    const previous=map.get(record.key);
+    if(previous) {
+      assert.equal(record.supersedesSha256,sha(JSON.stringify(previous)),'Duplicate correction requires exact previous SHA: '+record.key);
+      assert.deepEqual(record.before,previous.before,'Supersession must preserve original before values');
+      assert.deepEqual(Object.keys(record.after).sort(),Object.keys(previous.after).sort(),'Supersession must preserve corrected fields');
+      assert.deepEqual(record.imageReplacement,previous.imageReplacement,'Supersession must preserve image replacement');
+    } else assert.equal(record.supersedesSha256,undefined,'Superseded correction is missing');
     assert.ok(record.evidence.length>0);
     for(const evidence of record.evidence) {
       const source=resolve(evidence.file),path=relative(resolve('private-data'),source);
@@ -46,6 +53,17 @@ export function loadCorrections(file=correctionFile) {
           assert.ok(/^assets\/[a-zA-Z0-9_./-]+\.(png|webp|jpg)$/.test(image.src) && !image.src.includes('..'));
           assert.equal(sha(readFileSync(resolve('build/private/web',image.src))),image.sha256,'Reviewed image changed: '+image.src);
         }
+      }
+      for(const crop of replacement.crops || []) {
+        assert.ok(['images','solutionImages'].includes(crop.field));
+        assert.ok(crop.sourceRect.length===4 && crop.sourceRect.every(Number.isFinite) && crop.sourceRect[2]>crop.sourceRect[0] && crop.sourceRect[3]>crop.sourceRect[1]);
+        assert.ok(record.evidence.some(e=>e.file===crop.sourceFile && e.sha256===crop.sourceSha256 && e.page===crop.page+1 && e.rect[0]<=crop.sourceRect[0] && e.rect[1]<=crop.sourceRect[1] && e.rect[2]>=crop.sourceRect[2] && e.rect[3]>=crop.sourceRect[3]));
+        assert.ok(crop.pixelRect.length===4 && crop.pixelRect.every(n=>Number.isSafeInteger(n) && n>=0) && crop.pixelRect[2]>crop.pixelRect[0] && crop.pixelRect[3]>crop.pixelRect[1]);
+        const file=resolve(crop.file),path=relative(resolve('build'),file);
+        assert.ok(path && !path.startsWith('..') && !isAbsolute(path));
+        assert.equal(sha(readFileSync(file)),crop.sha256,'Reviewed crop changed');
+        assert.equal(crop.src,'assets/transcription/'+crop.sha256+'.png');
+        assert.ok(crop.alt && crop.reason && replacement[crop.field].length);
       }
     }
     map.set(record.key,record);
@@ -94,7 +112,8 @@ export function applyReviewedImages(q,records,assets={}) {
     }));
     if(removed.size) {
       assert.ok(q[field].every(i=>removed.has(i.src)),'Reviewed image mapping changed');
-      result[field]=[];
+      assert.ok((replacement.crops || []).filter(c=>c.field===field).every(c=>removed.has(c.parentSrc)),'Reviewed crop parent mapping changed');
+      result[field]=(replacement.crops || []).filter(c=>c.field===field).map(c=>({src:c.src,alt:c.alt}));
     }
   }
   return result;
@@ -120,18 +139,23 @@ export function applySupplementaryImageText(q,assets) {
   const normalize=s=>s.normalize('NFKC').replace(/\s+/g,'');
   for(const [images,field] of [['images','passage'],['solutionImages','explanation']]) {
     if(q.textReview?.[field]==='source-verified') continue;
-    let text=q[field] || '';const replacement=[];
+    let text=sourceMarkerText(q[field] || '');const replacement=[];
     const entries=q[images].map(image=>assets[image.src]);
-    if(field==='passage' && entries.length && entries.every(e=>e?.crops && typeof e.sourceText==='string') && normalize(text)===normalize(entries.map(e=>e.sourceText).join('\n\n'))) text='';
+    if(field==='passage' && entries.length && entries.every(e=>(e?.nativeVerified || e?.crops?.length) && typeof e.sourceText==='string')) {
+      const forms=['sourceText','sourceTextBeforeUnicodeRepair'].filter(f=>entries.every(e=>typeof e[f]==='string'));
+      if(forms.some(f=>normalize(text)===normalize(entries.map(e=>e[f]).join('\n\n')))) text='';
+    }
     for(const [index,image] of q[images].entries()) {
       const entry=assets[image.src];assert.ok(entry,'Missing image extraction: '+image.src);
       assert.equal(entry.status,'unreviewed');assert.equal(sha(entry.text),entry.textSha256,'Changed extracted text');
-      const value=entry.text.trim();if(!value) {replacement.push(image);continue;}
-      if(normalize(text).includes(normalize(value))) {replacement.push(...(entry.crops?.map((c,i)=>({src:c.src,alt:image.alt+`（図・文字化できない部分 ${i+1}）`})) || [image]));continue;}
-      const next=(text?text+'\n\n':'')+(images==='images'?'問題画像':'解答・解説画像')+` ${index+1} の補助テキスト（原本未照合・誤読や欠落の可能性あり）\n`+value;
+      if(entry.sourceTextBeforeUnicodeRepair!=null) assert.equal(sha(entry.sourceTextBeforeUnicodeRepair),entry.sourceTextBeforeUnicodeRepairSha256,'Changed original decoded text');
+      const value=sourceMarkerText(entry.text.trim());if(!value) {replacement.push(image);continue;}
+      const remaining=entry.nativeVerified?[]:entry.crops?.length?entry.crops.map((c,i)=>({src:c.src,alt:image.alt+`（図・原本照合待ちの部分 ${i+1}）`})):[image];
+      if(normalize(text).includes(normalize(value))) {replacement.push(...remaining);continue;}
+      const next=(text?text+'\n\n':'')+(images==='images'?'問題画像':'解答・解説画像')+` ${index+1} `+(entry.nativeVerified?'の文字（PDF文字・組版・画像画素照合済み）\n':'の補助テキスト（原本未照合・誤読や欠落の可能性あり）\n')+value;
       if(next.length>49000) {replacement.push(image);pending.push({src:image.src,field,reason:'field-length-limit'});continue;}
       text=next;
-      replacement.push(...(entry.crops?.map((c,i)=>({src:c.src,alt:image.alt+`（図・文字化できない部分 ${i+1}）`})) || [image]));
+      replacement.push(...remaining);
     }
     if(replacement.length<=30) result[images]=replacement;
     else pending.push({field,reason:'image-count-limit'});
@@ -140,6 +164,7 @@ export function applySupplementaryImageText(q,assets) {
       if(field==='explanation' && q.explanationKind==='absent-in-source') result.explanationKind='unknown';
     }
   }
+  if(q.images.length && !result.images.length) result.prompt=result.prompt.replace(/原本画像/g,'原本資料').replace(/共通症例も画像/g,'共通症例も資料');
   return {question:result,pending};
 }
 
