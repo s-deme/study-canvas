@@ -720,7 +720,7 @@ try {
     if(name==='medical-layout-line') {assert.equal(q.images.length,0);assert.equal(q.options[0],'1．1 秒量〈FEV［下付き：1.0］〉');assert.equal(q.options[3],'4．機能的残気量〈FRC〉');assert.ok(await evaluate(s,"[...document.querySelectorAll('.option sub')].some(e=>e.textContent==='1.0')"));}
     if(name==='medical-comma-case') {assert.equal(q.images.length,0);assert.ok(q.passage.includes('次の文を読み45、46') && q.passage.includes('人口8 万人'));assert.deepEqual(q.options,['1．自治会','2．シルバー人材センター','3．指定居宅介護支援事業所','4．指定居宅サービス事業所']);}
     if(name==='medical-greek-reviewed') {assert.equal(q.images.length,0);assert.equal(q.options[4],'5．尿中［斜体：β］₂-ミクログロブリン');assert.ok(await evaluate(s,"[...document.querySelectorAll('.option i')].some(e=>e.textContent==='β')"));}
-    if(name==='medical-ruby') {assert.equal(q.answer,1);assert.equal(q.subject,'午前');assert.equal(q.images.length,0);assert.equal(q.textReview.prompt,'source-verified');assert.equal(q.textReview.options,'source-verified');assert.ok(q.prompt.includes('看護師の業務従事者届') && !q.prompt.includes('かんご'));assert.ok(q.options[3].startsWith('4．10 年'));}
+    if(name==='medical-ruby') {assert.equal(q.answer,1);assert.equal(q.subject,'午前');assert.equal(q.images.length,0);assert.equal(q.textReview.prompt,'source-verified');assert.equal(q.textReview.options,'source-verified');assert.ok(q.prompt.includes('看護師（かんごし）の業務従事者届（ぎょうむじゅうじしゃとどけ）'));assert.equal(q.options[3],'4．10年（ねん）');}
     if(name.startsWith('shared-medical-')) {
       assert.equal(q.images.length,0);assert.equal(q.options.length,5);assert.equal(q.textReview.prompt,'source-verified');assert.equal(q.textReview.options,'source-verified');
       assert.ok(!/判読保留|未照合/.test(q.prompt+q.options.join('')));
