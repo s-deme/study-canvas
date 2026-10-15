@@ -22,7 +22,8 @@ const samples=[['prose','fe::2023r05_fe_kamoku_a-q003','独立して動作'],['t
   ['medical-cid-reviewed','orthoptist::medical-official-tp200414-10b_01-q003','人口統計'],
   ['medical-cid-recovered','orthoptist::medical-official-tp200414-10b_01-q004','男性に多い疾患'],
   ['medical-digits-recovered','orthoptist::medical-official-tp200414-10b_01-q021','右外転神経麻痺'],
-  ['medical-partial','orthoptist::medical-official-tp170425-10a_01-q006','乳児の正常な発達'],
+  ['medical-partial-reviewed','orthoptist::medical-official-tp170425-10a_01-q006','乳児の正常な発達'],
+  ['medical-partial','orthoptist::medical-official-tp200414-10b_01-q039','涙液層破壊時間'],
   ['medical-multiple','orthoptist::medical-official-tp200414-10b_01-q019','明所視'],
   ['medical-case','nurse::expansion-tp140512-03-3a-q091','呼吸困難が増悪'],
   ['medical-chemical','clinical-lab::expansion-tp150511-05am_01-q037','（NH₂）₂CO'],
@@ -713,12 +714,13 @@ try {
     if(name==='medical-cid-recovered') {assert.equal(q.images.length,0);assert.ok(q.options[3].includes('抗アクアポリン4抗体') && q.options[4].includes('〈AZOOR〉'));}
     if(name==='medical-digits-recovered') {assert.equal(q.images.length,0);assert.ok(q.options[1].includes('第1眼位') && q.options[2].includes('3step'));}
     if(name==='medical-partial') {assert.ok(q.options.some(o=>o.includes('判読保留')) && q.images.length && q.images.every(i=>i.src.startsWith('assets/transcription/')));}
+    if(name==='medical-partial-reviewed') {assert.equal(q.images.length,0);assert.equal(q.textReview.options,'source-verified');assert.ok(q.options[1].includes('5か月で寝返り'));}
     if(name==='medical-case') {assert.ok(q.passage.includes('次の文を読み91～93') && q.passage.includes('25 歳'));assert.ok(!q.options.some(o=>o.includes('93') || o.includes('次の文を読み')));assert.ok(await evaluate(s,"document.querySelector('.passage')?.textContent.includes('25 歳') && !document.querySelector('.passage').closest('details')"));}
     if(name==='medical-connectors') {assert.equal(q.images.length,0);assert.equal(q.options[0],'1．Addison 病 — 副腎皮質刺激ホルモン');assert.equal(q.options[4],'5．副腎性Cushing 症候群 — アルドステロン');}
     if(name==='medical-layout-line') {assert.equal(q.images.length,0);assert.equal(q.options[0],'1．1 秒量〈FEV［下付き：1.0］〉');assert.equal(q.options[3],'4．機能的残気量〈FRC〉');assert.ok(await evaluate(s,"[...document.querySelectorAll('.option sub')].some(e=>e.textContent==='1.0')"));}
     if(name==='medical-comma-case') {assert.equal(q.images.length,0);assert.ok(q.passage.includes('次の文を読み45、46') && q.passage.includes('人口8 万人'));assert.deepEqual(q.options,['1．自治会','2．シルバー人材センター','3．指定居宅介護支援事業所','4．指定居宅サービス事業所']);}
     if(name==='medical-greek-reviewed') {assert.equal(q.images.length,0);assert.equal(q.options[4],'5．尿中［斜体：β］₂-ミクログロブリン');assert.ok(await evaluate(s,"[...document.querySelectorAll('.option i')].some(e=>e.textContent==='β')"));}
-    if(name==='medical-ruby') {assert.equal(q.answer,1);assert.equal(q.subject,'午前');assert.equal(q.images.length,5);assert.ok(q.images.every(i=>i.src.startsWith('assets/transcription/')));assert.ok(q.prompt.includes('看護師の業務従事者届') && !q.prompt.includes('かんご'));assert.ok(q.options[3].startsWith('4．10 年'));}
+    if(name==='medical-ruby') {assert.equal(q.answer,1);assert.equal(q.subject,'午前');assert.equal(q.images.length,0);assert.equal(q.textReview.prompt,'source-verified');assert.equal(q.textReview.options,'source-verified');assert.ok(q.prompt.includes('看護師の業務従事者届') && !q.prompt.includes('かんご'));assert.ok(q.options[3].startsWith('4．10 年'));}
     if(name.startsWith('shared-medical-')) {
       assert.equal(q.images.length,0);assert.equal(q.options.length,5);assert.equal(q.textReview.prompt,'source-verified');assert.equal(q.textReview.options,'source-verified');
       assert.ok(!/判読保留|未照合/.test(q.prompt+q.options.join('')));
