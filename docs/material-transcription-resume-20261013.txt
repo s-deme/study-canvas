@@ -1,0 +1,44 @@
+/goal E:\script\study-canvas\docs\material-transcription-resume-20261014.txt を全文読み、停止位置から文字化作業を再開して。
+
+作業場所 E:\script\study-canvas。2026-10-14にユーザー指示で一時停止。全体未完了。再開時はユーザーの次の停止指示まで継続。commit/push/本番配信なし。
+
+【最初に読む最新記録】
+build/material-conversion-20261014-business-sme-2019-next/paused-progress.json、paused-state-hashes.json、process-exits.json、baseline.json、previous-sealed-proof.json、current-rebase-proof.json、new-corrections.json、selected-draft.json。
+停止確認: U/source build session44539をユーザー指示で停止、実終了1 chunk dee8ef。bcd70fの実プロセス一覧でビルド/画像抽出なし。残存ロックはpaused-build-private-build.lockへ保持済み。途中28500/50896抽出は成功に数えない。runner failure/先行開始中断/ロック失敗の履歴も保持。
+
+【最後まで検証済み】
+T130: build/material-conversion-20261013-business-sme-2020-next。SOURCE build/material-transcription/1791927467514、CLOUD build/private-cloud/1791929472224。両currentはTのまま。T snapshot-after実終了0 session19983 chunk894b16(過去169508ファイル・旧補正6098件・現行7565ファイル)、recheck-final実終了0 session81251 chunk79c534。Tのsummary/history/report/process/after-stateは保全し書き換えない。
+検証完了累計5262ID、本文5225＝全文5008＋必要図付き217、公式回答/解説38(本文と1重複)。全198268問に対する追加変換実績2.65%。既存文字問題も含めた全体完了率は未確定。OCR・原本照合待ち13988問（この分類だけの11183問）。重複する分類を足して母数にしない。
+
+【最優先で再開する未完バッチU131】
+SME2019 D43/E23/F25/G40=131。全全文・選択肢・共通文・条件・注記・継続/隣接・4表紙/全冊最終ページを実目視済み、必要図4ID原本所属/画素一致済み。
+最新T基準のbaseline作成 actual0 a150c2、rebase actual0 2dedae。既存authority b3bbb7・core preflight d7640b・全原本保全 session61000 e35ab4・採用 session93182 48b175・採用preflight session96842 82dd98は全て実終了0。
+補正6359件＝T検証済み6228件＋U採用131件。Uは既に採用済みなのでadopt-reviewed-groups.pyを再実行せず、baseline/before-*を上書きせず、古い基準へ戻さない。source/cloudのU成功は未確認。
+最初にpaused-state-hashesと現状、補正先頭6228とnew131、両current(T)、製品コードを照合。生きた所有プロセスを確認せずロックを解除しない。
+次にnpm run build:material-textを正常再実行し、実終了0を観測してからU check-delta.mjs、npm run check:material-text、check-reviewed-crops.py(新source)、check-code-delta.py、reuse-source-proof.py、prepare-browser.pyと全131+回帰ケース320/390/1100px/実画面、source完了証明/キューを進める。必要な補助記録はTを読み、U件数/パス/ハッシュ形式へ調整。検証用コードだけ調整、製品コード/API変更なし。
+その後package-private-cloud --compact、compiled worker build、check:private-cloud、全pack保持/実バンドル包含/原本画素/所有者認証/Range音声/保存回答再開/編集時公式回答解除などを検証。cloud全ケースと実画像も確認。summary/history/report/resume/process-exits、原本/旧ビルド/旧補正prefix/docprefix保持のsnapshot-afterとrecheck-finalまで各実終了0を観測して完了判定。実行途中や候補は成功に数えない。ログ・失敗・再試行理由を保持。
+
+【後続の準備済み未採用】
+V136 SME2018: build/material-conversion-20261014-business-sme-2018-next。D44/E25/F25/G42、全目視/4表紙/最終/必要図9ID10配置/原本所属済み。U完了後baselineを結び直す。
+W112 SME2017: build/material-conversion-20261014-business-sme-2017-next。D43/E21/F25/G23、全目視/4表紙/最終/必要図3点/所属済み。E4/E6/G19の継続を元領域とは別に追加。V完了後。
+X115 SME2016: build/material-conversion-20261014-business-sme-2016-next。D43/E18/F25/G29、全目視/4表紙/最終/必要図4点/所属済み。D25/G2/G20/G27の継続追加。W完了後。
+Y115 SME2015: build/material-conversion-20261014-business-sme-2015-next。D43/E19/F25/G28全目視済み、必要図7ID/7配置、全115所属98506 a11345、画素ab07d0、manual-proof d884bb全実終了0。prepared-process-exits/manual-review-proof/visual-contentを読む。D5/E4/G9の継続追加を元領域と別に保持。F25/E19/D43/G28の全冊最終確認。X完了後。U以外のV/W/X/Y計478問は採用0・配信未完了。
+W/X/Yは原本written/options0/answer null。PDFの選択肢はpromptに転記し自己採点/モデル回答/採点保留/保存回答を保持。ブラウザー検証expectedOptionsの||5は??5へ、writtenに関する検証条件も対応させる。製品をMCに変更しない。
+
+【次の目視準備Z114】
+build/material-conversion-20261014-business-sme-2014-next。D42/E18/F25/G29候補、4表紙確認。暫定sourceは封印済みT、正式Y後のbaseline未作成、採用0。written/options0全114。
+F1-19を実目視して保存、F17の図A/B/C/Dは2配置の必要画像として境界と画素4a3616確認済み。F20-25のPDF20-23は表示済みだが本文は未保存なので完了に数えず再確認して保存。F22の不正抽出\x0fは原本で6弱、F24分数/平方/乗算は手入力で復元。F20の英文単語間スペースを保持。D/E/G本文95問分の残りを続ける。Zを早期採用しない。
+
+【不変条件と残課題】
+原本/旧ビルド/既存補正順序/ID/問題形式/選択肢数/正答/採点保留/保存回答/製品コード/API保持。226対応保留、EPA9問保留、指定看護師採点保留維持。推測で原本字形/境界を埋めない、別原本へ画像一致だけで展開しない。独立校正・実機・本番未検証。
+担当口調は実工程ごとにお嬢様🌹/幼馴染🌟/委員長📋/ギャル💅。サブエージェントは明示依頼がない限り起動しない。既存の無関係な変更を保持。各依存工程は実終了0観測後に進める。
+
+
+【追加指示：品質を維持した高速化・ユーザー承認済み】
+この追記は以前の単年度ごとの封印順・サブエージェント制限より優先する。今は作業停止中。次にユーザーが再開した時に以下を実施し、この追記の保存だけでは文字化作業を再開しない。
+1. 最初に停止状態を検証し、実際の処理時間を計測する。変更のないOCR/抽出結果を毎回全件再生成する処理と、旧成果物の重複ハッシュ走査を調べ、既存の再利用機能を優先する。原本・画像・抽出コード・設定・校正/修正データ・マッピングなど結果に影響する依存関係のハッシュ一致を証明できる範囲だけ再利用し、変更分は再処理する。画像一致だけを原本所属や目視完了の証明にしない。途中で停止した生成物・成功未確認の結果をキャッシュとして採用しない。
+2. 複数冊・複数年度の採用をまとめ、重い全件ビルド/配信バンドル生成/全件回帰検証をまとまった区切りで行う。まずU131の採用済み状態とT成功基準を保持して復旧方法を決め、準備済みV136/W112/X115/Y115の計478問も活用する。各問の採用前原本照合・所属・回答互換性は省略しない。まとめ採用では共通の変更前基準、確定した対象ID集合、補正追加順序、原本ごとの根拠を保存し、全変更IDと旧全問を検証する。旧単年度封印を前提にした補助スクリプトをそのまま流用せず、実際のまとめバッチの依存関係・件数へ最小限調整する。まとめバッチの最終ビルド・検証・保存確認が全て実終了0になるまで配信完了数には含めない。
+3. 原本確認/独立した下書き準備の並列エージェント作業を明示的に許可する。利用可能な同時実行枠内で年度・科目・原本ごとに分担し、担当ごとに専用出力ディレクトリを用意する。既存成果物を共有書込みせず、原本確認範囲/未判読/目視記録を根拠付きで返す。採用、corrections/currentなど共通ファイル更新、重いビルド、統合検証と完了判定は主担当1人に集約する。原本/共有ビルドへの同時書込みは禁止。並列枠を計画し、主担当も有用な独立作業を続ける。定例進捗確認は120秒より頻繁に行わず、完了・質問・エラー通知には直ちに対応する。演出目的で起動しない。
+4. 優先順はハッシュで裏付けた再利用→まとめビルド→原本確認の並列化。必要ならビルド/検証用スクリプトを最小限改善し、変更前を保持して意図した変更パス/理由/検証結果を記録する。製品の問題表示/採点/保存回答/APIの仕様を高速化のために変更しない。既存の差分チェックでは意図したツール変更だけを明示的に扱い、広い例外で保全検証を無効にしない。
+5. 原本全文・全選択肢・条件/共通文/注記・継続/隣接・図/表/数式の確認、ID/選択肢数/正答/採点保留/保存回答の保持、全pack/実バンドル/Worker/表示検証の必須範囲は維持する。未判読を推測で埋めない。再利用可能な証拠は現在の依存関係と照合して再利用し、同じ検証を根拠なく繰り返さない。
+6. 数バッチの実測で原本確認・OCR・ビルド・検証・保存確認の所要時間と処理数を別々に記録し、高速化の前後を比較する。未測定の短縮率を約束せず、実測に基づいて残り時間の見積もりを更新する。commit/push/本番配信は引き続き行わない。

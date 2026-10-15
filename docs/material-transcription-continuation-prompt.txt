@@ -1,0 +1,632 @@
+/goal できるだけ多くの問題を「完全文字化済み」へ進めてください。計画の提示で終わらず、原本照合・実データ採用・アプリ反映・ローカル配信候補の再生成と検証まで実行してください。
+
+これは前チャットの続きです。作業場所は E:\script\study-canvas です。前チャットはユーザー指示で終了し、文字化の目標全体は未完了のまま一時停止しました。この依頼で、以下の保存記録から作業を再開してください。過去の候補数を成功数として扱わないでください。
+
+【最初に読む記録】
+1. build/material-conversion-20261012-medical-2022-2024-next/resume.md
+2. 同ディレクトリの summary.json、history.json、paused-state-hashes.json、baseline.json
+3. build/material-conversion-20261012-medical-2020-2021-next/ の summary.json、history.json、report.md、after-state-hashes.json
+4. 必要な旧採用根拠は、これらの履歴が参照する過去記録へたどる。build/material-conversion-20261011-bulk/ は初期記録であり、現在の基準ビルドへ戻してはいけない。
+
+【直近の検証済み状態：まず現在の実データで確認】
+- 文字化：build/material-transcription/1791780728111
+- ローカル配信候補：build/private-cloud/1791781555016
+- 既存補正：3,247件。既存レコードの順序と内容を保持する。
+- この継続作業の累計：実変更2,281ID、本文2,244ID＝完全文字化2,142＋文章と必要画像102。公式回答・解説文字化38ID（本文と1ID重複）。
+- 直前バッチは84IDを実採用し、全198,268問の差分と旧保存回答、文字化・配信候補それぞれ94ケースを320/390/1100pxで検証済み。
+- 配信容量：3,189,155,224 bytes。現存画像の可逆圧縮効果66,221,903 bytesは容量差と別集計。
+- 残存：画像付き74,659問・49,998画像・214,473参照・参照PDF2,448。全原本PDF2,453件を保持。
+- OCR・原本照合待ち16,439問、その待ち状態だけの13,584問。初期値18,547／15,440は過去値。
+- 各 current.json、マニフェスト、成功記録、現在の補正とハッシュを照合する。上記と違う場合は古いビルドへ戻さず、差異を調べて実際の最新成功状態を基準にする。
+- 開始時の容量・マニフェスト・ハッシュ・変更前データ・全残存一覧を保存する。未完の次バッチは採用0、文字化／配信ビルド未開始、原本・画像の新しい全件ハッシュ走査も未開始。
+
+【再開対象と処理順序】
+1. 確認済み未採用16IDを再開する。
+   build/material-conversion-20261012-medical-2022-2024-next/inherited-reviewed-16-drafts.json
+   2022年午前57/59/73/78/81/83/89/98の理学療法士・作業療法士の各対応ID。
+   両原本全文・字形・原本所属・元パック・再描画画素・表紙・既存core互換性の記録は前回保存済み。現在の原本／画像／補正／現行問題との一致と記録の確認範囲を再確認し、証拠が有効なら既存の目視記録を再利用する。まだ実採用・旧保存再開・アプリ・配信の成功には数えない。
+2. 続いて、同ディレクトリの own-source-candidates.json にある未照合32IDを処理する。
+   2022年午後51/52/54/66/69/70/72/73/81/83/86/92/95/96の14組28ID、2023年午前93の1組2ID、2024年午前93の1組2ID。
+   2022年午後51/52の両原本ページは停止直前に表示しただけ。原本所属・現行問題・全文・字形・境界の完了記録がないため、採用可能／確認済みとして扱わない。
+   前回の verify-medical-*-drafts.py、prepare-reviewed-drafts.mjs、adopt-reviewed-groups.py、check-delta.mjs、prepare-checks.py、既存ビルド／検証コマンドを調べて再利用する。前回用の件数・年・試験・パスを残して実行しない。
+3. 続いて同一原本共有、文字コード、ルビ、上付き下付き、組版の残存群を処理する。
+   continuation-candidates.json／CSV、continuation-order.json、start-inventory の references.json／CSV、cause-groups.json を使う。原本共有度、完全文字化できる問題数、照合容易性、既存抽出と設問境界の準備状況で優先順位を決める。
+   画像ハッシュやグローバル抽出元の一致だけで同一原本と判定しない。試験・年度・科目を混同した226IDの対応不確定群は candidate-source-mapping-conflict.json に記録されている。各ID自身の元パック・sourceUrl・preparedの原本領域と原本本文を確かめてから展開する。
+4. 対応が確定した回答・解説画像も文字化する。公式資料にない理由解説を追加しない。
+
+【完了済み工程の扱い】
+- 2023r05h_koudo_am1_qs.pdf は原本全30設問・150IDの対応が確認済み。既存85IDの採用記録を保持。
+- ITパスポートの残り18候補冊は前回までに採用・検証済み。現在の残存一覧ではOCR待ちIP原本は0冊。
+- 上記の成功根拠と保持を確認し、差異・不足が見つかった対象だけ調べる。完了済み工程を最初からやり直して、残存処理を後回しにしない。
+
+【採用条件】
+- 原本設問ごとに問題文・選択肢・条件・共通症例・注記・継続ページを照合する。
+- 同一原本への対応と内容一致を確認した問題IDへ展開する。
+- OCR信頼度や画素一致だけで全文校正済みにしない。
+- 自動検証、原本字形確認、設問全文の目視照合を別々に記録する。
+- 図が必要な問題も文章を採用し、必要領域だけ画像として残す。
+- 未確認部分や判読不能文字を推測で埋めない。
+- 個別の難問は理由を記録して保留し、独立して処理できる別の候補群へ進む。
+
+【効率と継続】
+- 少数の成功件数や一冊の完了を終了条件にしない。安全に処理できる候補冊・原因群を継続する。
+- 既存の抽出キャッシュ、補正記録、切り抜き、変換・再開処理を再利用する。新しい並行処理系は作らない。
+- 原本単位で照合・採用・必要な検証・履歴保存を完了する。
+- 重い配信バンドル全体の再生成は毎冊行わず、複数冊の変換を蓄積してから行う。
+- 中断時にも、完了した原本、未採用の作業、保留理由、次の対象が明確に分かる再開記録を残す。
+
+【検証】
+- 全件のID・件数・順序・選択肢数・未変更フィールドを確認する。
+- 変更対象の選択肢と正答インデックス、旧保存回答との互換性を確認する。
+- 原本・画像・補正記録のハッシュ、設問や子設問の混入、共有画像の誤削除を検出する。
+- 実際の配信バンドルから画像を取り出し、切り抜き・可逆圧縮・必要画像の包含・未使用画像の除外を検証する。
+- アプリで文章・選択肢・採点・解説・表・数式・必要画像・狭い画面・旧保存記録の再開を確認する。
+- 既存の文字修復・症例対応・正答訂正・許容正答を維持する。指定された看護師2問の採点保留も維持する。
+
+【報告と制約】
+完全文字化、文章＋部分画像、回答・解説文字化、確定文章訂正、正答訂正、ラベル変更を別集計する。
+容量と圧縮効果、残存問題・画像・参照数、具体的保留理由、確認範囲、未検証事項、候補・履歴・配信候補の保存先を報告する。
+
+外部APIと保存記録の互換性を維持する。正答変更は文字化作業から分離する。
+原本・旧ビルド・履歴・無関係な変更を保持する。
+コミット・push・本番配信は行わない。
+
+【追加：時短運用。採用条件と検証範囲は下げない】
+1. 原本ページ単位で準備と照合をまとめる。
+   既存キャッシュと原本画像を再利用し、同じPDFページに複数候補があればページを一度読み込み／描画して順に照合する。疑わしい字形だけ拡大する。本文・全選択肢・条件・注記・共通症例・継続・隣接設問の全文目視記録は設問ごとに残す。異なる原本は、画素が同じでもそれぞれの所属と本文を確認する。
+   保存済みの全文目視記録は、対象ID・原本PDF／画像SHA256・本文／選択肢・領域・確認範囲が現在と一致し、記録が十分な場合に再利用してよい。不一致・不足部分は再照合する。OCR差分は確認箇所の発見に使い、全文目視の代わりにはしない。
+2. 軽い事前点検を先に行い、重い再実行を防ぐ。
+   採用前に対象全IDの存在・重複・元パック／原本対応・選択肢数・正答インデックス・型・必要画像と領域・原本ハッシュ・未採用状態を点検する。
+   ブラウザ検証前に全対象の検索語、名前による分岐、期待件数、必要画像、既存の採点保留／許容正答の対象を点検する。特に空検索語を検出する。既存方式で上付き／複数選択／必要図／採点保留を短く試してから全対象を実行する。
+   前回スクリプトの全文文字列置換で件数や条件を機械的に流用しない。必要な最小修正で、対象リストから期待件数を求め、検証対象集合の一致も確認する。対象を落として件数だけ合わせてはいけない。
+3. 複数冊の変換を蓄積してからビルドする。
+   設問ごとの照合・採用根拠・軽量検証・履歴を先に完了し、確認済み群をまとめて文字化／配信候補へ反映する。冊ごとの3GB級バンドル再生成はしない。
+   目安は数冊・100〜300ID程度、または60〜90分程度の原本照合作業分。ただしこれは成功条件・上限ではない。小さい群しかなければ安全な独立群を続け、件数稼ぎのために保留を採用しない。中断要求や照合群の区切りでは、確定分を検証・保存できる範囲で締める。
+4. 重複走査を同一バッチ内で減らす。
+   原本所属が確定した対象は必要パックと原本領域を優先して読む。全198,268問のID・順序・未変更フィールド検証は最終差分で必ず行う。
+   開始時の全原本・画像・旧ビルドのハッシュ確認と、最終成果物の全件検証は維持する。同じバッチ内で既に確認済みの不変入力の重複走査／同じ残存一覧生成は、対象・内容ハッシュ・生成コード／設定・補正入力・確認範囲が一致する成功証拠を参照して再利用する。
+   更新日時・容量だけで一致を確定しない。入力／生成器／設定／範囲の変更、検証失敗、証拠の不足や変更疑義があれば必要な範囲を再検証する。採用対象の原本との結合確認、変更対象の旧回答互換性、最終実バンドルからの画像復元・ハッシュ・画素・包含／除外確認は省略しない。
+5. 依存する工程は終了コードで制御する。
+   順序は、照合・採用→文字化ビルド→全文字化／原本境界検証の正常終了→配信候補生成→Workerビルド→配信実行時検証・実バンドル画像検証・配信アプリ検証→最終記録と保存ハッシュ確認。
+   ログに一部PASSが出ただけで次工程へ進まない。process/sessionの終了コード0と必要な成功証拠を確認してから依存工程へ進む。成功記録不足時に配信生成を先行させない。
+   独立した既存チェックは資源とファイル書込みの競合がない範囲で併行してよい。文字化ビルドと配信生成は同時実行せず、採用入力を処理中に書き換えない。同じブラウザ接続を使うsource／cloud検証は順に行う。新しい並行処理系や検証省略の仕組みは作らない。
+6. アプリ検証の対象を明確にする。
+   全変更IDに必要な検証と、指定看護師2問の保留、許容正答、旧保存再開、表・数式・コード・必要図・狭い画面の代表回帰を行う。
+   未変更部分の過去成功記録は、製品コード／関連入力の一致と全件差分で変更なしを確認できた範囲で再利用する。関連コードや表示方式を変えた場合は影響範囲を広げる。「全ケース再実行」と「過去成功証拠の再利用」を分けて報告する。
+7. 保存のやり直しを防ぐ。
+   summary/history/report・文書・候補・全残存一覧を先に確定し、その後に保存ハッシュを作成・再確認する。ハッシュ対象のログへその検証自身の出力を書き込まない。確定済みの旧チェックポイントを上書きしない。
+   同じ元データの再読込み／同じハッシュ走査を必要以上に繰り返さず、必要な最終再確認は正常終了まで待つ。観測タイムアウトだけで処理を再起動しない。
+   作業時間・実採用数・保留数・ビルド回数・再検証理由を簡潔に記録する。速度改善の割合は計測なしに断定しない。
+8. 難問は早く独立群から切り離す。
+   未確定の原本対応・判読不能字形・設問境界・図の意味が解決しない設問は、ID／原本／不足証拠／具体的理由を保存して保留し、独立して処理できる候補へ進む。推測で穴埋めせず、全体を止め続けない。
+
+【再開時の報告】
+最初の短い報告で、採用済み／確認済み未採用／未照合の件数と今回の対象を示す。その後は実作業を続ける。終了・中断時は実採用の各区分、容量／圧縮効果、残存と保留理由、確認範囲・未検証範囲、再開位置と保存先を示す。原本・旧記録・保存互換性を保持し、commit・push・本番配信は行わない。
+
+
+
+【最新チェックポイント：2026-10-12 再開バッチ、上記の過去件数・再開位置に優先】
+保存先：E:\script\study-canvas\build\material-conversion-20261012-resumed
+今回実採用86ID、すべて完全文字化。累計実変更2367ID、本文2330（完全文字2228＋部分画像102）、公式回答38（本文との重複1）。補正3333件、開始時3247件の先頭を維持。
+文字化：E:\script\study-canvas\build\material-transcription\1791786646598
+ローカル配信候補：E:\script\study-canvas\build\private-cloud\1791787453607
+summary.json / history.json / report.md / resume.md / after-state-hashes.json を全文確認し、最終保存ハッシュを再確認して続ける。
+旧確認済み未採用16と未照合32、診療放射線技師2022午後36、視能訓練士2022午前28・臨床検査技師2020午前84は採用・原本・アプリ検証済み。元の未採用位置から重複採用しない。
+残存・理由は現在文字化ビルドのretained-material/。次の候補は本保存先のcontinuation-candidates.json/CSV・continuation-order.json。共有画像の出典メタデータだけで別年度・別試験へ展開しない。prepared/raw/sourceUrlから自分の原本を特定する。
+6IDの字形・数字・全文を拡大原本で再修正済み。selected-draft.json / new-corrections.json / refinement-proof.json が確定稿。初期作成スクリプトやpre-refinementの稿を再採用しない。
+文字化3起動（1停止・2成功）、配信候補1回、Worker1回。失敗・再実行理由はhistory.json。旧原本・成功/途中ビルド・履歴を保持。製品コード/API/正答は変更なし。
+全体目標は未完了。少数の成功や一冊で終了せず、安全な独立群と公式に存在する解説を継続する。commit/push/本番配信は行わない。
+
+
+【最新チェックポイント：2026-10-12 放射線技師・視能訓練士・臨床検査技師8冊、上記過去再開位置に優先】
+保存先：E:\script\study-canvas\build\material-conversion-20261012-radiological-am-next
+今回実採用114ID（完全文字化113・文章と必要画像1）。累計実変更2481、本文2444（完全文字2341・部分画像103）、公式回答38（本文重複1）。補正3447件、旧3333件先頭の内容・順序保持。
+文字化：E:\script\study-canvas\build\material-transcription\1791791745271
+ローカル配信候補：E:\script\study-canvas\build\private-cloud\1791793269973
+summary.json / history.json / report.md / resume.md / after-state-hashes.json を全文確認し、recheck-final.pyで保存後の全ハッシュを確認して再開。
+放射線技師2022午前23・2023午前9・2024午前7/午後5、視能訓練士2022午前17/午後15、臨床検査技師2022午前22/午後16は採用・各原本全文字形・アプリ検証済み。selected-draft.json / new-corrections.jsonが確定稿。初稿/未照合nativeスクリプトの再採用は禁止。TG18－QC図1は必要領域のexact cropを保持。
+5初稿修正と抽出欠落の原本字形照合はdraft-refinements.json。数値・制御文字を別資料へ一律適用しない。診療放射線技師2023問33の偽の選択肢「クロスキャリブレーション」を原本どおり維持。
+視能2020午前51の画像グループが2022午後に誤対応する候補1は採用せず、candidate-source-mapping-conflict.jsonで自分の2020原本照合へ保留。既存226対応保留や看護師指定保留はそのまま保持。
+残存・理由は現在文字化retained-material/のreferences.json/CSV、ocr-queue.json・cause-groups.json。次は本保存先のcontinuation-candidates.json/CSV・continuation-order.jsonを使い、prepared/raw/sourceUrlで自分の原本を確定して継続。共有画像のメタデータだけで別年度/試験へ本文を展開しない。
+文字化2起動（parentSrc指定不足で初回終了1、自分の未完了生成先を修正再開し成功1）、配信候補1回、Worker1回、必要全チェック/境界・実バンドル画像・全198268件差分・文字化/配信各126ブラウザケースの正常終了0をprocess-exits.jsonへ記録。履歴・ドキュメント確定後に最終snapshot/recheckを実行。旧原本・成功/途中ビルド・履歴・製品コード/API/正答を保持。
+全体は未完了。少数成功や一冊で終了せず、安全な独立群と公式に存在する回答解説を継続する。commit/push/本番配信は行わない。
+
+
+【最新チェックポイント：2026-10-12 2020年医療原本5冊、過去再開位置より優先】
+保存先：E:\script\study-canvas\build\material-conversion-20261012-medical-2020-next
+今回実採用114ID（完全文字化114・部分画像0）。累計実変更2595、本文2558（全文2455・部分画像103）、公式回答38（本文重複1）。補正3561件、旧3447件先頭の内容・順序保持。
+文字化：E:\script\study-canvas\build\material-transcription\1791800391589
+ローカル配信候補：E:\script\study-canvas\build\private-cloud\1791801528998
+summary/history/report/resumeとafter-state-hashesを全文確認し、recheck-final.pyの終了0を確認して継続。放射線2020AM28/PM33・臨床2020AM23/PM18・視能2020AM12を実採用・検証済み。selected-draft/new-correctionsが確定稿。未照合native稿を再採用しない。
+各ID自身のprepared/raw/sourceURLと原本全本文・全選択肢・字形・条件・注記・継続・隣接境界を比較。上付き下付き・菌名斜体・太字、誤った選択肢を原本のまま保持。目視と自動証拠は別。製品コード/API/正答・旧保存回答互換性保持。原本2453PDFと旧ビルド・途中ビルド・履歴保持。
+視能2020AM51は自分の2020原本所属をnext-orthoptist2020AM51-own-binding.jsonへ準備済み、今回未採用。旧2022PM誤対応保留・過去226対応保留・看護師指定採点保留を保持。共有画像のグローバル出典だけで別年度/試験に本文を展開しない。
+次は現行retained-materialのreferences/OCR/cause-groupsと本保存先continuation-candidates/orderから安全な独立群・公式に存在する回答解説を続ける。全変更IDと代表回帰、全件差分・原本境界・実バンドル画像・両アプリの正常終了0を記録。文書/履歴を確定してから保存ハッシュを作成し再確認。
+全体未完了。ユーザーは停止指示まで継続を明示。少数成功や一冊で作業終了しない。commit/push/本番配信なし。
+
+
+【最新チェックポイント：2026-10-12 作業療法・看護・助産の医療原本6冊、過去再開位置より優先】
+保存先：E:\script\study-canvas\build\material-conversion-20261012-medical-nurse-and-09-next
+今回実採用99ID（完全文字化89・文章と必要画像10）。累計実変更2694、本文2657（全文2544・部分画像113）、公式回答38（本文重複1）。補正3660件、旧3561件先頭を保持。
+文字化：E:\script\study-canvas\build\material-transcription\1791806428393
+ローカル配信候補：E:\script\study-canvas\build\private-cloud\1791807213466
+作業療法2020AM11/PM11、看護2023AM17/2024AM30、助産2022AM12/PM18を採用・検証。selected-draft/new-correctionsが確定稿。必要図10切り抜きを保持。全198268問の差分、全文字化・原本境界、実バンドル画像と実行時、文字化/配信各111ケースを320/390/1100pxで正常終了0。実画面の目視は各8枚、独立校正者なし。製品コード/API/正答・旧保存互換性・原本2453PDF・旧ビルド保持。summary/history/report/resumeとafter-state-hashesを読み、recheck-final.pyの終了0で保存を確認。
+次は build/material-conversion-20261012-medical-2021-next の自分の2021原本6冊143問。本文・選択肢・字形・境界の目視記録はvisual-contentと各manual-reviewに保存済み、必要図2切り抜きは放射線AM94。採用0、次の開始基準は未確定。最新状態からbaseline/全原本画像ハッシュ/core/prepared/領域/図を確認してから採用。初稿の再採用禁止。
+EPA2023/2024のルビ9問は未採用、epa-ruby-review-holds.json参照。過去226対応保留・視能2020AM51別原本誤対応保留・指定看護師採点保留保持。既存公式回答対応のcurrent/raw差は既存公式対応表を適用した証拠に限定。正答変更なし。
+全体未完了。ユーザー停止指示まで安全な独立群と公式にある回答解説を継続。commit/push/本番配信なし。
+
+
+【最新チェックポイント：2026-10-12 2021年医療原本6冊、過去再開位置より優先】
+保存先：E:\script\study-canvas\build\material-conversion-20261012-medical-2021-next
+今回実採用143ID（完全文字化142・文章と必要画像1）。累計実変更2837、本文2800（全文2686・部分画像114）、公式回答38（本文重複1）。補正3803件、旧3660件先頭保持。
+文字化：E:\script\study-canvas\build\material-transcription\1791811526467
+ローカル配信候補：E:\script\study-canvas\build\private-cloud\1791815596671
+放射線2021AM22/PM27、臨床2021AM25/PM33、視能2021AM17/PM19を採用・検証。確定稿selected-draft/new-corrections。放射線AM94の必要図2切り抜き保持。全198268問差分・原本境界・実バンドル画像・実行時、両アプリ各155ケース320/390/1100px正常終了0。手動画面範囲はapp-visual-review.json、独立校正者なし。製品コード/API/正答・旧保存互換性・原本2453PDF・旧ビルド保持。
+summary/history/report/resume/after-state-hashesを読み、recheck-final.pyの終了0で保存確認。開始ハッシュ元セッション終了は取得不能、完成証拠の別確認と採用時の再結合は正常終了。process-exits.json参照。
+次：build/material-conversion-20261012-medical-2020-2022-nurse-midwife-next: seven own books,112 full visual drafts, adopted0. Fresh baseline, original hashes, prepared/raw/core and3 exact crops must be verified before adoption. Preserve EPA9/legacy226/own2020AM51/nursing grading holds; continue until user stop.
+視能2021AM16は自身のAM原本で確定し今回内に採用。過去誤対応記録は保持しcandidate-source-conflict-resolution.jsonへ解決を記録。視能2020AM29は未採用。2020AM51の準備はbuild/material-conversion-20261012-medical-2020-next/next-orthoptist2020AM51-own-binding.json、未採用。EPA9・過去226対応保留・指定看護師採点保留保持。
+全体未完了。停止指示まで継続。commit/push/本番配信なし。
+
+
+【最新チェックポイント：2026-10-12 作業療法・看護・助産の医療原本7冊、過去再開位置より優先】
+保存先：E:\script\study-canvas\build\material-conversion-20261012-medical-2020-2022-nurse-midwife-next
+今回実採用112ID（完全文字化109・文章と必要画像3）。累計実変更2949、本文2912（全文2795・部分画像117）、公式回答38（本文重複1）。補正3915件、旧3803件先頭保持。
+文字化：E:\script\study-canvas\build\material-transcription\1791820324272
+ローカル配信候補：E:\script\study-canvas\build\private-cloud\1791821600401
+作業療法2021AM11/PM12、助産2021AM18/PM24、看護2021AM15・2022AM13・2020AM19を採用・検証。確定稿selected-draft/new-corrections。作業療法2021PM1/4/9の必要図3切り抜き保持。全198268問差分・原本境界・実バンドル画像・実行時、両アプリ各124ケース320/390/1100px正常終了0。手動画面範囲はapp-visual-review.json、独立校正者なし。製品コード/API/正答・旧保存互換性・原本2453PDF・旧ビルド保持。
+summary/history/report/resume/after-state-hashesを読み、recheck-final.pyの終了0で保存確認。開始ハッシュ元セッション終了は取得不能、完成証拠の別確認と採用時の再結合は正常終了。process-exits.json参照。
+次：build/material-conversion-20261012-medical-mapping-holds-next: own original106 full visual drafts/crops3, adopted0. Fresh baseline/hash/core/binding checks required; retain all original mapping/grading/EPA holds.
+視能2020AM29/51は後続106問の全文照合稿に保存済みだが未採用。後続放射線129問も全文照合済み未採用。EPAルビは従来9問の保留を維持し、140問群は所属準備だけで本文未確認。05bはEPA用午前であり午後扱いしない。過去226対応保留・指定看護師採点保留保持。
+全体未完了。停止指示まで継続。commit/push/本番配信なし。
+
+
+【最新チェックポイント：2026-10-12 視能・臨床7原本と対応保留106問、過去再開位置より優先】
+保存先：E:\script\study-canvas\build\material-conversion-20261012-medical-mapping-holds-next
+今回実採用106ID（完全文字化103・文章と必要画像3）。累計実変更3055、本文3018（全文2898・部分画像120）、公式回答38（本文重複1）。補正4021件、旧3915件先頭保持。
+文字化：E:\script\study-canvas\build\material-transcription\1791823921223
+ローカル配信候補：E:\script\study-canvas\build\private-cloud\1791825081264
+視能2020AM29/51、視能2018AM16/PM19、視能2017AM16/PM14、臨床2018AM25/PM14を採用・検証。確定稿selected-draft/new-corrections。視能2018AM67・2017PM23・臨床2018PM98の必要図3切り抜き保持。全198268問差分・原本境界・実バンドル画像・実行時、両アプリ各118ケース320/390/1100px正常終了0。手動画面範囲はapp-visual-review.json、独立校正者なし。製品コード/API/正答・旧保存互換性・原本2453PDF・旧ビルド保持。
+summary/history/report/resume/after-state-hashesを読み、recheck-final.pyの終了0で保存確認。開始時2453PDF・48949画像ハッシュの元セッション終了0を観測。全文検査ログは観測済み最終出力抜粋、完全出力はツール履歴。ログ未保存によるコード保持チェック初回失敗は保存後の再検証で終了0。process-exits.json参照。
+次：build/material-conversion-20261012-medical-2018-2019-radio-next: own2018/2019 AM/PM129 full manual drafts with1 exactcrop, adopted0. Fresh E sealed baseline/hash/core/binding checks before adoption. Then H149 own nurse/midwife fullmanual drafts, adopted0; EPA140 maintext/ruby still pending.
+視能2020AM29/51と2017AM29は各自身の原本に再結合して今回採用。過去誤対応記録を保持。後続放射線129問、看護助産149問は全文照合稿保存済み未採用。EPA従来9問保留を維持し140問群は所属準備のみ、本文とルビ未確認。05bはEPA午前。過去226対応保留記録・指定看護師採点保留保持。
+全体未完了。ユーザー停止指示まで継続。commit/push/本番配信なし。
+
+
+【最新チェックポイント：2026-10-13 放射線2018・2019年4原本129問、過去再開位置より優先】
+保存先：E:\script\study-canvas\build\material-conversion-20261012-medical-2018-2019-radio-next
+今回129ID、全文128・必要画像1。補正4021→4150。累計実変更3184、本文3147、全文3026・画像併用121、公式回答38、重複1。
+SOURCE:E:\script\study-canvas\build\material-transcription\1791828687030
+CLOUD:E:\script\study-canvas\build\private-cloud\1791829511020
+全198268問差分、原本所属4表紙/129全文・境界・1図、両ブラウザー141ケース320/390/1100px、手動8画面ずつ、worker/runtime/all delivery hashes/pixels/membership/pack保持、実終了0。開始2453PDF/48774画像ハッシュ実0。失敗と解消はprocess-exits.json。本文検査完全ログ保存。
+配信容量3183974272→3183340275bytes。圧縮効果61177643bytesは別集計。OCR待ち15584。
+summary/history/report/resume/after-state-hashesを読み、recheck-final.py実終了0で保存確認する。旧A～E保存物・全原本・補正先頭・既存回答・製品コード/APIを保持。
+次：H149 own nurse/midwife full manual prepared drafts: fresh F sealed baseline before adoption; then I1298books full manual/21 crops prepared membership actual0, extra common-page evidence requires adoption handling; EPA140 ruby/body pending.
+H149全文・表紙・membership保存済み未採用。I129全文・8表紙・21必要図を目視/切り抜き境界確認済み、prepared membership session28582実0、未採用。IのPT2019AM4は共通p10をadditionalReviewedSourceRegionsに保存しoriginalRegions不変、採用時に追加証拠/図参照を検証する。PT2019PM10のp16は隣のq11/12なので出力図には含めない。EPA140は本文/ルビ未確認、05bは午前。
+過去226対応保留記録・EPAルビ9問・指定看護師採点保留維持。全体未完了。ユーザー停止指示まで継続。commit/push/本番配信なし。
+
+
+【最新チェックポイント：2026-10-13 看護・助産2017～2020年7原本149問、過去再開位置より優先】
+保存先：E:\script\study-canvas\build\material-conversion-20261012-medical-nurse-midwife-2017-2020-next
+今回149ID、全文149・必要画像0。補正4150→4299。累計実変更3333、本文3296、全文3175・画像併用121、公式回答38、重複1。
+SOURCE:E:\script\study-canvas\build\material-transcription\1791833311617
+CLOUD:E:\script\study-canvas\build\private-cloud\1791834504323
+全198268問差分、原本所属7表紙/149全文・条件・症例・注記・継続・隣接境界、source/cloud各161ケース320/390/1100px、手動8画面ずつ、worker/runtime/all delivery hashes/pixels/membership/pack保持を検証。実終了はprocess-exits.json。開始2453PDF/48555画像ハッシュ実0。本文検査完全ログ保存。
+配信容量3183340275→3181818575bytes。圧縮効果59057389bytesは別集計。OCR待ち15435。
+summary/history/report/resume/after-state-hashesを読み、recheck-final.py実終了0で保存確認する。旧A～F保存物・全原本・補正先頭・既存回答・製品コード/APIを保持。
+次：I129 eight own therapy/clinical books: full manual/21 exact crops saved; fresh sealed H baseline required; additional common-page evidence handling pending. EPA140 full manual/ruby saved,3 exact figures reviewed, ruby delivery representation pending; adopted0.
+I129全文・8表紙・21必要図を目視/切り抜き境界確認済み、未採用。PT2019AM4は共通p10をadditionalReviewedSourceRegionsに保存しoriginalRegions不変。追加証拠と図参照の採用用検証処理を準備、まだ採用実行なし。PT2019PM10のp16は隣のq11/12なので出力図には含めない。
+EPA140は全文・全選択肢・共通症例・ルビの目視記録と3必要図の切り抜き境界確認を保存、ルビ配信表現は未確定、採用0。05bはEPA午前。過去226対応保留記録・EPA従来9問保留・指定看護師採点保留維持。
+全体未完了。ユーザー停止指示まで継続。commit/push/本番配信なし。
+
+
+【最新チェックポイント：2026-10-13 臨床・理学療法・作業療法8原本129問、過去再開位置より優先】
+保存先：E:\script\study-canvas\build\material-conversion-20261012-medical-2017-2021-therapy-clinical-next
+今回129ID、必要図21問・全文108問。補正4299→4428。累計実変更3462、本文3425、全文3283・画像併用142、公式回答38、重複1。
+SOURCE:E:\script\study-canvas\build\material-transcription\1791837866285
+CLOUD:E:\script\study-canvas\build\private-cloud\1791838706948
+全198268問差分、8原本所属・129全文・症例・条件・注記・継続・隣接境界、21必要図の原本切り抜き、両アプリ各141ケース320/390/1100px、手動8画面ずつ、実バンドル画像・実行時・pack保持を検証。実終了はprocess-exits.json。開始2453PDF/48247画像ハッシュ実0。本文検査完全ログ保存。
+PT2019AM4の共通p10は独立原本照合済みの追加証拠として結合し、originalRegionsを保持。既存補正形式のpassage証拠・図参照元許可リストへ適合。PT2019PM10のp16隣接q11/12は出力図に含めない。失敗と修正はadoption-evidence-schema-refinement.json。
+配信容量3181818575→3180791334bytes。圧縮効果59473480bytesは別集計。OCR待ち15306。
+summary/history/report/resume/after-state-hashesを読み、recheck-final.py実終了0で保存確認する。旧A～H保存物・全原本・補正先頭・既存回答・製品コード/API保持。
+次：EPA140 own 2021～2024午前4原本。全本文・選択肢・共通症例・ルビ表現140問と3必要図の目視稿を保存。selected-draftとruby-representation-reviewedが確定稿、未採用。新しいI保存基準・原本ハッシュ・所属・互換性・アプリ表示検証が必要。
+EPA2023問97太い文字、問100座位時ざいじ、問118英語ruptured esophageal varices、2024問97のか月げつ・問113通所つうしょなどの原本修正を保存。未照合初稿は再採用しない。05bは午前。過去226対応保留記録・EPA従来9問保留・指定看護師採点保留保持。
+全体未完了。ユーザー停止指示まで継続。commit/push/本番配信なし。
+
+
+【最新チェックポイント：2026-10-13 EPA看護2021～2024年午前4原本140問、過去再開位置より優先】
+保存先：E:\script\study-canvas\build\material-conversion-20261012-medical-nurse-pm-2021-2024-next
+今回140ID、ルビ付き全文137問・必要図3問。補正4428→4568。累計実変更3602、本文3565、全文3420・画像併用145、公式回答38、重複1。
+SOURCE:E:\script\study-canvas\build\material-transcription\1791841480219
+CLOUD:E:\script\study-canvas\build\private-cloud\1791842664269
+全198268問差分、原本所属・4表紙・140全文/全選択肢/共通症例/条件/注記/継続/隣接境界/ルビ関連付け・英語配置を確認。3必要図原本切り抜き画素一致、両アプリ各152ケース320/390/1100px、手動8画面ずつ、実画像・実行環境・pack保持を検証。実終了はprocess-exits.json。開始2453PDF/48085画像ハッシュ実0。全文検査完全ログ保存。
+ruby-representation-reviewed.jsonとselected-draft.jsonは140問の原本比較確定稿。未照合初稿は採用しない。2023問97太い文字・問100座位時ざいじ・問118ruptured esophageal varices、2024問97か月げつ・問113通所つうしょを保持。05bは午前。既存正答authorityによる112問のraw/current差はexisting-authority-proof.jsonで照合し、正答を変更しない。
+配信容量3180791334→3178736391bytes。可逆圧縮効果56500908bytesは別集計。OCR待ち15166。
+summary/history/report/resume/after-state-hashesを読み、recheck-final.py実終了0で保存確認する。旧A～I保存物・全原本・補正先頭・既存回答・製品コード/API保持。
+次：build/material-conversion-20261013-medical-2016-therapy-radio-next のJ131。実原本は2016保健師/助産師/看護師6冊（ディレクトリ名は歴史名）。131全文・全選択肢・症例・条件・注記・境界を手動照合済み、1必要姿勢図の切り出し目視済み、selected-draft準備、採用0。最新G保存基準・全原本ハッシュ・所属・互換性・採用・配信検証を実施する。
+続いて build/material-conversion-20261013-medical-2016-2017-therapy-nurse-next のK121。実原本は放射線技師2017/理学療法2017/臨床検査2016の6冊。全121本文/全選択肢と6必要図の切り出しを手動照合済み、selected-draft準備、採用0。PT2017PM17共通症例p20は追加原本証拠が必要。prepared originalRegionsは保持する。全原本・製品画面検証・最新保存基準への照合は残る。
+過去226対応保留・従来EPA9問保留・指定看護師採点保留を維持。全体未完了。ユーザー停止指示まで継続。commit/push/本番配信なし。
+
+
+【最新チェックポイント：2026-10-13 保健師・助産師・看護師2016年6原本131問、過去再開位置より優先】
+保存先：E:\script\study-canvas\build\material-conversion-20261013-medical-2016-therapy-radio-next
+今回131ID、全文130問・必要図1問。補正4568→4699。累計実変更3733、本文3696、全文3550・画像併用146、公式回答38、重複1。
+SOURCE:E:\script\study-canvas\build\material-transcription\1791847369702
+CLOUD:E:\script\study-canvas\build\private-cloud\1791848107680
+全198268問差分、原本所属・6表紙・131全文/全選択肢/共通症例/条件/注記/継続/隣接境界を確認。必要姿勢図1問の原本切り抜き画素一致、両アプリ各143ケース320/390/1100px、手動8画面ずつ、実画像・実行環境・pack保持を検証。実終了はprocess-exits.json。開始2453PDF/47427画像ハッシュ実0。全文検査完全ログ保存。
+手動画面で太字記号の文字表示を発見し、既存の［太字：…］表記へ79項目を修正、製品コードを変えず再ビルド・再検証。修正前原稿・ビルド・試行記録はrepresentation-attempt-1に保存。正答・問題ID・順序・選択肢数・保存回答・補正先頭を維持。
+配信容量3178736391→3177579357bytes。可逆圧縮効果54934728bytesは別集計。OCR待ち15035。
+summary/history/report/resume/after-state-hashesを読み、recheck-final.py実終了0で保存確認する。旧A～I/G保存物・全原本・製品コード/API保持。
+次：build/material-conversion-20261013-medical-2016-2017-therapy-nurse-next のK121。実原本は放射線技師2017/理学療法2017/臨床検査2016の6冊。全121本文/全選択肢と6必要図を手動照合、原本所属/6表紙/確認ページ実検証0、採用0。PT2017PM17共通症例p20は独立した追加原本証拠として結び付け済み。originalRegionsを保持。最新J保存基準・全原本ハッシュ・互換性・採用・配信検証を実施する。
+続いて build/material-conversion-20261013-medical-therapy-2017-2022-clinical-2025-next のL106。作業療法2017/理学療法2020・2022/作業療法2022/臨床検査2025の10冊。全106本文/全選択肢/条件/隣接/継続/最終空白ページ・10表紙を手動照合、必要20図の境界目視、所属/表紙/ページ実検証0、採用0。最新K保存基準へ照合する。K/Lとも太字を既存表示表記へ整え、本文原本証拠を再結合済み。製品での表示確認は残る。
+K121 radio2017/PT2017/clinical2016 six originals: all121 manual bodies/options and6 necessary crops reviewed, extra PT2017PM17 common case p20 bound independently; adoption0, fresh J sealed baseline/core/delivery checks next. L106 OT2017/PT2020/PT2022/OT2022/clinical2025 ten originals: all106 manual bodies/options,10 covers,20 necessary crops reviewed and prepared membership verified; adoption0, fresh K sealed baseline pending.
+過去226対応保留・従来EPA9問保留・指定看護師採点保留を維持。全体未完了。ユーザー停止指示まで継続。commit/push/本番配信なし。
+
+
+【最新チェックポイント：2026-10-13 放射線技師2017・理学療法2017・臨床検査2016年6原本121問、過去再開位置より優先】
+保存先：E:\script\study-canvas\build\material-conversion-20261013-medical-2016-2017-therapy-nurse-next
+今回121ID、全文115問・必要図6問。補正4699→4820。累計実変更3854、本文3817、全文3665・画像併用152、公式回答38、重複1。
+SOURCE:E:\script\study-canvas\build\material-transcription\1791850932428
+CLOUD:E:\script\study-canvas\build\private-cloud\1791852200251
+全198268問差分、原本所属・6表紙・121全文/全選択肢/共通症例/条件/注記/継続/隣接境界を確認。必要図6問の原本切り抜き画素一致、両アプリ各133ケース320/390/1100px、手動10画面ずつ、実画像・実行環境・pack保持を検証。実終了はprocess-exits.json。開始2453PDF/47189画像ハッシュ実0。全文検査完全ログ保存。
+PT2017PM17共通症例p20は独立した追加原本証拠として結び付け、originalRegionsを保持。太字102項目を既存表示表記へ整え、元原稿をrepresentation-attempt-1に保存。正答・問題ID・順序・選択肢数・保存回答・補正先頭を保持。
+配信容量3177579357→3176947533bytes。可逆圧縮効果54583016bytesは別集計。OCR待ち14914。
+summary/history/report/resume/after-state-hashesを読み、recheck-final.py実終了0で保存確認する。旧A～I/G/J保存物・全原本・製品コード/API保持。
+次：build/material-conversion-20261013-medical-therapy-2017-2022-clinical-2025-next のL106。作業療法2017/理学療法2020・2022/作業療法2022/臨床検査2025の10冊。全106本文/全選択肢/共通症例/条件/隣接/継続・10表紙を手動照合、必要20図の境界目視、所属/表紙/ページ実検証0、採用0。最新K保存基準へ照合して採用・配信検証する。
+続いて build/material-conversion-20261013-medical-2017-2022-own-next のM263。保健師2017～2022/助産師2018、14原本の表紙確認済み。153本文/全選択肢/症例を手動照合して保存、残り110、採用0。保健師2019AM20/PM29まで終了し、次は保健師2020AM15。native抽出は未確認原稿のまま保持、目視済みだけ採用する。
+L106 OT2017/PT2020/PT2022/OT2022/clinical2025 ten originals: all106 manual bodies/options,10 covers,20 necessary crops reviewed and prepared membership verified; adoption0, fresh K sealed baseline pending. M263 PHN2017-2022/MID2018 fourteen originals: actual14 covers,153 whole bodies manually reviewed, remaining110, adoption0; continue manual review while L validation runs.
+過去226対応保留・従来EPA9問保留・指定看護師採点保留を維持。独立校正・実機・本番確認なし。全体未完了。ユーザー停止指示まで継続。commit/push/本番配信なし。
+
+
+【最新チェックポイント：2026-10-13 L106 作業療法2017/2022・理学療法2020/2022・臨床検査2025の10原本。過去再開位置より優先】
+保存先：E:\script\study-canvas\build\material-conversion-20261013-medical-therapy-2017-2022-clinical-2025-next
+今回106ID、全文86・必要図20。補正4820→4926。累計{'adopted': 3960, 'questionText': 3923, 'fullyText': 3751, 'partialText': 172, 'solutionImageTranscribed': 38, 'questionSolutionOverlap': 1}。
+SOURCE:E:\script\study-canvas\build\material-transcription\1791854992029
+CLOUD:E:\script\study-canvas\build\private-cloud\1791856085788
+全198268問差分、10表紙、106本文/全選択肢/症例/条件/注記/継続/隣接境界を原本照合。20必要図は原本画素と照合。両アプリ各118ケース320/390/1100px、手動22画面ずつ、実画像・実行環境・全pack保持を検証。実終了はprocess-exits.json。開始2453PDF/46999画像ハッシュ実0。全文検査完全ログ保存。
+preflight終了結果を観測する前にsource-buildを開始した順序の観測記録をprocess-order-observation.jsonに保存。preflightとsource-buildはいずれも後に実終了0を観測。採用入力の途中変更なし。
+配信容量3176947533→3176042775bytes、可逆圧縮効果55049720bytesは別集計。OCR待ち14808。
+summary/history/report/resume/after-state-hashesを読み、recheck-final.py実終了0で保存確認。旧A～K全保存物・原本・解答・ID・順序・保存回答・製品コード/API保持。
+次：build/material-conversion-20261013-medical-2017-2022-own-next のM263。保健師2017～2022/助産師2018の14原本。全263本文/全選択肢/共通症例/条件/隣接/継続・14表紙を手動照合して記録。必要グラフ3参照は保存切り抜きを実際に表示確認、共有図は同一内容ハッシュ。所属/表紙/ページ画像再現/切り抜き画素検査も実終了0。採用0。最新L保存基準へ再照合して採用・全文・全問差分・両アプリ・配信検証を実施する。
+M263 PHN2017-2022/MID2018 fourteen originals: actual14 covers and all263 full bodies/options/common cases/conditions manually reviewed, three necessary exact figure references actually viewed, prepared membership/crop checks. Adoption0; rebase to sealed L baseline, check core and adopt, then full source/delivery validation. Continue until explicit user stop.
+過去226対応保留・従来EPA9問保留・指定看護師採点保留維持。独立校正・実機・本番確認なし。全体未完了。ユーザー停止指示まで継続。commit/push/本番配信なし。
+
+
+【最新チェックポイント：2026-10-13 M263 保健師2017～2022・助産師2018の14原本。過去再開位置より優先】
+保存先：E:\script\study-canvas\build\material-conversion-20261013-medical-2017-2022-own-next
+今回263ID、全文260・必要図3。補正4926→5189。累計{'adopted': 4223, 'questionText': 4186, 'fullyText': 4011, 'partialText': 175, 'solutionImageTranscribed': 38, 'questionSolutionOverlap': 1}。
+SOURCE:E:\script\study-canvas\build\material-transcription\1791859293310
+CLOUD:E:\script\study-canvas\build\private-cloud\1791861465595
+全198268問差分、14表紙、263本文/全選択肢/共通症例/条件/注記/継続/隣接境界を原本照合。必要グラフ3参照は原本画素と照合。両アプリ各275ケース320/390/1100px、手動7画面ずつ、実画像・実行環境・全pack保持を検証。実終了はprocess-exits.json。開始2453PDF/46873画像ハッシュ実0。全文検査完全ログ保存。
+コード保持検査初回は本文検査完了前に実行し1、終了0観測後再実行0。画面検査初回は表Markdownを表示本文と比較する検査側不具合で1、既存表示照合処理へ修正して全ケース再実行0。最終集計初回は現在ビルドOCR待ち一覧未保存で1、全残存参照から既存集計で生成後0。初回失敗・修正記録を保持。製品コード/問題データは検査修正で変更なし。
+配信容量3176042775→3173387693bytes、可逆圧縮効果51524443bytesは別集計。OCR待ち14545。
+summary/history/report/resume/after-state-hashesを読み、recheck-final.py実終了0で保存確認。旧A～L全保存物・原本・解答・ID・順序・保存回答・製品コード/API保持。
+次：build/material-conversion-20261013-medical-2017-2025-nurse-midwife-next のN210。EPA看護2017/2018/2019/2025午前・通常看護2025午前・助産2017午前午後の7原本。全210本文/全選択肢/共通症例/ルビと7表紙を手動照合、必要5図を切り抜き実表示確認。所属/表紙/全確認ページの再描画検査78764実0。看護2019問101共通p42/問119共通p54を独立追加原本証拠に結合しoriginalRegions保持。採用0。最新M保存基準・全原本ハッシュ・既存正答authority123件・採点保留2問保持・互換性・採用・配信検証へ進む。
+N210 nurse2017/2018/2019/2025 EPA AM, ordinary nurse2025 AM, midwife2017 AM/PM seven originals: all210 whole bodies/options/cases/ruby and7 covers manually reviewed,5 needed exact figures actually viewed; q101/q119 nurse2019 common pages independently bound. Adoption0; fresh sealed M baseline/core/authority/protected holds and source/delivery checks next. Continue until explicit user stop.
+過去226対応保留・従来EPA9問保留・指定看護師採点保留維持。独立校正・実機・本番確認なし。全体未完了。ユーザー停止指示まで継続。commit/push/本番配信なし。
+
+
+【最新チェックポイント：2026-10-13 N210 EPA看護2017/2018/2019/2025・通常看護2025・助産2017の7原本。過去再開位置より優先】
+保存先：E:\script\study-canvas\build\material-conversion-20261013-medical-2017-2025-nurse-midwife-next
+今回210ID、全文205・必要図5。補正5189→5399。累計{'adopted': 4433, 'questionText': 4396, 'fullyText': 4216, 'partialText': 180, 'solutionImageTranscribed': 38, 'questionSolutionOverlap': 1}。
+SOURCE:E:\script\study-canvas\build\material-transcription\1791865341494
+CLOUD:E:\script\study-canvas\build\private-cloud\1791866849619
+全198268問差分、7表紙、210本文/全選択肢/共通症例/条件/注記/継続/隣接境界/ルビを原本照合。必要図5参照4固有画像は実バンドル画素一致。両アプリ各222ケース320/390/1100px、手動12画面ずつ、実画像・実行環境・全pack保持を検証。実終了はprocess-exits.json。開始2453PDF/46377画像ハッシュ実0。全文検査完全ログ保存。
+2019看護問101共通p42/問119共通p54を独立追加原本証拠として結合、originalRegions保持。既存authority123件は解答を変更せず保持。準備ヘルパー初回は参照名誤りで1、既存名確認後再実行0。本文検査の実終了0観測後、コード保持検査0。製品コード/API/解答を維持。
+配信容量3173387693→3169991235bytes、可逆圧縮効果46926237bytesは別集計。OCR待ち14335。
+summary/history/report/resume/after-state-hashesを読み、recheck-final.py実終了0で保存確認。旧A～M全保存物・全原本・補正先頭・保存回答保持。
+次：build/material-conversion-20261013-business-sme-2026-next のO123。診断士2026年G34/D41/F25/E23、4原本の表紙と全123本文/全選択肢/条件/注記/継続/子設問境界を手動照合保存。必要図5参照4固有切り抜きを実表示確認、採用0。最新N保存基準と全原本ハッシュ・所属・互換性・採用・両アプリ/配信検証へ進む。
+Oのグローバル候補207件は歯科等の別原本への誤対応として保留。自分のprepared/raw/sourceURLで確定した123件だけ候補へ結合。D15作業図の右端3分は切り抜き初稿から拡張し再目視、初稿をcrop-attempt-1に保存。native抽出は未確認の文字化け稿であり再採用しない。
+過去226対応保留・従来EPA9問保留・指定看護師採点保留維持。独立校正・実機・本番確認なし。全体未完了。ユーザー停止指示まで継続。commit/push/本番配信なし。
+
+
+【最新チェックポイント：2026-10-13 O123 診断士2026年G/D/F/E4原本。過去再開位置より優先】
+保存先：E:\script\study-canvas\build\material-conversion-20261013-business-sme-2026-next
+今回123ID、全文118・必要図5。補正5399→5522。累計{'adopted': 4556, 'questionText': 4519, 'fullyText': 4334, 'partialText': 185, 'solutionImageTranscribed': 38, 'questionSolutionOverlap': 1}。
+SOURCE:E:\script\study-canvas\build\material-transcription\1791870820503
+CLOUD:E:\script\study-canvas\build\private-cloud\1791872896808
+全198268問差分、4表紙、123本文/全選択肢/条件/注記/共通文/継続/子設問/隣接境界を原本照合。必要図5参照5固有画像は実バンドル画素一致。両アプリ各135ケース320/390/1100px、手動12画面ずつ、実画像・実行環境・全pack保持を検証。実終了はprocess-exits.json。開始2453PDF/45449画像ハッシュ実0。全文検査完全ログ保存。
+207件の別原本グローバル候補は対応保留のまま、自分のprepared/raw/sourceURL確定123件のみ採用。D15右端3分まで切り抜き修正し初稿保持。初回準備検査optionCount参照不足/採用前core証拠不足/候補集計引数不足を解決して再実行0。preflight終了0観測前のsource起動はprocess-order-observation.jsonで開示し、両工程の実終了0を確認。製品コード/API/解答を維持。
+配信容量3169991235→3167768416bytes、可逆圧縮効果46762817bytesは別集計。現在OCR待ち14275。
+summary/history/report/resume/after-state-hashesを読み、recheck-final.py実終了0で保存確認。旧A～N全保存物・全原本・補正先頭・保存回答保持。
+次：build/material-conversion-20261013-business-sme-2025-next P126、D38/E23/F23/G42。4表紙・全126本文/全選択肢/共通文/条件/注記/継続/隣接/最終ページを目視して保存、必要図5ID6切り抜き実表示確認。採用0。最新O保存基準への再照合・所属・採用・全文・全件差分・両アプリ・実バンドル検証が残る。D36前後2図を保持。G第30問はPDF最終39/40に続き、41ページ目の範囲外試行はboundary-observation.jsonに記録。
+過去226対応保留・従来EPA9問保留・指定看護師採点保留維持。独立校正・実機・本番確認なし。全体未完了。ユーザー停止指示まで継続。commit/push/本番配信なし。
+
+
+【最新チェックポイント：2026-10-13 P126 診断士2025年G/D/F/E4原本。過去再開位置より優先】
+保存先：E:\script\study-canvas\build\material-conversion-20261013-business-sme-2025-next
+# 診断士2025年4原本126問の文字化継続
+今回実採用126ID、全文121、必要画像付き5。補正5522→5648。正答・ID・順序・製品コード/API保持。
+累計{'adopted': 4682, 'questionText': 4645, 'fullyText': 4455, 'partialText': 190, 'solutionImageTranscribed': 38, 'questionSolutionOverlap': 1}。
+全198268問差分、4表紙・全126本文/全選択肢/共通文/条件/注記/継続/隣接/最終ページを原本照合。必要図5ID6固有切り抜き、D36の前後2図を保持。source/cloud各138ケース320/390/1100px、手動12画面ずつ、実行環境と実バンドル画像/全packを検証。独立校正なし。
+配信容量3167768416→3165620377bytes、削減2148039。可逆画像圧縮効果46594327bytesは別集計。
+初回sourceは共通文4項目の末尾空行と表示正規化の差で終了1。末尾空白だけ整え、先頭5522補正・原本本文・製品コードを保持し再検証0。初稿/失敗ログはrepresentation-attempt-1、修正根拠はtrailing-whitespace-refinement.json。本文検査の実終了0後にコード保持検査0。開始全2453PDFと全画像ハッシュは read-only再検証5722の実終了0を確認。過去成功記録保持。
+SOURCE:E:\script\study-canvas\build\material-transcription\1791878212336
+CLOUD:E:\script\study-canvas\build\private-cloud\1791891343208
+OCR待ち14220。残存{'source': 'E:\\script\\study-canvas\\build\\material-transcription\\1791878212336', 'questions': 198268, 'questionsWithImages': 72346, 'uniqueImages': 45303, 'imageReferences': 209131, 'uniquePDFs': 2377, 'categories': {'OCR・原本照合待ち': 22413, '文字抽出の不具合': 7904, '図として必要': 893, '問題範囲・共通症例の対応未解決': 177921}, 'complete': False, 'limitations': ['Categories are processing queues, not proof that OCR is correct or a figure is necessary.', 'Exact crops may include unreadable text; consult each source and reason before removing them.'], 'breakdown': {'kinds': {'original': {'images': 43563, 'references': 205822, 'bytes': 2467505449}, 'figureCandidate': {'images': 591, 'references': 604, 'bytes': 12261133}, 'unreadableText': {'images': 40, 'references': 40, 'bytes': 197549}, 'unknownCrop': {'images': 1109, 'references': 2665, 'bytes': 56445765}}, 'unresolved': {'文字コード・組版': {'questions': 26734, 'images': 12491, 'references': 43286}, 'OCR・原本照合待ち': {'questions': 39819, 'images': 29778, 'references': 145399}, '問題範囲未確定': {'questions': 56849, 'images': 22018, 'references': 180948}, '原本対応なし': {'questions': 2818, 'images': 3059, 'references': 3771}}, 'generatedCrops': 9783, 'referencedGeneratedCrops': 1740, 'unusedGeneratedCrops': 8043, 'coexistingParentImages': 544, 'storage': {'scope': '原本保管領域全体・過去ビルドは未集計。以下は現在の問題が参照する画像と、このビルドの生成候補のみ。', 'archivePDFs': None, 'archiveImages': None}}}。
+次:Q130 SME2024 D41/E24/F23/G42 four originals: all130 whole bodies/options/cases/conditions and four covers/final pages manually reviewed;6 exact necessary figures reviewed and prepared verified. Adoption0; rebase to sealed P baseline then source/delivery validation. R65 SME2023 E25/G40 whole own bodies reviewed, adoption0; combine further own sources before heavy delivery. Continue until explicit user stop.
+過去対応保留・従来EPA9問保留・指定看護師採点保留維持。原本・旧ビルド・保存回答保持。commit/push/本番配信なし。実機・本番・独立校正は未検証。ユーザー停止指示まで継続。
+
+summary/history/report/resume/after-state-hashesを読み、recheck-final.py実終了0で保存確認。旧A～O全保存物・原本・補正先頭・保存回答保持。
+
+
+【最新チェックポイント：2026-10-13 Q130 診断士2024年G/D/F/E4原本。過去再開位置より優先】
+保存先：E:\script\study-canvas\build\material-conversion-20261013-business-sme-2024-next
+# 診断士2024年4原本130問の文字化継続
+今回実採用130ID、全文124、必要画像付き6。補正5648→5778。正答・ID・順序・選択肢数・保存回答・製品コード/API保持。
+累計{'adopted': 4812, 'questionText': 4775, 'fullyText': 4579, 'partialText': 196, 'solutionImageTranscribed': 38, 'questionSolutionOverlap': 1}。
+全198268問差分、4表紙・全130本文/全選択肢/共通文/条件/注記/継続/子設問/隣接/最終ページを原本照合。必要図6ID6固有切り抜きは実配布バンドルから復元し原本画素一致。source/cloud各142ケース320/390/1100px、手動12画面ずつ、実行環境と全pack保持を検証。独立校正なし。
+配信容量3165620377→3163457123bytes、削減2163254。可逆画像圧縮効果46328790bytesは別集計。
+初回authorityはパス区切り比較、初回coreはauthority証拠への依存順序で終了1。対象ローカル検査のパス比較を解決後、authority→coreを順に再実行0。preflight-order-path-observation.jsonに保存。sourceは1起動1成功、失敗0。採用前検査の実終了0を観測してからsource起動。本文検査の実終了0後にコード保持検査0。開始2453PDF/45303画像ハッシュ検査39260実終了0。
+SOURCE:E:\script\study-canvas\build\material-transcription\1791898662608
+CLOUD:E:\script\study-canvas\build\private-cloud\1791900963098
+OCR待ち14166。残存{'source': 'E:\\script\\study-canvas\\build\\material-transcription\\1791898662608', 'questions': 198268, 'questionsWithImages': 72222, 'uniqueImages': 45222, 'imageReferences': 208919, 'uniquePDFs': 2375, 'categories': {'OCR・原本照合待ち': 22311, '文字抽出の不具合': 7892, '図として必要': 899, '問題範囲・共通症例の対応未解決': 177817}, 'complete': False, 'limitations': ['Categories are processing queues, not proof that OCR is correct or a figure is necessary.', 'Exact crops may include unreadable text; consult each source and reason before removing them.'], 'breakdown': {'kinds': {'original': {'images': 43503, 'references': 205706, 'bytes': 2465497483}, 'figureCandidate': {'images': 591, 'references': 604, 'bytes': 12261133}, 'unreadableText': {'images': 40, 'references': 40, 'bytes': 197549}, 'unknownCrop': {'images': 1088, 'references': 2569, 'bytes': 56061302}}, 'unresolved': {'文字コード・組版': {'questions': 26691, 'images': 12464, 'references': 43240}, 'OCR・原本照合待ち': {'questions': 39765, 'images': 29751, 'references': 145297}, '問題範囲未確定': {'questions': 56783, 'images': 21970, 'references': 180844}, '原本対応なし': {'questions': 2818, 'images': 3059, 'references': 3771}}, 'generatedCrops': 9789, 'referencedGeneratedCrops': 1719, 'unusedGeneratedCrops': 8070, 'coexistingParentImages': 511, 'storage': {'scope': '原本保管領域全体・過去ビルドは未集計。以下は現在の問題が参照する画像と、このビルドの生成候補のみ。', 'archivePDFs': None, 'archiveImages': None}}}。
+次:Paused by explicit user instruction. Next R192: SME2023 E25/G40 plus SME2022 D43/E24/F23/G37 six originals, all192 whole bodies reviewed, prepared membership22333 actual exit0,11 figure IDs/14 placements/13 unique crops checked;adoption0, rebase to sealed Q. Then S128 SME2021 D42/E24/F25/G37:54 whole own questions reviewed (F25/E24/D5),74 pending,adoption0;resume D PDF page6/question5 then remaining D/G;D4-1 exact figure crop pending. Current provisional P baseline must be refreshed.
+過去226原本対応保留・従来EPA9問保留・指定看護師採点保留維持。原本・旧ビルド・補正先頭5648件・保存回答保持。commit/push/本番配信なし。実機・本番・独立校正は未検証。ユーザー停止指示によりこのチェックポイントで終了。
+
+summary/history/report/resume/after-state-hashesを読み、recheck-final.py実終了0で保存確認。旧A～P全保存物・原本・補正先頭・保存回答保持。
+
+
+【最新チェックポイント：2026-10-14 R192 診断士2023年・2022年6原本。過去再開位置より優先】
+保存先：E:\script\study-canvas\build\material-conversion-20261013-business-sme-2023-next
+# 診断士2023年・2022年6原本192問の文字化継続
+今回実採用192ID、全文181、必要画像付き11。補正5778→5970。正答・ID・順序・選択肢数・保存回答・製品コード/API保持。
+累計{'adopted': 5004, 'questionText': 4967, 'fullyText': 4760, 'partialText': 207, 'solutionImageTranscribed': 38, 'questionSolutionOverlap': 1}。
+全198268問差分、6表紙と全192問の本文・全選択肢・共通文・条件・注記・継続・隣接・最終ページを原本照合。必要図11ID、14配置、13固有画像の原本画素と実バンドル包含を検証。
+source/cloud各204ケース320/390/1100px、手動12画面ずつ、Worker実行環境と全pack保持を検証。
+初回source画面で2022D第13問の最後の選択肢への図中ラベル混入を発見。原本を再表示し、混入のみ除去。初回画面検査を中止（29196実終了1）、修正版sourceから依存検証を再実行。初回ビルドも保持。
+配信容量3163457123→3159989729bytes、削減3467394。可逆画像圧縮効果46222173bytesは別集計。
+SOURCE:E:\script\study-canvas\build\material-transcription\1791910811281
+CLOUD:E:\script\study-canvas\build\private-cloud\1791912595945
+OCR待ち14092。
+次:S128 SME2021 D42/E24/F25/G37: all128 full own questions manually reviewed and prepared, zero adoption; rebase to sealed R then validate. T130 SME2020 D43/E23/F25/G39: all130 own bodies reviewed and prepared membership validated; six required figures verified; zero adoption, fresh predecessor baseline pending. U131 SME2019 D43/E23/F25/G40: E23 reviewed; other108 pending; zero adoption. Overall work continues until user stop.
+過去226原本対応保留・従来EPA9問保留・指定看護師採点保留維持。原本・旧ビルド・既存補正先頭5778件保持。
+commit/push/本番配信なし。実機・本番・独立校正は未検証。全作業は未完了、継続中。
+
+summary/history/report/resume/after-state-hashesを読み、recheck-final.py実終了0で保存確認。旧A～Q全保存物・原本・補正先頭・保存回答保持。
+
+
+【最新チェックポイント：2026-10-14 S128 診断士2021年4原本。過去再開位置より優先】
+保存先：E:\script\study-canvas\build\material-conversion-20261013-business-sme-2021-next
+# 診断士2021年4原本128問の文字化継続
+今回実採用128ID、全文124、必要図付き4。補正5970→6098。正答・ID・順序・選択肢数・保存回答・製品コード/API保持。
+累計{'adopted': 5132, 'questionText': 5095, 'fullyText': 4884, 'partialText': 211, 'solutionImageTranscribed': 38, 'questionSolutionOverlap': 1}。
+全198268問差分、4表紙と全128問の本文・全選択肢・共通文・条件・注記・継続・隣接・最終ページを原本照合。必要図4ID/4配置の原本画素と実配信バンドル包含を検証。
+source/cloud各140ケース320/390/1100px、手動12画面ずつ、Worker実行環境と全pack保持を検証。
+記録確定時に選定ファイルの旧ハッシュを検出。全128問を変更のない目視本文・採用本文・原本ページ証拠へ再照合し、最終証明に現行ハッシュを記録。旧証明と失敗履歴保持。
+配信容量3159989729→3157580899bytes、削減2408830。可逆画像圧縮効果46173380bytesは別集計。
+SOURCE:E:\script\study-canvas\build\material-transcription\1791919032350
+CLOUD:E:\script\study-canvas\build\private-cloud\1791921076650
+OCR待ち14041。
+次:T130 SME2020, U131 SME2019 and V136 SME2018: all own full manual drafts, required crops and membership prepared; zero adoption; latest sealed predecessor rebases pending. W112 SME2017: E21/F25 reviewed, D43/G23 pending; original written self-grade preserved; zero adoption. Overall unfinished and continuing.
+過去226原本対応保留・従来EPA9問保留・指定看護師採点保留維持。原本・旧ビルド・既存補正先頭5970件保持。
+commit/push/本番配信なし。実機・本番・独立校正は未検証。全作業は未完了、継続中。
+
+summary/history/report/resume/process-exits/after-state-hashesを読み、recheck-final.py実終了0を確認。旧Rを含む全保存物・原本・補正先頭・保存回答保持。
+
+
+【最新T130保存記録・旧記録保持】
+/goal E:\script\study-canvas\docs\material-transcription-continuation-prompt.txt を全文読み、最新位置から継続。ユーザーの停止指示まで継続。commit/push/本番配信なし。
+
+最新T130：build/material-conversion-20261013-business-sme-2020-next。summary/history/report/resume/process-exits/after-state-hashesを読む。snapshot-after.py・recheck-final.pyの実終了0とcurrent両ポインタを確認。保存確認未終了なら先に終える。旧S/R基準へ戻さない。
+SOURCE E:\script\study-canvas\build\material-transcription\1791927467514、CLOUD E:\script\study-canvas\build\private-cloud\1791929472224。補正6228件・旧先頭6098件保持。実変更130（全文124・必要図6）、累計5262、本文5225（全文5008・必要図217）、公式回答38・重複1。容量3155380897bytes。OCR待ち13988。
+全198268問差分、全130問の全文・全選択肢・条件・共通文・注記・継続・隣接、4表紙と全冊最終ページ、必要図6ID/6配置を原本照合。source/cloud各142ケース320/390/1100px、各12実画面、Workerと全pack・実バンドル検証済み。原本・旧ビルド・補正順序・ID/選択肢数/正答/採点保留/保存回答・製品コード/API保持。
+
+次U131：build/material-conversion-20261014-business-sme-2019-next。D43/E23/F25/G40全131問の目視本文、4表紙、最終ページ、必要図4IDを準備・原本所属検証済み。D5旧切り抜き保持。採用0、T封印後の最新基準へ再結合。
+V136：build/material-conversion-20261014-business-sme-2018-next。D44/E25/F25/G42全136問目視、4表紙・最終ページ・必要図9ID/10配置、原本所属検証済み。採用0、U封印後の最新基準待ち。
+W112：build/material-conversion-20261014-business-sme-2017-next。D43/E21/F25/G23全112問の目視本文、4表紙・最終ページ・必要図3点、原本所属59706実終了0で検証済み。E4/E6/G19の続きページ証拠は元領域を保持して別追加。採用0、V封印後の最新基準待ち。
+X115：build/material-conversion-20261014-business-sme-2016-next。D43/E18/F25/G29全115問の目視本文、4表紙・最終ページ・必要図4点、原本所属9277実終了0で検証済み。D25/G2/G20/G27の続きページ証拠を元領域と別に追加。採用0、W封印後の最新基準待ち。
+W/Xは全原本written/options0/answer null。PDF選択肢はprompt内に転記し、自己採点・モデル回答を保持。ブラウザー検証のoptions0対応は検証用に調整し、製品コード変更なし。
+Y115：build/material-conversion-20261014-business-sme-2015-next。D43/E19/F25/G28の候補・4表紙準備済み。F1〜15全本文・選択肢を目視保存済み。残りF16〜25とD/E/G未目視。採用0、X封印後の最新基準待ち。進捗は当該visual-content.jsonの最新保存済み記録を確認。
+
+各依存工程の実終了0を観測してから次へ。候補・未採用目視・検証途中は完了数に含めない。画像一致だけで別原本へ展開しない。未判読を推測しない。従来226対応保留・EPA9問保留・指定看護師採点保留維持。独立校正・実機・本番未検証。全作業は未完了、継続。
+
+
+【2026-10-14 ユーザー指示で停止・最新位置】
+最新再開指示は docs/material-transcription-resume-20261014.txt を全文読む。U2019/paused-progress.jsonとpaused-state-hashes.jsonを最初に照合。T2020まで検証完了5262ID。U131採用済み6359補正、build44539ユーザー停止exit1、両currentはT。Uを二重採用しない。V136/W112/X115/Y115全目視準備・未採用。Z2014 F1-19保存、残り95。全体未完了・停止中。
+
+
+【追加指示：品質を維持した高速化・ユーザー承認済み】
+この追記は以前の単年度ごとの封印順・サブエージェント制限より優先する。今は作業停止中。次にユーザーが再開した時に以下を実施し、この追記の保存だけでは文字化作業を再開しない。
+1. 最初に停止状態を検証し、実際の処理時間を計測する。変更のないOCR/抽出結果を毎回全件再生成する処理と、旧成果物の重複ハッシュ走査を調べ、既存の再利用機能を優先する。原本・画像・抽出コード・設定・校正/修正データ・マッピングなど結果に影響する依存関係のハッシュ一致を証明できる範囲だけ再利用し、変更分は再処理する。画像一致だけを原本所属や目視完了の証明にしない。途中で停止した生成物・成功未確認の結果をキャッシュとして採用しない。
+2. 複数冊・複数年度の採用をまとめ、重い全件ビルド/配信バンドル生成/全件回帰検証をまとまった区切りで行う。まずU131の採用済み状態とT成功基準を保持して復旧方法を決め、準備済みV136/W112/X115/Y115の計478問も活用する。各問の採用前原本照合・所属・回答互換性は省略しない。まとめ採用では共通の変更前基準、確定した対象ID集合、補正追加順序、原本ごとの根拠を保存し、全変更IDと旧全問を検証する。旧単年度封印を前提にした補助スクリプトをそのまま流用せず、実際のまとめバッチの依存関係・件数へ最小限調整する。まとめバッチの最終ビルド・検証・保存確認が全て実終了0になるまで配信完了数には含めない。
+3. 原本確認/独立した下書き準備の並列エージェント作業を明示的に許可する。利用可能な同時実行枠内で年度・科目・原本ごとに分担し、担当ごとに専用出力ディレクトリを用意する。既存成果物を共有書込みせず、原本確認範囲/未判読/目視記録を根拠付きで返す。採用、corrections/currentなど共通ファイル更新、重いビルド、統合検証と完了判定は主担当1人に集約する。原本/共有ビルドへの同時書込みは禁止。並列枠を計画し、主担当も有用な独立作業を続ける。定例進捗確認は120秒より頻繁に行わず、完了・質問・エラー通知には直ちに対応する。演出目的で起動しない。
+4. 優先順はハッシュで裏付けた再利用→まとめビルド→原本確認の並列化。必要ならビルド/検証用スクリプトを最小限改善し、変更前を保持して意図した変更パス/理由/検証結果を記録する。製品の問題表示/採点/保存回答/APIの仕様を高速化のために変更しない。既存の差分チェックでは意図したツール変更だけを明示的に扱い、広い例外で保全検証を無効にしない。
+5. 原本全文・全選択肢・条件/共通文/注記・継続/隣接・図/表/数式の確認、ID/選択肢数/正答/採点保留/保存回答の保持、全pack/実バンドル/Worker/表示検証の必須範囲は維持する。未判読を推測で埋めない。再利用可能な証拠は現在の依存関係と照合して再利用し、同じ検証を根拠なく繰り返さない。
+6. 数バッチの実測で原本確認・OCR・ビルド・検証・保存確認の所要時間と処理数を別々に記録し、高速化の前後を比較する。未測定の短縮率を約束せず、実測に基づいて残り時間の見積もりを更新する。commit/push/本番配信は引き続き行わない。
+
+
+【再開後の最新状態 2026-10-14／作業継続中】
+旧本文の単年度再開手順より build/material-speed-resume-20261014/resume-status.json と step-exits.json、実プロセス/currentを優先して照合する。停止指示はまだ受けていない。
+停止時647ファイル照合actual0 863247。T成功抽出証拠・依存・原本/画像47432件照合actual0 session67045 f4fa21、574.197秒。中断text.tmp除外。U131を再採用せず、V/W/X/Y478の原本画素/必要図/所属/実補正適用/回答/保存回答互換性を確認し追加採用actual0 session25610 8c8a00。現在補正6837＝旧6228＋U131＋478。共通T基準・変更609・追加順序/根拠はadoption-combined-proof/new-corrections/selected-draftに保存。配信完了への加算0、完成累計はT5262のまま。
+source-buildはsession41134でnpm run build:material-text -- --reuse-image-extraction --reuse-scoped-extraction --reuse-numeric-extraction実行中、実終了0未観測。old-preservationはsession39043で過去証拠を重複パス統合して247947ファイル照合中。両currentは完了時に更新され得るので、再開時に所有プロセスとstep-exitsを確認し成功未確認を完成扱いしない。ロック解除前に生きた所有者を確認する。
+U D3/V G14-1の末尾組版空白が既存validateQuestionsのtrimと不一致。元採用補正/下書きを保全し、scripts/build-material-transcription.mjsのrows.map結果を既存validateQuestionsへ通す2行のみ修正。変更前コピー/tool-change-proof保存、製品表示/採点/保存/API変更なし。専用check-deltaは既存正規化後の期待値、check-code-deltaはこの正確な1パスの変更前後SHAだけ許可。広い例外禁止。
+次はsource actual0→まとめcheck-delta/check:material-text/crops/code/reuse/全609＋回帰12(621ケース)の320/390/1100px＋実画面→source完了/キュー→cloud compact package/compiled worker/check全pack実バンドル原画素/認証Range/保存再開/編集解除/全621ケース＋実画面→summary/history/report/docs/snapshot/recheck。各依存actual0観測必須。written342をMCに変更しない。失敗・実測・再試行はstep-exits/attempt-logs/retry-observationsに保存。
+Z2014の全114未採用候補はagent-Z-completeに統合済、必要図2ID3配置、継続8問、全冊表紙/最終/原本画素/回答core/目視根拠/実終了証拠あり。共有Z元成果物は上書きなし。U609完全封印後に正式次baselineへ再結合する。SME2013のD/E/F/Gはagent-AA2013-*専用へ並列下書き準備中、共有採用0。commit/push/本番配信なし。
+
+【最新実終了追記／609問のsource検証中】
+source build1791983022679 actual0 2e93ad 2024.906秒、全198268差分actual0 52ed60、本文582/必要図27。check:material-text actual0 d75560 584.233秒、source必要図原画素 actual0 1fffd1、抽出証拠再利用 actual0 f44713、code-delta actual0 2c45bb。承認ツール変更はapproved-tool-changes.jsonの正確な2パス（builder正規化＋regionのPDFページ境界cache）、cache実試験actual0 30b8e7。製品表示/採点/保存/API仕様保持。
+旧成果物保全は旧Tの既存23依存証拠＋T/U snapshotで177514 unique files/177524 references actual0 6d0508（3054.590秒）。以前の拡大走査は実終了15で保全成功に数えない。
+source-browser初回actual1 55d466、511.711秒、2018 D7で検証側がinline表示の選択肢をMarkdown表として正規化した不一致。本文/共通文のrich表示と選択肢inline表示を分けて全選択肢一致を厳密検証、製品は変更なし。再試行session84141、621ケース全件未完。現在のstep-exits/current/実プロセスを確認する。cloudはTのまま、609配信完了0。
+Z2014 114、AA2013 119、BB2012 116は専用agent-*-completeの未採用候補。2011 D/E/F/Gはprepared pending-reviewで既存ID/packなし、対応保留を維持し採用可能0。原本番号の下書きがあっても完成IDへ加算しない。
+配信画像再利用の実ループ試験actual0 e68c3c：同一bytes再利用/新規pixel比較、source/delivered bytes・pixel/dimension metadata・alias改変5件全拒否。実cloud全件検証は未実施。全体未完了、commit/push/本番なし。
+
+【source609完了／配信検証へ継続・2026-10-15】
+source全621ケース320/390/1100px actual0 29e55f、2082.265秒。停止した2018D7とwritten2＋回帰12の先行確認actual0 18f1ecを経て、全件再実行actual0を観測。初回/第2回actual1と根本原因・再試行はattempt-logs/retry-observationsに保持。
+20原本代表29実画像（28全画面＋共通文表示範囲1）を実目視しsource-manual-viewedへその時点のbytes保存、source-app-visual-reviewのSHA一致。source完了証明actual0 c1a5a5、12.733秒。キュー保存actual0 f6c844、5.519秒。OCR・原本照合待ち13698、onlyOCR10983。重複分類を足さない。
+追加609 IDは旧手動補正6228のIDと重複0、旧本文全609 placeholderを既存fieldStatus/codecで確認 actual0 c0b623。必要図付き27/全文582の実差分・全198268回答互換性を維持。
+package-cloud --compact はsession37268で実行中、実終了0未観測。既存PNG圧縮cacheはsource/encoded SHA＋method一致時の再利用機能を使用。root compact-material.py変更なし。compiled worker/check:private-cloud/全pack/実バンドル/原画素/cloud621画面/最終summary/snapshot/recheckは未完。
+共有採用は6837件のまま、sourceのみ新1791983022679、cloudは成功currentを読み確認。配信完了への加算は0、最終封印累計はまだT5262。status/step-exits/current/所有プロセスを優先。
+次431未採用候補はagent-next-combinedで実終了証拠付き統合完了、必要図21ID23配置、旧補正/既存Cq11保持、正式採用baseline再照合はrootが今回封印後に実施。後続A2013/B2017/A2014/B2018等は別専用準備で、431へ未混入。全体未完了、停止指示まで継続、commit/push/本番なし。
+
+
+【まとめ609問の配信検証完了・最終保存確認待ち】
+# 2019〜2015年度・20原本609問のまとめ文字化
+全文582問、必要図付き27問。補正6837件、旧6228件と採用済みU131を保持。
+全198268問の差分と回答互換性、source/cloud各621ケース・320/390/1100px、原本所属・必要図原画素・全pack・実バンドル・compiled Worker・認証/Range/保存再開を検証。
+現在検証済み累計{'adopted': 5870, 'questionText': 5833, 'fullyText': 5589, 'partialText': 244, 'solutionImageTranscribed': 38, 'questionSolutionOverlap': 1}。記録上累計{'adopted': 5871, 'questionText': 5834, 'fullyText': 5590, 'partialText': 244, 'solutionImageTranscribed': 38, 'questionSolutionOverlap': 1}から、既存2025C問11の「化」欠落1問を訂正再検証まで除外。旧記録と補正prefixは保持し、訂正は新規distinctへ加算しない。
+全198268問に対する追加変換実績2.96%、全体完了率は未確定。
+SOURCE E:\script\study-canvas\build\material-transcription\1791983022679
+CLOUD E:\script\study-canvas\build\private-cloud\1791989828866
+容量3139115476bytes、OCR待ち13698問。
+次: Rebase 638 new-ID drafts in agent-next-combined-638 against this sealed batch, independently verify source ownership and canonical figure pixels, and repair existing 2025C q11 missing 化 with preserved correction history; later drafts remain separate and mapping holds remain held。
+高速化ツール変更は正確な2パスのみ。工程別実測と失敗履歴を保持し、未測定の短縮率は示さない。
+対応保留226/EPA9/看護師採点保留を維持。commit/push/本番配信なし。独立校正・実機・本番未検証。全体未完了。
+
+summary/history/step-exits/after-state-hashesを確認。snapshot-after/recheck-finalのactual0までは最終封印へ加算しない。ユーザーの停止指示まで継続。
+
+
+【609封印完了・次638＋既存1字訂正の基準保存／2026-10-15】
+build/material-speed-resume-20261014 は source/cloud 各621ケース3幅＋29実画像を確認し、最終snapshot actual0 490df5（22039新規ファイル、207.307秒）とfinal-recheck actual0 bac44c（18.318秒）を観測。旧177514ファイル保全成功証拠、旧補正6228＋追加609＝6837、旧文書bytesを保全。609は配信検証済みへ加算済み、記録上累計5871／既存2025C問11「化」欠落1を除いた現在検証済み5870。全体未完了、OCR待ち13698、全体完了率不明。
+次の正式作業ディレクトリはbuild/material-conversion-20261015-business-sme-combined-638-next。609成功基準baseline actual0 f1044f、旧6837beforeは上書き禁止。次の採用/処理実行/停止位置はこのディレクトリのresume-status.json・step-exits.json・current・実所有プロセスを優先。準備638新規＋既存2025C問11の1字訂正は新規distinct0、変更予定639。候補生成/既存訂正/補正適用の実終了を確認し採用前を完成扱いしない。
+履歴を上書きしない訂正のためscripts/material-transcription.mjsの1か所にsupersedesSha256による旧record厳密SHA・元before・対象field集合・画像置換の保持を追加。元source/evidence/校正/回答禁止validatorは維持。beforeコードと正確な変更前後SHAを新ディレクトリapproved-tool-changesに保存。候補10拒否実試験actual0 3691d6、実ツール10拒否actual0 ba6e35、全旧6837のsource/画像SHAと実効record同一 actual0 037d31（71.559秒）。新基準に対する許可変更はloader1パス、前609のbuilder正規化/regioncache2パスは成功基準に含む。製品表示/採点/保存/API変更なし。
+638は23原本、written508/single130、必要図81ID87配置。独立prepared番号/ID/URL/原本SHA・568原領域の実画素 actual0 4a46ee、全図原本canonical1.5画素actual0 6e0766。native1.8の7配置は実再描画＋全7目視済み。継続領域16は既存内13/真の追加3、元領域と別に保持。候補パス表記は物理原本/SHA一致を確認して揃え、現行自動抽出画像は元原画像の補正とは別証拠化、画像一致でownerを推定しない。
+後続のC2023q27は原文4択/既存3択で全旧saved ordersがvalidation拒否、A2020原文4-2とB2025原文20-2はprepared/current未対応。通常候補から除外して専用pending、ID/回答推定なし、609/638へ混入0。A2021公式訂正は原文誤植/web根拠と、訂正PDFのSHA/実目視未確認を分けて記録。これらを成功/互換性確認済みと数えない。元の対応保留226/EPA9/看護師採点保留は維持。
+ユーザーの停止指示まで継続。commit/push/本番配信なし。
+
+
+【次638新規＋既存1字訂正／source検証完了・cloud画面検査中】
+正式作業はbuild\material-conversion-20261015-business-sme-combined-638-next。補正7476レコード＝旧6837prefix＋639（新規638/既存2025C問11の化1字訂正1）、実効7475キー。採用actual0 51e132。source E:/script/study-canvas/build/material-transcription/1791996280033 build actual0 2962c9・981.076秒、全198268差分actual0 9b822e（新規全文557/必要図81、既存訂正1）、本文check actual0 698521・188.519秒、回答/保存互換性保持。source全651ケース3幅actual0 cd147c・2205.407秒、23冊25実画像と実キャプチャ2617ファイルのSHA保管actual0 1bb68f、source完了98f080、queue afaf83。OCR待ち13359/onlyOCR10687。
+cloud E:/script/study-canvas/build/private-cloud/1791997897120 package actual0 6922f1・97.644秒、compiled406360、private check e67d63・87.410秒、全1776画像原画素＋バンドルSHAと全198268問/認証/Range/保存再開。親成功の子画像検査を再利用503ad6、pack f0e414/実包含0c57d9/今回87配置原画素a98a4f actual0。cloud画面651ケースはsession77989進行中、actual0未観測。current・step-exits・所有プロセスを確認し完了推定しない。
+source画面の環境変数名をSCREENSHOT_DIRと誤り実出力tmpへ保存、旧保護ファイル該当0を確認し、その実bytesを専用source-app-screenshotsへ複写・provenance記録。cloudは正しいSTUDY_CANVAS_SCREENSHOT_DIRを使用。再実行や未目視を偽装しない。
+現在封印済み5870のまま、638新規と既存1の復帰はcloud/summary/docs/snapshot/recheck全actual0後に6509へ反映予定。全体未完了、保留維持、commit/push/本番配信なし、停止指示まで継続。
+
+
+【まとめ638新規＋既存1字訂正の配信検証完了・最終保存確認待ち】
+# 23原本638新規ID＋既存1字訂正のまとめ文字化
+新規全文557問、必要図付き81問・87配置。既存2025C問11の「化」1字を原本どおり復元し、distinct新規加算0。
+補正7476レコード/7475キー、旧6837レコードと順序を保持。全198268問のID/型/選択肢数/正答/保存回答互換性とsource/cloud各651ケース・320/390/1100px、原本所属・画素・全pack・実バンドル・Worker/認証/Range/保存再開を確認。
+検証後累計{'adopted': 6509, 'questionText': 6472, 'fullyText': 6147, 'partialText': 325, 'solutionImageTranscribed': 38, 'questionSolutionOverlap': 1}。新規638と以前除外していた1件の復帰を区別。全体完了率は未確定。
+SOURCE E:\script\study-canvas\build\material-transcription\1791996280033
+CLOUD E:\script\study-canvas\build\private-cloud\1791997897120
+容量3122489637bytes、OCR待ち13359問（分類重複は加算しない）。
+次: Rebase frozen agent-next-combined-later-761 (28books761 new drafts) with later-preflight-bundle after final seal; later C2014/C2019 and other qualification drafts stay separate until formally grouped; mapping and save-incompatible anomalies remain pending。
+新基準に対するツール変更は履歴保持loader1パス。成功証拠のSHA一致範囲で再利用し、変更分は実検査。工程別実測・失敗・再試行を保持、未測定の短縮率は示さない。
+対応保留226/EPA9/看護師採点保留、未対応原文とC2023q27保存互換性問題を維持。独立校正・実機・本番未検証。commit/push/本番配信なし。最終snapshot/recheck待ち、全体未完了。
+
+summary/history/step-exits/after-state-hashesを確認。snapshot-after/recheck-finalのactual0までは最終封印へ加算しない。ユーザーの停止指示まで継続。
+
+
+【638新規＋既存1字訂正の封印完了／次961件の正式基準保存】
+前バッチ build/material-conversion-20261015-business-sme-combined-638-next はsource/cloud各651ケース3幅actual0（cd147c/7340d6）、各23冊25実画像、全198268問/回答保存互換性/全pack/実バンドル/compiled Worker/全1776配布画像原画素を確認。最終snapshot actual0 4bc4d8（22147ファイル・104.443秒）、final-recheck actual0 e3ea2d（18.342秒）。旧原本/旧ビルド/補正6837prefix/文書全文を保持し、最終反映3c9b99。新規638＋以前除外した既存1字修正1の復帰により現在検証済み6509（本文6472＝全文6147＋必要図325、解説38/本文重複1）。既存訂正は新規distinct加算0。OCR待ち13359、onlyOCR10687、全体完了率は未確定。
+次の正式作業はbuild\material-conversion-20261015-business-and-condo-combined-961-next。6509成功基準baseline actual0 afaaae、補正7476レコード/7475キーをbefore保存済み。旧prefixとbeforeを上書きしない。準備済み28冊761（written172/single589、必要図164ID170配置、原本726領域/全core保存choiceの主担当事前検証8ff8d3）＋C2014 33/C2015 35/C2018 41/C2019 41/管理業務主任者2025 50の5冊200＝予定961新規。後半200の主担当正式所属/画素/適用と全961再基準化はこれから。全961未採用、配信完了加算0。
+SOURCE E:\script\study-canvas\build\material-transcription\1791996280033
+CLOUD E:\script\study-canvas\build\private-cloud\1791997897120
+A2021公式訂正は専用agent-next-A2021-errata-verificationの公式PDF SHA ad7e2c49f91e46055a07d5f96e1476980eea29b2128c01f2938c4f38bede76b9 と全1頁・元A20の実目視/全5保存choiceを確認し、主担当実目視も別保存。原本オ先頭b→a、正答/採点不変、G22全員正解は別科目へ混用しない。古い未確認記録は履歴として保持し補足証拠で解消。
+原文未対応A2020 4-2/A2023 8-2/A2026 14・22/B2025 20-2/B2026 14/C2024 17/C2022 4-2・18と、C2023q27原文4択/既存3択の保存互換性不成立は別保留。対応保留226/EPA9/看護師採点保留も維持。C2016/C2017/ボイラー2026-10等は別準備で961へ未混入。
+新基準の許可ツール変更0。前基準までの3ツール変更は成功基準に含む。成功SHA一致の抽出/原画素/旧保存証拠を再利用し変更分のみ実処理、実測/失敗/再試行を保存。step-exits/resume-status/current/所有プロセスを優先、途中を成功としない。全体未完了、ユーザー停止指示まで継続、commit/push/本番配信なし。
+
+
+【961問の装飾修正後source検証完了・ローカル配布版検証中】
+正式作業はbuild/material-conversion-20261015-business-and-condo-combined-961-next。初期961のsource/cloud構造検査後に原本下線等の欠落を検出し、未封印のまま7組の原本書式監査を実施。200問を旧補正8437レコードの追記supersessionで修正、現在8637レコード/8436キー。旧全履歴・回答・型・保存互換性を保持し、装飾修正の新規distinct加算0。独立200検査・全961/3403保存状態actual0。C2022q32の①アンカー2件移動だけ原本で明示確認、他基礎文字/空白不変。
+修正後SOURCE build/material-transcription/1792010694323、build actual0 2d8eca 798.171秒。全198268差分・本文検査179.741秒・173図原画素・root178コード/API不変actual0。source画面は修正200＋回帰12の全212ケース3幅actual0 7d0101 643.976秒、旧成功761ケースは問題/画像/UI/生成catalogの非SHA項目一致で再利用。追加実行文/索引・pack属性変更/偽装SHA拒否9fixtureも独立actual0。混在実行を全973新規実行と表現しない。33冊38代表実画像（33同一依存再利用＋5修正後実目視）を保持、source完了510c83、既知2012Cq26関与下線も原画素詳細で復旧確認。
+修正後CLOUD build/private-cloud/1792013012393、package actual0 8c73bc 91.640秒、compiled Worker actual0 9556d5。private-cloud-check session40645実行中、全画像/実bundle/pack/973画面/最終snapshot/recheckはまだ未確認。current/step-exits/実プロセスの最新を優先。現在検証済み累計6509のまま、961配信完了加算0。初期修正前source1792004553260/cloud1792005692994と16532ファイルのSHAをformat-repair-baselineで保持、最後のrecheckでも照合。
+次の凍結525は18冊。later-typography-readonly-index-525にC16/17 24・宅建注意5・ボイラー数式3の32提案を別保存、原下書き未変更・未採用。CPA-I/宅建2001等の追加準備も別専用で、正式次scopeへ未混入。全体未完了、ユーザー停止指示まで継続。commit/push/本番配信なし。
+
+
+【まとめ961新規の配信検証完了・最終保存確認待ち】
+# 33原本961新規IDのまとめ文字化
+新規全文794問、必要図付き167問・173配置。
+原本の装飾修正200問は旧履歴を残して追記、新規distinct加算0。source画面は修正200＋回帰12を新規実行し、問題・画像・UI一致の旧成功761ケースを再利用。cloudは修正後973ケースを新規実行。
+補正8637レコード/8436キー（装飾履歴追記200、新規distinct加算0）、旧7476レコードと順序を保持。全198268問のID/型/選択肢数/正答/保存回答互換性、source/cloud各973ケース3幅、原本所属・画素・全pack・実バンドル・Worker/認証/Range/保存再開を確認。
+検証後累計{'adopted': 7470, 'questionText': 7433, 'fullyText': 6941, 'partialText': 492, 'solutionImageTranscribed': 38, 'questionSolutionOverlap': 1}。全体完了率は未確定。
+SOURCE E:\script\study-canvas\build\material-transcription\1792010694323
+CLOUD E:\script\study-canvas\build\private-cloud\1792013012393
+容量3102615438bytes、OCR待ち12880問。分類重複は加算しない。
+次: Rebase frozen later-readonly-index-525 (18books525 drafts) after final seal with exact current-pack rebase proof, then independently verify own-source membership, boiler masking, canonical crops, full correction application and saved core before adoption; later drafts remain separate and holds stay held。
+今回の新規rootツール変更0。成功SHAが一致する証拠のみ再利用し、変更分を実検査。実測・失敗・再試行を保持。
+対応保留226/EPA9/看護師採点保留、未対応原文/C2023q27保存互換性問題を維持。独立校正・実機・本番未検証。commit/push/本番配信なし。最終snapshot/recheck待ち、全体未完了。
+
+summary/history/step-exits/after-state-hashesを確認。snapshot-after/recheck-finalのactual0までは最終封印へ加算しない。ユーザーの停止指示まで継続。
+
+
+【961新規の最終保存確認完了・次951問の正式基準保存】
+961問のsource/ローカル配布版検証と最終保存SHA照合は実終了0。累計検証確定7470問（本文7433=全文6941＋必要図付き492、解答のみ38、本文/解答重複1）。全体未完了、停止指示まで継続。
+最新封印: E:\script\study-canvas\build\material-conversion-20261015-business-and-condo-combined-961-next
+source E:\script\study-canvas\build\material-transcription\1792010694323
+cloud E:\script\study-canvas\build\private-cloud\1792013012393
+source画面973ケースは修正200＋回帰12の新規実行と完全一致の旧成功761を結合、cloud画面973ケース3幅は修正後全新規実行actual0 7a4965。source/cloud各38実目視・33原本。既存177514原ファイルの成功証拠をSHA再利用し、現保存46840ファイルの実再照合actual0 e29945（338.521秒）、確定29e2e3。装飾追記200は新規distinct加算0。
+次の正式基準: E:\script\study-canvas\build\material-conversion-20261015-mixed-company-law-safety-951-next
+baseline actual0 c20b94、旧8637補正レコード/8436キーを完全保持。951候補=独立集約中901＋宅建1999の50。現時点採用0・追加配信完了0。原本SHA/URL/番号/領域での所属、全文・全択・注意・真の継続/隣接除外、型/回答/全保存index、必要図/マスク、装飾32、実core適用を主担当が確認してから採用する。
+集約901: build/material-speed-resume-20261014/agent-next-combined-later-901。読み取り専用の独立集約・独立差分検証が進行中。元の525/671/801/821索引は上書きしない。宅建1999独立下書きは最終496fc6 actual0、集約901外としてrootが50件追加。以降の宅建1998は後続候補。
+525内の装飾32は独立証拠/文字保持検証actual0 4e6eb6。実目視再確認は5頁のみ、全32独立全文校正ではない。boiler問28だけ原本根拠付き限定数式表記例外を保持。
+boiler40問59領域/20unique頁のraw解答親・マスク再現問題親の全画素照合actual0 6207bd、独立再現037df6/57312f actual0。必要図2点は全マスク外でraw/masked/crop全画素一致。raw親=問題親と偽らず、○の正答印を問題画像に復活させない。
+未対応226/EPA9/看護師採点保留、C2023q27保存互換問題、SME2011未対応原文と未対応枝問を保持。CPA2021-II既存packなし/CPA2012-I preparedなし・宅建2024preparedなしを推測で埋めない。CPA2013I/II公式回答HTMLは原文・科目区別を保存。
+rootだけが共有採用/current更新/重いbuild/統合ブラウザ検証を行う。成功証拠は全依存SHA一致時のみ再利用、変更分と配信を検査。実終了0までは完成に加算しない。commit/push/本番配信なし。最新のresume-status/step-exitsを優先し、全体未完了のまま次工程へ継続する。
+
+
+【951問の候補採用完了・sourceビルド実行中】
+最新作業dir: E:\script\study-canvas\build\material-conversion-20261015-mixed-company-law-safety-951-next
+確定済み7470問を維持。951新規候補は採用actual0 5c0f8c、旧8637レコードの内容/順序を完全保持し9588レコード/9387キー。951問35原本=記述69＋単一882、必要図2問2配置。配布完了加算0。全体未完了。
+候補の原本所属/画素はroot実行actual0 d3300b:727領域fresh＋root追加24領域/マスク20頁のexact成功SHA再利用。全951/4683保存状態、図2点の実目視/raw/masked全画素・マスク外条件、独立helper QAを確認。
+原本対照中にCPA2025-I全20prompt先頭の印刷コード混入を発見し、全20本文頁再目視のstrict修正案を別保存。宅建2001の共通法令日注意欠落は、表紙1頁をroot/独立担当が実目視し50passageだけ別候補へ復元。元901/年度/selected/旧QAを保存し、装飾32＋metadata20＋notice50はいずれも新distinct加算0。独立全冊再校正とは主張しない。
+正式生成e5507fは独立dryrunとnew/candidate SHA一致、raw/current実ローダー適用b21be8で951/4683保存状態・949全文/必要図付き2が一致。396共通証拠=宅建表紙350＋2025免除5＋boiler実見出し40＋CPA2018I訂正1、C2017原領域内の真継続4を保持。候補問題解決f78306actual0。候補生成/採用の後もsource/cloud画面と最終保存の検査は必要。
+sourceビルドsession51743を実行中。コマンド: npm.cmd run build:material-text -- --reuse-image-extraction --reuse-scoped-extraction --reuse-numeric-extraction。実終了0未確認。source currentは実終了と新manifestを確認してから記録する。root178コード/製品/ビルドツール変更0。
+画面検査は951新規＋既存回帰12=963ケース/3幅をsourceとcloudで順次実行する。代表38画面/35原本の実目視計画のみ（まだ実表示未確認、画像を実際に見てから記録）。統合検証・重build・current更新はrootのみ。
+採用前/source基準: build/material-transcription/1792010694323、cloud基準: build/private-cloud/1792013012393。以前の7470封印証拠を上書きしない。旧177514原ファイル成功証拠は全依存SHA一致時のみ再利用し、旧961の保存46840ファイルは次のold-preservationでfresh照合予定。失敗・再試行・実測は各attempt-logsとretry/performanceへ保存。
+後続の宅建1998は別凍結50候補（図1/ルビ1）、1997は別原本照合中で今回951には加えない。1997原本は表紙・法令日注意頁なしのため他年度の文章を転用しない。
+未対応226/EPA9/看護師採点、SME2011未対応/C2023q27保存互換問題、CPA2021-II既存packなし/CPA2012-I preparedなし/宅建2024preparedなしは保持。commit/push/本番配信なし。最新resume-status/step-exitsを優先し、ユーザーの停止指示まで継続する。
+
+
+【951問のsource生成完了・実画面検査継続中】
+source build/material-transcription/1792020128851 はactual0 15fe25、940.958秒。全198268問差分検査actual0 998d90（951変更=全文949/必要図付き2、型/正答/選択肢/保存互換性保持）、本文検査actual0 eb8758、図2点原画素actual0 6af9f0、root178コード不変actual0 5e9929。
+旧961封印46840中、宣言変更6パスを除く46834ファイルfresh保全検査actual0（439.610秒）。旧177514原本保全成功証拠は依存SHA一致で再利用し、新たな全177514実再走査とは表現しない。source証拠再利用actual0（7.789秒）。
+source-browser session38781を同一実行のまま継続。予定963ケース3幅、38代表画面/35原本のうち8画面を主担当が実目視して記録。終了0未確認、未生成画像を目視済みとしない。最新進捗はresume-status/step-exits/current/実所有プロセスを優先。
+最終記録helperは独立検証済み7ファイルを専用951へコピーし、Windowsのslash表記差だけresolved-path比較へ最小修正。同じ実フォルダ3例を許可、別build/kind/script3例を拒否する独立actual0証拠を保持。元凍結helper/QAは上書きしない。
+累計確定7470を維持、951は採用済みでも配信完了加算0。cloud currentは旧1792013012393で、今回cloud生成/検証/最終保存はこれから。後続CPA2026-I20問は原本/公式全29頁レビュー完了の別凍結、宅建1998の50と1997作業は今回951へ混入0。SME-Eのprepared333は全採用済み、2011対応保留を推測で埋めない。
+全体未完了、ユーザー停止指示まで継続。commit/push/本番配信なし。
+
+
+【951問のsource全963画面検証完了・ローカル配布版生成中】
+source build/material-transcription/1792020128851 の新規951＋既存回帰12=963ケースを320/390/1100pxですべて新規実行し、source-browser実終了0 6c3ee2（2674.320171秒）。source35原本38実画面を主担当が実目視済み。印刷code除去後CPA2025I問1/20、CPA2018I問18原本訂正注意、宅建2001復元共通法令日、免除注意の太字、記述ケース下線、ボイラー2図/数式を含む。
+source-screenshot-archive実終了0 970c06（963ケース3幅とtraceのSHA）、source-record実終了0 dd2f34（全sourceゲート）。queues実終了0 1a88ac、OCR待ち12829/onlyOCR10227/他待ち重複2602。分類の単純加算や951単純差引きはしない。
+package-cloud session41329が実行中。部分生成先build/private-cloud/1792024108196、完了currentはまだ旧1792013012393。最新プロセス観測時はnode24264生存、バンドル493ファイル/2038198786bytesまで生成進行。終了0までは部分生成先を完成配布版としない。旧版/currentを改変して失敗回避しない。
+確定累計7470のまま、今回951の配信完了加算0。次はpackage実終了0後、Worker build、private-cloud全画像/実bundle/認証/Range/保存再開、全pack/実包含/2図原画素、cloud全963ケース3幅＋38実目視、最終report/docs/snapshot/recheck/mark実終了0。
+後続はroot-future-frozen-120-indexに宅建1998/1997/CPA2026Iの3冊120問を原本所属・72fresh領域画素で確認。宅建1998/1997は独立微差3件ずつを主担当実目視し別候補へstrict適用、元凍結は上書き0。CPA2026Iは独立全29頁/全120保存index修正0。労働衛生コンサルタント関係法令2024/2025各15は別原本/独立完了、2025問4全5流れ図を主担当実目視、未採用。宅建1996は独立読点7件の別修正案確認中で完成候補として採用しない。1995と労働衛生一般2025は別原本レビュー中。CS2023関係法令はprepared/current/raw/原本に存在せず推測0。
+未対応226/EPA9/看護師採点、原文対応保留/C2023q27保存互換を保持。現在951のroot178コード/製品/ビルドツール変更0、最終記録helperのpath比較と累計counterは独立fixture検証済みで本体と区別。全体未完了、停止指示まで継続。commit/push/本番配信なし。
+
+
+【まとめ951新規の配信検証・最終封印待ち】
+# 35原本951新規IDの配信検証（最終封印待ち）
+全文949問、必要図付き部分文字化2問・2図、written69問。新規951、旧8637prefix保持、9588履歴/9387キー。
+装飾32・metadata20・共通注意50は採用前修正で新distinct加算0。原文全冊実目視は元完了証拠を継承し、独立QAの範囲を限定。
+source/cloud各963ケース・320/390/1100幅をすべて新規実行、各38実画面/35原本を実目視。型・択数・正答・4683保存状態、root178コード変更0、旧封印46834ファイルfresh照合、可変root6経路は旧prefix/旧コピーと新currentで別照合。177514原本成功証拠はexactSHA再利用。
+SOURCE E:\script\study-canvas\build\material-transcription\1792020128851
+CLOUD E:\script\study-canvas\build\private-cloud\1792024108196
+最終snapshot/recheck actual0後の見込累計8421（本文8384=全文7890+部分494、解答38、重複1）。現時点で配信完了累計へ加算しない。
+最終完了はseal-completion-proof.jsonとmarkの実終了を確認する。全体文字化は未完了。実機・本番・独立全文校正未確認、commit/push/本番配信なし。
+
+
+【951問の最終保存確認完了・次488問の正式基準保存】
+951新規はsource/cloud各963ケース3幅を全新規実行、各35原本38実画面を目視、原本所属・2図原画素・全198268型/回答/保存・全pack/実bundle/Worker/認証Range保存再開・1745画像全原画素を確認。最終snapshot実終了0 d95fa0（25540ファイル/105.048秒）、final-recheck実終了0 e63389（18.412秒）、mark実終了0 6cf55b（18.350秒）。951配信完了を加算し累計検証確定8421（本文8384=全文7890＋必要図付き494、解答38、重複1）。全体未完了、停止指示まで継続。
+最新封印: build/material-conversion-20261015-mixed-company-law-safety-951-next。summaryは封印前記録として不変、最終完了authorityはseal-completion-proof.json＋mark-batch-sealedの実終了0。source1792020128851/cloud1792024108196、9588補正履歴/9387キー。source build940.958秒/source browser2674.320秒、package783.055秒/cloud browser2787.362秒、各実測のみ。OCR待ち12829/onlyOCR10227、分類重複を加算しない。
+次正式dir: build/material-conversion-20261015-estate-health-boiler-combined-488-next。baseline実終了0 a167c5、前9588レコード全内容順序・コード178・前docs全文と両currentをbefore保存。現在採用0/追加配信完了0、計画488は最終対象集合まだ未凍結。候補集約agent-next-combined-future-488を原本完成/独立確認後に正式検証する。現在のresume-status/step-exits/current/実プロセスを優先。
+予定13冊488=凍結6冊200＋宅建1995/1994各50＋1991/1990各mapped49＋労働衛生一般2025/2024各30＋ボイラー整備士2026年4月30。元200は別凍結のまま上書きしない。原本200は198全文/必要図2・保存870、770入力SHAをrootと別担当が検証。宅建1998/1997/1996の13ID strict修正とroot実目視根拠を適用し元不合格履歴を保全。1995は5ID/読点7をroot実目視し別有効候補へ修正、1994/1991/CS一般2冊は別独立全冊検査済み。ボイラー整備士は作者完了/独立検査中、1990は作者原本全25頁済み・閉じ未確認、いずれも未完成を最終集約成功にしない。
+1991原文問9/1990原文問17は公式正答『なし』で既存IDなし。原文本数50と既存mapped49を分け、未対応原文全4択を別pending、ID/回答生成0/保留解除0。1993/1992はprepared pending-review/現行packなしを保持し本文ID推定0。CS2023関係法令は原本prepared/current/rawなし。
+既存未対応226/EPA9/看護師採点、SME2011/未対応枝問/C2023q27保存互換問題は維持。現在新baselineの許可rootツール変更0、製品表示/採点/保存/API仕様は変更しない。原本/画像/抽出/マッピング/修正/証拠の全依存SHA一致時のみ成功再利用、変更分は実検査。共有採用/current/重いbuild/統合検証はrootだけ。commit/push/本番配信なし。
+
+
+【488問採用後の再開・統合検証中 2026-10-15】
+正式dir: build/material-conversion-20261015-estate-health-boiler-combined-488-next。旧9588履歴全内容順序を保持し488追加採用actual0 784c99、10076履歴/9875キー。全13冊の独立原本確認は既存証拠を継承、宅建1990の独立完了は別resolutionで確定。新しい全冊目視を主張しない。必要図5点は新たに原本/親/切り出し画素とマスク外を再検査actual0。実loader/core全488/2112保存状態成功。
+source-build session27176実行中、実終了0未確認。成功のcurrentはsource1792020128851/cloud1792024108196を基準とする。配信完了への加算0、確定8421を維持。採用を再実行しない。新しいsource成功後に全198268差分/本文/5図/コード不変/証拠再利用、500ケース3幅と22実画面、cloud compact生成/Worker/全pack実bundle/認証Range保存回答/5図/全500ケース3幅22実画面、最終保存確認を進める。現在resume-status/step-exits/current/所有プロセスを優先。失敗した採用前キー名チェック履歴も保全。commit/push/本番配信なし。
+
+
+【488問source検証完了・ローカル配信候補生成中】
+source build/material-transcription/1792054301767はbuild実終了0 56e195（684.314秒）。全198268差分actual0 c866c8:変更488=全文483/必要図付き5、全ID/型/選択肢数/正答/保存2112保持。本文actual0 b83960、5図cc8560、コード178/API不変df6e9a、証拠再利用3b04ee。source501ケース（488新規+既存12+公式記述回帰1）/320/390/1100pxを全新規実行actual0 85d736（1128.405秒）、13原本22実画面を主担当実目視。source記録10ce64/queues f37a0b actual0。
+package-cloud session79338実行中、実終了0未観測。cloud成功currentは旧1792024108196のまま。全体未完了、確定累計8421/今回488配信完了加算0。次はpackage actual0→Worker→private-cloud/全pack実bundle/全画像原画素/5図/認証Range保存→cloud全501ケース3幅+22実画面→最終report/docs/snapshot/recheck/mark。採用488を再実行しない。既存保留/原本/旧成果保持、commit/push/本番配信なし。
+
+
+【まとめ488新規の配信検証・最終封印待ち】
+# 13原本488新規IDの配信検証（最終封印待ち）
+全文483問、必要図付き5問・5図、written0問。新規488、旧9588prefix保持、10076履歴/9875キー。
+source/cloud各500ケース・320/390/1100幅を新規実行、各22実画面/13原本を実目視。2112保存状態、root178コード変更0、旧封印25534ファイルfresh照合。
+SOURCE E:\script\study-canvas\build\material-transcription\1792054301767
+CLOUD E:\script\study-canvas\build\private-cloud\1792056437414
+最終snapshot/recheck actual0後の見込累計8909（本文8872=全文8373+部分499、解答38、重複1）。現時点で配信完了累計へ加算しない。
+全体文字化は未完了。実機・本番・独立全文校正未確認、commit/push/本番配信なし。
+
+
+【488問の最終保存確認完了・次100問の正式基準保存】
+488新規（全文483/必要図付き5）はsource/cloud各501ケース・320/390/1100pxを全新規実行、各13原本22実画面を主担当実目視。全198268差分/正答/保存2112、全pack/実bundle/1750画像原画素/Worker/所有者認証Range保存再開を確認。snapshot実終了0 7e072e（21180ファイル/22.825秒）、final-recheck実終了0 ba3f73（16.476秒）、mark実終了0 3f2dd3（16.646秒）。
+検証確定累計8909（本文8872=全文8373＋必要図付き499、解答38、重複1）。全体未完了。最新封印: build/material-conversion-20261015-estate-health-boiler-combined-488-next。最終authorityはseal-completion-proof.json＋mark実終了0、summary/reportの封印前記録を上書きしない。SOURCE1792054301767/CLOUD1792056437414、10076履歴/9875キー。build684.314秒/source-browser1128.405秒/package66.423秒/cloud-browser1062.779秒は今回実測のみ。OCR待ち12770/onlyOCR10168、分類重複を加算しない。
+次正式dir: build/material-conversion-20261015-estate-takken-1988-1989-combined-100-next。sealed8909基準保存actual0 ef7c83。次100は採用0・配信完了加算0・正式対象集合未凍結。1989は旧agent-next-takken-1989＋resume-takken-1989-independent-review-20261015、候補/独立QAはresume-takken-1989-candidate-helper-20261015とresume-takken-1989-candidate-independent-20261015。原本25頁/50問200選択肢、図0。候補ガードの不足は旧履歴を保持して補強、候補bytes不変で独立QA合格。
+1988はresume-takken-1988-author-20261015＋resume-takken-1988-independent-review-20261015、原本26頁/50問200選択肢、図は問23の敷地＋凡例1点。昭和63年4月1日法令日、Q15定義、Q24三斜線定義、ルビ6箇所を独立原本対照済み。元preparedの隣接参照はownOriginalRegionsと別保全。1988の正式補正候補生成/独立helperQA、100の共通採用前基準への再結合/原本所属画素/全保存400/実loader/source/cloud/画面/最終保存検証は未実施。1987は原本/対応表/current存在なしをmapping-blockerで保持しIDを推定しない。
+未対応226/EPA9/看護師採点保留、SME2011/未対応枝問/C2023q27保存互換問題を維持。旧原本177514成功証拠は全依存SHA一致で再利用、今回新たな全177514再走査とは主張しない。次100を再開する際は両current/補正prefix/全依存SHAと最新resume-status/step-exits/実所有プロセスを照合する。commit/push/本番配信なし。

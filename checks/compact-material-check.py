@@ -13,9 +13,43 @@ doc = m.fitz.open()
 page = doc.new_page()
 page.insert_text((50, 50), 'Question: choose the correct statement.')
 assert 'correct statement' in m.native_text(page, page.rect)
+trim = doc.new_page()
+trim.insert_text((50,100),'Text with printer marks outside the question.')
+shape = trim.new_shape()
+for x in [-20, trim.rect.width + 20]:
+    for y in [20, trim.rect.height-20]:
+        shape.draw_line((x-10,y),(x+10,y))
+shape.finish(color=(0,0,0)); shape.commit()
+region = m.fitz.Rect(0,70,trim.rect.width,140)
+assert not m.region_drawings(trim,region)
+assert 'printer marks' in m.native_text(trim,region)
+trim.draw_line((-28,110),(.0156,110),color=(1,1,1),width=1.417)
+trim.draw_line((-28,110),(.0156,110),width=.283)
+assert not m.region_drawings(trim,region), 'Sheet-edge registration strokes are not question content'
+trim.draw_line((50,120),(150,120))
+try:m.native_text(trim,region);raise AssertionError('A real line inside the region was ignored')
+except ValueError:pass
+closed = doc.new_page()
+closed.insert_text((50,100),'A closing polygon edge crosses this region.')
+shape=closed.new_shape();shape.draw_polyline([(-50,-50),(700,-50),(700,800)]);shape.finish(color=(0,0,0),closePath=True);shape.commit()
+assert m.region_drawings(closed,m.fitz.Rect(0,70,closed.rect.width,140))
 arithmetic = doc.new_page()
 arithmetic.insert_text((50, 50), 'Calculate 1 + 2 = 3; 0.02 / 2 = 0.01.')
 assert '0.02 / 2 = 0.01' in m.native_text(arithmetic, arithmetic.rect)
+subscript = doc.new_page()
+subscript.insert_text((50,50),'H',fontsize=12)
+subscript.insert_text((59,52),'2',fontsize=7)
+subscript.insert_text((64,50),'O',fontsize=12)
+assert 'H₂O' in m.native_text(subscript,subscript.rect)
+superscript = doc.new_page()
+superscript.insert_text((50,50),'cm',fontsize=12)
+superscript.insert_text((67,46),'2',fontsize=7)
+assert 'cm²' in m.native_text(superscript,superscript.rect)
+unsupported = doc.new_page()
+unsupported.insert_text((50,50),'X',fontsize=12)
+unsupported.insert_text((59,52),'word',fontsize=7)
+try:m.native_text(unsupported,unsupported.rect);raise AssertionError('Unsupported lowered text must retain the source')
+except ValueError:pass
 styled = doc.new_page();styled.insert_text((50, 50), 'Bold condition', fontname='hebo')
 assert '［太字：Bold condition］' in m.native_text(styled, styled.rect)
 indented = doc.new_page();indented.insert_text((50, 50), 'if ready:', fontname='cour');indented.insert_text((70, 70), 'execute()', fontname='cour')
@@ -34,6 +68,15 @@ try:
     raise AssertionError('Zero-height underline must keep the image')
 except ValueError:
     pass
+pairing = doc.new_page()
+pairing.insert_text((50,50),'Choose the correct pair.')
+pairing.insert_text((50,90),'1. Disease A',fontsize=10)
+pairing.insert_text((200,90),'Hormone B',fontsize=10)
+pairing.draw_line((115,87),(196,87),width=.5)
+assert '1. Disease A — Hormone B' in m.native_text(pairing,pairing.rect)
+pairing.draw_line((196,87),(185,82),width=.5)
+try:m.native_text(pairing,pairing.rect);raise AssertionError('A directional arrow cannot be discarded as a choice connector')
+except ValueError:pass
 page = doc[0]
 page.draw_rect(m.fitz.Rect(40, 70, 200, 120))
 try:
@@ -191,6 +234,20 @@ with tempfile.TemporaryDirectory(dir=root / 'build') as folder:
     assert grouped[asset] == grouped['assets/duplicate.png']
     for name in ['assets/audio.mp3','assets/audio-copy.mp3']:
         assert grouped[name]['src']==name and grouped[name]['sha256']==m.sha(audio.read_bytes())
+    inventory = cache/'referenced-images.json'; inventory.write_text(json.dumps([asset]),encoding='utf-8')
+    saved_argv = m.sys.argv
+    try:
+        m.concurrent.futures.ProcessPoolExecutor = InlinePool
+        m.sys.argv = ['compact-material.py','--compress-assets',str(source),str(cache),str(inventory)]
+        m.main()
+        assert json.loads((cache/'assets.json').read_bytes())[asset] == entry
+        inventory.write_text(json.dumps(['assets/../outside.png']),encoding='utf-8')
+        try:
+            m.main(); raise RuntimeError('Delivery compression accepted a path outside the asset folder')
+        except AssertionError:
+            pass
+    finally:
+        m.sys.argv = saved_argv; m.concurrent.futures.ProcessPoolExecutor = pool
     audio.write_bytes(file.read_bytes())
     untouched = m.compress((source,cache,'assets/audio.mp3'))[1]
     assert untouched['src']=='assets/audio.mp3' and untouched['sha256']==m.sha(audio.read_bytes())

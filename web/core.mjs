@@ -46,9 +46,20 @@ export function validateQuestions(input,existing=[],custom=false,examId) {
       let options=[],answer=null,modelAnswer='';
       if(isChoice({type})) {
         valid(Array.isArray(row.options) && row.options.length>=2 && row.options.length<=26 && (!legacy || row.options.length===4),'選択肢は2〜26個（旧形式は4個）必要です');options=row.options.map(v=>text(v,'選択肢',10000));valid(new Set(options).size===options.length,'選択肢は異なる文章にしてください');
-        if(type==='single') {valid(integer(row.answer,0,options.length-1),'正解の番号が不正です');answer=row.answer;}
+        if(row.answerPending===true) {valid(row.answer===null && row.acceptedAnswers===undefined,'保留中の正答は空欄にしてください');}
+        else if(type==='single') {valid(integer(row.answer,0,options.length-1),'正解の番号が不正です');answer=row.answer;}
         else {valid(Array.isArray(row.answer) && row.answer.length>0 && row.answer.every(a=>integer(a,0,options.length-1)) && new Set(row.answer).size===row.answer.length,'正解の番号が不正です');answer=[...row.answer].sort((a,b)=>a-b);}
       }else modelAnswer=text(row.modelAnswer ?? '', '模範解答',50000,type==='essay' && !!row.evaluationGuide);
+      const grading={};
+      if(row.answerPending!==undefined) {valid(row.answerPending===true && isChoice({type}),'正答保留の形式が不正です');grading.answerPending=true;}
+      if(row.previousType!==undefined) {valid(isChoice({type}) && ['single','multiple'].includes(row.previousType) && row.previousType!==type,'旧解答形式が不正です');grading.previousType=row.previousType;}
+      if(row.acceptedAnswers!==undefined) {
+        const signature=a=>JSON.stringify(Array.isArray(a)?[...a].sort((x,y)=>x-y):a);
+        valid(isChoice({type}) && Array.isArray(row.acceptedAnswers) && row.acceptedAnswers.length>=2 && row.acceptedAnswers.length<=26,'許容正答の形式が不正です');
+        valid(row.acceptedAnswers.every(a=>type==='single'?integer(a,0,options.length-1):Array.isArray(a) && a.length>0 && a.every(v=>integer(v,0,options.length-1)) && new Set(a).size===a.length),'許容正答の番号が不正です');
+        valid(new Set(row.acceptedAnswers.map(signature)).size===row.acceptedAnswers.length && row.acceptedAnswers.some(a=>signature(a)===signature(answer)),'許容正答が重複するか代表正答がありません');
+        grading.acceptedAnswers=row.acceptedAnswers.map(a=>Array.isArray(a)?[...a].sort((x,y)=>x-y):a);
+      }
       const images=row.images ?? [];valid(Array.isArray(images) && images.length<=30,'図は30枚以内にしてください');
       const checkedImages=images.map(image=>{valid(object(image) && typeof image.src==='string' && (/^https:\/\/[^\s<>"']+$/.test(image.src) || /^assets\/[a-zA-Z0-9_./-]+\.(png|webp|jpg)$/.test(image.src) && !image.src.includes('..')),'図のURLが不正です');return {src:image.src,alt:text(image.alt,'図の説明',5000)};});
       const solutionImages=(row.solutionImages ?? []).map(image=>{valid(object(image) && typeof image.src==='string' && /^assets\/[a-zA-Z0-9_./-]+\.(png|webp|jpg)$/.test(image.src) && !image.src.includes('..'),'解答画像が不正です');return {src:image.src,alt:text(image.alt,'図の説明',1000)};});valid(solutionImages.length<=30,'解答画像が多すぎます');
@@ -61,7 +72,7 @@ export function validateQuestions(input,existing=[],custom=false,examId) {
       }
       const kinds={};
       for(const [field,values] of [['answerKind',['official-answer','answer-example','evaluation-guide']],['explanationKind',['official-explanation','grading-commentary','absent-in-source','unknown']]]) if(row[field]!==undefined) {valid(values.includes(row[field]),'解答資料の種別が不正です');kinds[field]=row[field];}
-      return {id,examId:target,type,...(Object.keys(review).length?{textReview:review}:{}),...kinds,...(checkedAudio.length?{audio:checkedAudio}:{}),term:text(row.term ?? '','期',40,true),evaluationGuide:text(row.evaluationGuide ?? '','評価資料',50000,true),solutionImages,category,subject:text(row.subject ?? '','科目',200,true),topic:text(row.topic ?? '','topic',200,true),prompt:text(row.prompt,'問題文',50000),options,answer,modelAnswer,explanation:text(row.explanation ?? '','解説',50000,true),source:text(row.source ?? '持込問題','出典',1000),year:text(String(row.year ?? ''),'年度',40,true),passage:text(row.passage ?? '','共通本文',50000,true),images:checkedImages,sourceUrl:row.sourceUrl?safeUrl(row.sourceUrl):'',explanationSource:text(row.explanationSource ?? '登録者による解説','解説の出典',200)};
+      return {id,examId:target,type,...grading,...(Object.keys(review).length?{textReview:review}:{}),...kinds,...(checkedAudio.length?{audio:checkedAudio}:{}),term:text(row.term ?? '','期',40,true),evaluationGuide:text(row.evaluationGuide ?? '','評価資料',50000,true),solutionImages,category,subject:text(row.subject ?? '','科目',200,true),topic:text(row.topic ?? '','topic',200,true),prompt:text(row.prompt,'問題文',50000),options,answer,modelAnswer,explanation:text(row.explanation ?? '','解説',50000,true),source:text(row.source ?? '持込問題','出典',1000),year:text(String(row.year ?? ''),'年度',40,true),passage:text(row.passage ?? '','共通本文',50000,true),images:checkedImages,sourceUrl:row.sourceUrl?safeUrl(row.sourceUrl):'',explanationSource:text(row.explanationSource ?? '登録者による解説','解説の出典',200)};
     }catch(error) {throw new Error(`${index+1}問目：${error.message}`);}
   });
 }
@@ -84,8 +95,9 @@ export function newSession(pool,count,title,mock=false,minutes=0,now=Date.now())
 }
 export function remaining(deadline,now=Date.now()) {return Math.max(0,Math.ceil((deadline-now)/1000));}
 export function expired(session,now=Date.now()) {return !!session && !session.ended && session.deadline>0 && remaining(session.deadline,now)===0;}
-export function correctAnswer(q,answer) {if(!isChoice(q)) return object(answer) && answer.review==='done';if(q.type==='multiple') return Array.isArray(answer) && answer.length===q.answer.length && [...answer].sort((a,b)=>a-b).every((a,i)=>a===q.answer[i]);return answer===q.answer;}
+export function correctAnswer(q,answer) {if(q.answerPending) return false;if(!isChoice(q)) return object(answer) && answer.review==='done';return (q.acceptedAnswers || [q.answer]).some(expected=>q.type==='multiple'?Array.isArray(answer) && answer.length===expected.length && [...answer].sort((a,b)=>a-b).every((a,i)=>a===expected[i]):answer===expected);}
 export function record(state,q,answer,now) {
+  if(q.answerPending) return;
   const key=questionKey(q),old=state.stats[key] || {attempts:0,correct:0,bookmark:false},correct=correctAnswer(q,answer),choice=isChoice(q),self={done:0,partial:0,review:0,...old.self};if(!choice) self[object(answer) && answer.review || 'review']++;
   state.stats[key]={...old,attempts:old.attempts+1,correct:old.correct+(choice && correct?1:0),gradedAttempts:(old.gradedAttempts ?? old.attempts)+(choice?1:0),self,lastCorrect:correct,lastAt:now};
   const day=dayKey(new Date(now)),dailyKey=q.examId && q.examId!=='gken'?`${q.examId}::${day}`:day;state.daily[dailyKey]=(state.daily[dailyKey] || 0)+1;
@@ -93,7 +105,7 @@ export function record(state,q,answer,now) {
 export function score(session,questions) {const map=questionIndex(questions);return session.ids.reduce((n,id,i)=>n+(map.has(id) && isChoice(map.get(id)) && correctAnswer(map.get(id),session.answers[i])?1:0),0);}
 export function sessionSummary(session,questions) {
   const map=questionIndex(questions),self={done:0,partial:0,review:0,pending:0};let gradedTotal=0;
-  session.ids.forEach((id,i)=>{if(isChoice(map.get(id))) gradedTotal++;else {const a=session.answers[i];self[object(a)?a.review || 'pending':a===-1?'pending':'review']++;}});return {correct:score(session,questions),gradedTotal,self};
+    session.ids.forEach((id,i)=>{if(map.get(id)?.answerPending) self.pending++;else if(isChoice(map.get(id))) gradedTotal++;else {const a=session.answers[i];self[object(a)?a.review || 'pending':a===-1?'pending':'review']++;}});return {correct:score(session,questions),gradedTotal,self};
 }
 export function finish(state,questions,now=Date.now()) {
   const s=state.session;if(!s || s.ended) return;const map=questionIndex(questions);
@@ -139,7 +151,7 @@ export function validateState(input,base=[]) {
         if(integer(a,0,25)) return true;
         if(Array.isArray(a)) return a.length<=26 && a.every(v=>integer(v,0,25)) && new Set(a).size===a.length;
         return pending?typeof a==='string' && a.length<=50000:object(a) && typeof a.text==='string' && a.text.trim().length>0 && a.text.length<=50000 && [null,'done','partial','review'].includes(a.review);
-      }if(isChoice(q)) return q.type==='multiple'?Array.isArray(a) && a.every(v=>integer(v,0,q.options.length-1)) && new Set(a).size===a.length:integer(a,0,q.options.length-1);
+      }if(isChoice(q)) return [q.type,q.previousType].some(type=>type==='multiple'?Array.isArray(a) && a.every(v=>integer(v,0,q.options.length-1)) && new Set(a).size===a.length:type==='single' && integer(a,0,q.options.length-1));
       return pending?typeof a==='string' && a.length<=50000:object(a) && typeof a.text==='string' && a.text.trim().length>0 && a.text.length<=50000 && [null,'done','partial','review'].includes(a.review);
     };
     valid(Array.isArray(s.answers) && s.answers.length===s.ids.length && s.answers.every((a,i)=>answerValid(a,map.get(s.ids[i]),false,!!retiredExamId(s.ids[i]))),'演習の回答が不正です');valid(Array.isArray(s.orders) && s.orders.length===s.ids.length && s.orders.every((order,i)=>{const n=map.get(s.ids[i])?.options.length ?? (retiredExamId(s.ids[i])?order?.length:4);return Array.isArray(order) && integer(n,0,26) && order.length===n && order.every(v=>integer(v,0,n-1)) && new Set(order).size===n;}),'選択肢の順序が不正です');

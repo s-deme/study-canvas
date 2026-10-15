@@ -16,7 +16,7 @@ if (Test-Path -LiteralPath 'private-data/material/packs.json') {
   $sourceHash = (Get-FileHash -LiteralPath 'build/private/manifest.json' -Algorithm SHA256).Hash.ToLowerInvariant()
   $compactCurrent = if (Test-Path -LiteralPath 'build/private-compact/current.json') { Get-Content -LiteralPath 'build/private-compact/current.json' -Raw | ConvertFrom-Json }
   $compactHash = if ($compactCurrent) { (Get-FileHash -LiteralPath (Join-Path $compactCurrent.directory 'manifest.json') -Algorithm SHA256).Hash.ToLowerInvariant() }
-  if (-not $textManifest -or -not $textManifest.transcription.allImagesAttempted -or $textManifest.transcription.cropMethod -ne 4 -or $textManifest.compaction.sourceManifestSha256 -ne $sourceHash -or $textManifest.transcription.sourceManifestSha256 -ne $compactHash) {
+  if (-not $textManifest -or -not $textManifest.transcription.allImagesAttempted -or $textManifest.transcription.cropMethod -ne 9 -or $textManifest.compaction.sourceManifestSha256 -ne $sourceHash -or $textManifest.transcription.sourceManifestSha256 -ne $compactHash) {
     Write-Host '問題・解答・解説を文字化しています。初回のOCRには時間がかかります。'
     npm run build:private-compact
     if ($LASTEXITCODE -ne 0) { throw '教材の文字化に失敗しました。前回の成功ビルドと原本は保持しています。' }

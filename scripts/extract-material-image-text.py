@@ -1,4 +1,4 @@
-"""Extract every retained question/solution image; candidates never replace source images."""
+"""Extract all retained images; replace only verified text or pixel-exact figure crops."""
 import concurrent.futures
 import hashlib
 import json
@@ -20,10 +20,34 @@ compact = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(compact)
 
 METHOD = 4
-CROP_METHOD = 4
+CROP_METHOD = 9
 sha = lambda raw: hashlib.sha256(raw).hexdigest()
 read = lambda file: json.loads(file.read_bytes())
-unmapped = lambda text: bool(re.search(r'[\uFFFD\uE000-\uF8FF]', text))
+unmapped = lambda text: bool(re.search(r'[\x00-\x08\x0b\x0c\x0e-\x1f\uFFFD\uE000-\uF8FF]', text))
+
+
+def verify_native(saved, region, image):
+    """Reuse the conservative layout gate, then compare the actual delivered pixels."""
+    if saved['method'] != 'native' or saved.get('nativeSafetyVersion') == 10:
+        return saved
+    saved['nativeSafetyVersion'] = 10
+    saved.pop('nativeVerified', None)
+    saved.pop('retainedReason', None)
+    try:
+        if not region:
+            raise ValueError('no source PDF region')
+        with fitz.open(stream=source_pdf(region['sourceFile'], region['sourceSha256']), filetype='pdf') as doc:
+            native = doc[region['page']].get_text('text',clip=fitz.Rect(region['rect']),flags=fitz.TEXTFLAGS_TEXT & ~fitz.TEXT_USE_CID_FOR_UNKNOWN_UNICODE)
+            text = compact.native_text(doc[region['page']], fitz.Rect(region['rect']), uniform_ink=True)
+            if unmapped(text):
+                raise ValueError('unmapped or control characters')
+            compact.verified_pixels(doc[region['page']], dict(region, sha256=sha(image.read_bytes())), image)
+        saved.update(text=str(text), textSha256=sha(text.encode()), sourceText=text.source_text, nativeVerified=True)
+    except ValueError as error:
+        saved['retainedReason'] = str(error)
+        if 'native' in locals():
+            saved.update(text=native.strip(),textSha256=sha(native.strip().encode()))
+    return saved
 
 
 def regions():
@@ -67,7 +91,58 @@ def source_pdf(name, digest):
     raw = (ROOT / name).read_bytes()
     if sha(raw) != digest:
         raise ValueError('Source PDF changed: ' + name)
+    calibration = ROOT / 'private-data/material-transcription/unicode-repairs.json'
+    repairs = [r for r in read(calibration) if r['file'].replace('\\','/')==name.replace('\\','/')] if calibration.exists() else []
+    if repairs:
+        with fitz.open(stream=raw,filetype='pdf') as doc:
+            for repair in repairs:
+                if repair['status']!='source-verified' or repair['sourceSha256']!=digest:
+                    raise ValueError('Unverified PDF Unicode repair')
+                if repair.get('glyphReviewFile'):
+                    proof=reviewed_glyphs(repair['glyphReviewFile'],repair['glyphReviewSha256'])
+                    glyphs={g['index']:g for g in proof['glyphs']}
+                    allowed={(f['fontXref'],str(g['code'])):(glyphs[g['glyphIndex']]['reviewedUnicode'],g['pixelSha256'])
+                             for f in proof['fonts'] if f['sourceFile'].replace('\\','/')==name.replace('\\','/') and f['sourceSha256']==digest for g in f['glyphs']}
+                    for font in repair['fonts']:
+                        for code,character in font['mappings'].items():
+                            assert allowed.get((font['xref'],code))==(character,font['glyphPixelSha256'][code]),'Glyph calibration differs from reviewed source evidence'
+                for font in repair['fonts']:
+                    assert doc.xref_get_key(font['xref'],'Subtype')==('name','/Type1')
+                    key=doc.xref_get_key(font['xref'],'ToUnicode')
+                    if key[0]=='xref':
+                        cmap=doc.xref_stream(int(key[1].split()[0])).decode('ascii')
+                    else:
+                        assert key[0]=='null',key
+                        cmap='/CIDInit /ProcSet findresource begin 12 dict begin begincmap /CIDSystemInfo << /Registry (Adobe) /Ordering (UCS) /Supplement 0 >> def /CMapName /Reviewed-Glyph-UCS def /CMapType 2 def 1 begincodespacerange <00> <ff> endcodespacerange endcmap CMapName currentdict /CMap defineresource pop end end'
+                    # A shared original CMap must not receive another font's glyph corrections.
+                    xref=doc.get_new_xref();doc.update_object(xref,'<<>>')
+                    doc.xref_set_key(font['xref'],'ToUnicode',str(xref)+' 0 R')
+                    pairs=[]
+                    for code,character in font['mappings'].items():
+                        assert 0<=int(code)<=255 and len(character)==1 and not unmapped(character)
+                        pairs.append(f'<{int(code):02x}> <{character.encode("utf-16-be").hex()}>')
+                    cmap=re.sub(r'\d+\s+begincodespacerange.*?endcodespacerange','1 begincodespacerange <00> <ff> endcodespacerange',cmap,flags=re.S)
+                    cmap=cmap.replace('endcmap',str(len(pairs))+' beginbfchar\n'+'\n'.join(pairs)+'\nendbfchar\nendcmap')
+                    doc.update_stream(xref,cmap.encode('ascii'))
+            raw=doc.tobytes()
     return raw
+
+
+@lru_cache(maxsize=4)
+def reviewed_glyphs(name, digest):
+    raw=(ROOT/name).read_bytes();assert sha(raw)==digest,'Glyph review record changed'
+    proof=json.loads(raw)
+    for glyph in proof['glyphs']:
+        assert glyph.get('reviewedUnicode') and glyph.get('reviewer') and glyph.get('reviewedOn')
+        with Image.open(ROOT/glyph['file']) as image:
+            assert sha(image.convert('RGB').tobytes())==glyph['pixelSha256'],'Reviewed glyph pixels changed'
+    return proof
+
+
+def original_region_text(region):
+    raw=(ROOT/region['sourceFile']).read_bytes();assert sha(raw)==region['sourceSha256'],'Source PDF changed'
+    with fitz.open(stream=raw,filetype='pdf') as doc:
+        return doc[region['page']].get_text('text',clip=fitz.Rect(region['rect'])).strip()
 
 
 @lru_cache(maxsize=8192)
@@ -100,9 +175,9 @@ def cached_ocr(region, page):
     return '\n'.join(texts).strip() or None
 
 
-def image_ocr(image):
+def image_ocr(image, dpi=150):
     pix = fitz.Pixmap(fitz.csRGB, image.width, image.height, image.tobytes(), False)
-    pix.set_dpi(150, 150)
+    pix.set_dpi(dpi, dpi)
     with fitz.open(stream=pix.pdfocr_tobytes(language='jpn+eng', tessdata=str(ROOT / 'build/tessdata')), filetype='pdf') as ocr:
         return ocr[0].get_text(sort=True).strip()
 
@@ -111,7 +186,9 @@ def split_region(page, rect, raw, cache, key):
     """Partition around non-text bands only when source pixels match exactly."""
     if page.rotation or list(page.annots() or []) or not page.get_text('text',clip=rect).strip():
         return None
-    bounds = [fitz.Rect(d['rect']) & rect for d in page.get_drawings()
+    if any(fitz.Rect(s['bbox']).intersects(rect) and (s['type'] == 3 or s.get('opacity', 1) == 0) for s in page.get_texttrace()):
+        return None
+    bounds = [fitz.Rect(d['rect']) & rect for d in compact.region_drawings(page, rect)
               if (fitz.Rect(d['rect']) + (-0.5, -0.5, 0.5, 0.5)).intersects(rect)]
     bounds += [fitz.Rect(i['bbox']) & rect for i in page.get_image_info() if fitz.Rect(i['bbox']).intersects(rect)]
     if not bounds:
@@ -122,8 +199,10 @@ def split_region(page, rect, raw, cache, key):
     pix = page.get_pixmap(matrix=fitz.Matrix(1.5, 1.5), clip=rect, alpha=False)
     if image.size != (pix.width, pix.height) or image.tobytes() != pix.samples:
         return None
-    data = page.get_text('rawdict', clip=rect, flags=fitz.TEXTFLAGS_DICT & ~fitz.TEXT_PRESERVE_IMAGES)
+    data = page.get_text('rawdict', clip=rect, flags=fitz.TEXTFLAGS_DICT & ~fitz.TEXT_PRESERVE_IMAGES & ~fitz.TEXT_USE_CID_FOR_UNKNOWN_UNICODE)
     lines = [line for block in data['blocks'] for line in block.get('lines', [])]
+    colors = {s['color'] for line in lines for s in line['spans'] if any(c['c'].strip() for c in s['chars'])}
+    dark_ink = len(colors) == 1 and all(max((c >> 16) & 255, (c >> 8) & 255, c & 255) <= 80 for c in colors)
     char_boxes = [fitz.Rect(char['bbox']) for line in lines for span in line['spans'] for char in span['chars']]
     groups = [(b+(-3,-3,3,3)) & rect for b in bounds]
     changed = True
@@ -165,7 +244,7 @@ def split_region(page, rect, raw, cache, key):
         file=cache/(key+'-crop-'+str(len(crops)+1)+'.png');cropped.save(file)
         crops.append(dict(file=str(file.relative_to(ROOT)),sha256=sha(file.read_bytes()),
                           pixelRect=[x0+box[0],y0+box[1],x0+box[2],y0+box[3]]))
-        group_text = page.get_text('text',clip=group,sort=True).strip()
+        group_text = page.get_text('text',clip=group,sort=True,flags=fitz.TEXTFLAGS_TEXT & ~fitz.TEXT_USE_CID_FOR_UNKNOWN_UNICODE).strip()
         if not group_text or unmapped(group_text) or any(fitz.Rect(i['bbox']).intersects(group) for i in page.get_image_info()):
             ocr_text = image_ocr(cropped)
             if ocr_text and sha(ocr_text.encode()) != sha(group_text.encode()):
@@ -180,9 +259,15 @@ def split_region(page, rect, raw, cache, key):
             remaining=[c for c in span['chars'] if not any(g.contains(fitz.Point((c['bbox'][0]+c['bbox'][2])/2,(c['bbox'][1]+c['bbox'][3])/2)) for g in groups)]
             if not remaining:
                 continue
-            if span['flags'] & 19 or span['color'] != 0 or span.get('alpha',255) != 255 or line['dir'] != (1.0,0.0) or line.get('wmode'):
+            text = ''.join(c['c'] for c in remaining)
+            if not text.strip():
+                continue
+            if ('Greek' in span['font'] and re.search('[A-Za-z]',text)) or span['flags'] & 1 or span['color'] != 0 and not dark_ink or span.get('alpha',255) != 255 or line['dir'] != (1.0,0.0) or line.get('wmode'):
                 return None
-            spans.append({**span,'chars':remaining,'text':''.join(c['c'] for c in remaining)})
+            if span['flags'] & 18 and text.strip():
+                style = '太字・斜体' if span['flags'] & 18 == 18 else '太字' if span['flags'] & 16 else '斜体'
+                text = '［' + style + '：' + text + '］'
+            spans.append({**span,'chars':remaining,'text':text})
         if spans:
             outside.append({**line,'spans':spans})
     if not crops or len(crops)>20 or not outside:
@@ -205,8 +290,11 @@ def extract(task):
     key = sha(json.dumps(identity, sort_keys=True).encode())
     file = cache / (key + '.json')
     if file.exists():
-        saved = read(file)
-        if saved.get('identity') == identity and saved.get('textSha256') == sha(saved['text'].encode()) and not (saved['method']=='native' and unmapped(saved['text'])) and (not saved.get('crops') or saved.get('cropMethod')==CROP_METHOD) and all((ROOT/c['file']).exists() and sha((ROOT/c['file']).read_bytes())==c['sha256'] for c in saved.get('crops', [])):
+        try:
+            saved = read(file)
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            saved = {}
+        if saved.get('identity') == identity and saved.get('textSha256') == sha(saved['text'].encode()) and not (saved['method']=='native' and unmapped(saved['text']) and (saved.get('nativeVerified') or saved.get('nativeSafetyVersion') != 10)) and (not saved.get('crops') or saved.get('cropMethod')==CROP_METHOD) and all((ROOT/c['file']).exists() and sha((ROOT/c['file']).read_bytes())==c['sha256'] for c in saved.get('crops', [])):
             if region:
                 pdf=source_pdf(region['sourceFile'], region['sourceSha256'])
                 if saved.get('crops') and 'sourceText' not in saved:
@@ -214,6 +302,32 @@ def extract(task):
                         saved['sourceText']=doc[region['page']].get_text('text',clip=fitz.Rect(region['rect'])).strip()
                     temporary=file.with_suffix('.'+str(os.getpid())+'.tmp')
                     temporary.write_text(json.dumps(saved,ensure_ascii=False),encoding='utf-8');temporary.replace(file)
+            if saved['method'] == 'native' and saved.get('nativeSafetyVersion') != 10:
+                saved = verify_native(saved, region, source / 'web' / src)
+                if region and not saved.get('nativeVerified'):
+                    with fitz.open(stream=source_pdf(region['sourceFile'], region['sourceSha256']), filetype='pdf') as doc:
+                        split = split_region(doc[region['page']], fitz.Rect(region['rect']), raw, cache, key)
+                        if split:
+                            saved.update(split, method='native+cropped-images', cropMethod=CROP_METHOD,
+                                         sourceText=doc[region['page']].get_text('text', clip=fitz.Rect(region['rect'])).strip())
+                            saved['textSha256'] = sha(saved['text'].encode())
+                temporary=file.with_suffix('.'+str(os.getpid())+'.tmp')
+                temporary.write_text(json.dumps(saved,ensure_ascii=False),encoding='utf-8');temporary.replace(file)
+            if not saved['text'].strip() and not saved.get('highResolutionAttempted'):
+                if region:
+                    with fitz.open(stream=source_pdf(region['sourceFile'], region['sourceSha256']), filetype='pdf') as doc:
+                        pix = doc[region['page']].get_pixmap(dpi=300, clip=fitz.Rect(region['rect']), alpha=False)
+                        image = Image.frombytes('RGB', (pix.width, pix.height), pix.samples)
+                else:
+                    with Image.open(BytesIO(raw)) as original:
+                        image = original.convert('RGB').resize((original.width*2, original.height*2), Image.Resampling.LANCZOS)
+                retry = image_ocr(image, dpi=300)
+                saved.update(text=retry, textSha256=sha(retry.encode()), highResolutionAttempted=True,
+                             highResolution=dict(dpi=300, pixelSha256=sha(image.tobytes()), width=image.width, height=image.height, status='unreviewed'))
+                if retry:
+                    saved['method'] = 'ocr'
+                temporary=file.with_suffix('.'+str(os.getpid())+'.tmp')
+                temporary.write_text(json.dumps(saved,ensure_ascii=False),encoding='utf-8');temporary.replace(file)
             return src, saved
     native = ''
     scan = True;split = None;previous_ocr = None;source_text = ''
@@ -223,8 +337,8 @@ def extract(task):
             rect = fitz.Rect(region['rect'])
             if rect.is_empty or not (page.rect + (-1, -1, 1, 1)).contains(rect):
                 raise ValueError('Invalid PDF crop: ' + src)
-            native = page.get_text('text', clip=rect, sort=True).strip()
-            source_text = page.get_text('text', clip=rect).strip()
+            native = page.get_text('text', clip=rect, sort=True, flags=fitz.TEXTFLAGS_TEXT & ~fitz.TEXT_USE_CID_FOR_UNKNOWN_UNICODE).strip()
+            source_text = page.get_text('text', clip=rect, flags=fitz.TEXTFLAGS_TEXT & ~fitz.TEXT_USE_CID_FOR_UNKNOWN_UNICODE).strip()
             scan = not native or unmapped(native) or any(fitz.Rect(i['bbox']).intersects(rect) for i in page.get_image_info())
             split = split_region(page, rect, raw, cache, key)
             if scan and not split:
@@ -248,6 +362,7 @@ def extract(task):
         saved['crops'] = split['crops']
         saved['cropMethod'] = CROP_METHOD
         saved['sourceText'] = source_text
+    saved = verify_native(saved, region, source / 'web' / src)
     temporary = file.with_suffix('.' + str(os.getpid()) + '.tmp')
     temporary.write_text(json.dumps(saved, ensure_ascii=False), encoding='utf-8')
     temporary.replace(file)
@@ -257,6 +372,10 @@ def extract(task):
 def main(source):
     cache = ROOT / 'build/material-image-text/cache'
     cache.mkdir(parents=True, exist_ok=True)
+    calibration=ROOT/'private-data/material-transcription/unicode-repairs.json'
+    repair_files={}
+    for repair in read(calibration) if calibration.exists() else []:
+        repair_files.setdefault(repair['file'].replace('\\','/'),[]).append(repair)
     mappings = regions()
     assets = read(source / 'asset-evidence.json')
     reverse = {}
@@ -268,6 +387,10 @@ def main(source):
             ocr = existing_ocr(region['sourceFile'],region['page'],region['sourceSha256'])
             if ocr:
                 region = dict(region,ocr=ocr)
+            if region['sourceFile'].replace('\\','/') in repair_files:
+                repairs=repair_files[region['sourceFile'].replace('\\','/')]
+                assert all(r['sourceSha256']==region['sourceSha256'] and r['status']=='source-verified' for r in repairs)
+                region=dict(region,unicodeRepairSha256=sha(calibration.read_bytes()),unicodeRepairIds=[r['id'] for r in repairs])
         if entry['src'] not in reverse or reverse[entry['src']] is None:
             reverse[entry['src']] = region
     tasks = [(source, cache, entry['src'], entry['sha256'], reverse[entry['src']])
@@ -280,10 +403,15 @@ def main(source):
     with temporary.open('w', encoding='utf-8') as stream, concurrent.futures.ProcessPoolExecutor(max_workers=min(8, os.cpu_count() or 1)) as pool:
         stream.write('{')
         for index, (src, data) in enumerate(pool.map(extract, tasks, chunksize=8)):
+            region=data['identity'].get('region')
+            if region and region.get('unicodeRepairSha256'):
+                before=original_region_text(region)
+                data.update(sourceTextBeforeUnicodeRepair=before,sourceTextBeforeUnicodeRepairSha256=sha(before.encode()))
             if index:
                 stream.write(',')
             stream.write(json.dumps(src) + ':' + json.dumps(data, ensure_ascii=False))
-            counts[data['method']] = counts.get(data['method'], 0) + 1
+            label = 'native-verified' if data.get('nativeVerified') else data['method']
+            counts[label] = counts.get(label, 0) + 1
             if (index + 1) % 500 == 0:
                 print('Extracted', index + 1, '/', len(tasks), counts, flush=True)
         stream.write('}')
